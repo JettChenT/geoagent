@@ -2,6 +2,8 @@ from pathlib import Path
 from PIL import Image
 import time
 from websocket_server import WebsocketServer
+import requests
+import io
 
 class VLLM:
     def prompt(self, prompt: str, image: Image.Image | Path | None = None) -> str:
@@ -38,13 +40,27 @@ class GPT4Vision(VLLM):
             time.sleep(0.1)
         return self.incoming.pop(0)
 
+
+class LLAVA(VLLM):
+    def __init__(self, endpoint="http://localhost:8080"):
+        self.endpoint = endpoint
+
+    def heartbeat(self) -> bool:
+        return requests.get(self.endpoint).status_code == 200
+
+    def prompt(self, prompt: str, image: Image.Image | Path | None = None) -> str:
+        files = None
+        if image is not None:
+            if isinstance(image, Path):
+                files = {'image_file': open(image, 'rb')}
+            elif isinstance(Image.Image):
+                output = io.BytesIO()
+                image.save(output, format='JPEG')
+                files = {"image_file": output}
+        r = requests.post(f"{self.endpoint}/llava", data={"user_prompt": prompt}, files=files)
+        return r.json()['content']
+
 # test
 if __name__ == '__main__':
-    gv = GPT4Vision()
-    while not gv.heartbeat():
-        time.sleep(0.1)
-    while True:
-        inp = input()
-        if inp == 'q':
-            break
-        print("RESULT", gv.prompt(inp))
+    llava = LLAVA()
+    print(llava.prompt("Describe this image", Path(__file__).parent/"images"/"NY.png"))
