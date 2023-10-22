@@ -6,8 +6,10 @@ import requests
 import io
 import array
 import ctypes
+import asyncio
 from llama_cpp import (Llama, clip_model_load, llava_image_embed_make_with_filename, llava_image_embed_make_with_bytes,
     llava_image_embed_p, llava_image_embed_free, llava_validate_embed_size, llava_eval_image_embed)
+from utils import md
 
 class VLLM:
     def prompt(self, prompt: str, image: Image.Image | Path | None = None) -> str:
@@ -17,6 +19,10 @@ class VLLM:
         pass
 
 class GPT4Vision(VLLM):
+    """
+    Connector to GPT4, based on a web browser api
+    TODO: switch to selenium controller for file upload
+    """
     WS_PORT = 8181
 
     def __init__(self):
@@ -30,19 +36,28 @@ class GPT4Vision(VLLM):
         print("new join!")
 
     def recv_incoming(self, _client, _server, message):
-        if message != "undefined":
-            self.incoming.append(message)
+        print("received message:", message)
+        if message != "undefined" and message is not None and isinstance(message, str) and len(message)>40:
+            print("appending message")
+            self.incoming.append(md(message))
+
+    async def wait_for_message(self):
+        while len(self.incoming) == 0:
+            await asyncio.sleep(0.01)
+        return self.incoming.pop(0)
 
     def heartbeat(self) -> bool:
         return True
 
     def prompt(self, prompt: str, image: Image.Image | Path | None = None) -> str:
+        if image is not None:
+            print("Automatic Image Upload not supported yet. Please upload the image manually.")
+            print(f"The image is located at {image}")
+            input("Press Enter to continue...")
         if not self.heartbeat():
             raise ConnectionRefusedError()
         self.server.send_message_to_all(prompt + '\n')
-        while len(self.incoming) == 0:
-            time.sleep(0.1)
-        return self.incoming.pop(0)
+        return asyncio.run(self.wait_for_message())
 
 
 class LLAVA_Server(VLLM):
@@ -139,6 +154,12 @@ def test_llava():
     _fres = llava.prompt("write a diary about a visit to the place")
 
 
+def test_gpt_connection():
+    gpt = GPT4Vision()
+    input("enter to start...")
+    print(f"---RESULT\n{gpt.prompt('output a python implementation of hello world with 10 lines')}")
+
 # test
 if __name__ == '__main__':
-    test_llava()
+    test_gpt_connection()
+    # test_llava()
