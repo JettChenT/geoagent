@@ -40,6 +40,8 @@ class Agent:
         res = self.vllm.prompt(prompt, image)
         print("RESPONSE:", res)
         osm_res = self.proc_osm(res)
+        print("------- OSM Response --------")
+        print(osm_res)
         if isinstance(osm_res, str):
             return self.chain(osm_res, depth=depth + 1)
         else:
@@ -51,5 +53,6 @@ class Agent:
                 return osm_res
 
 if __name__ == '__main__':
-    agent = Agent(GPT4Vision())
-    print(agent.chain(INITIAL_PROMPT, Path('./images/ksteak.png')))
+    # agent = Agent(GPT4Vision())
+    agent = Agent(LLAVA(Path('../models/llava/ggml-model-q4_k.gguf'), Path('../models/llava/mmproj-model-f16.gguf')))
+    print(agent.chain(INITIAL_PROMPT, Path('./images/NY.png')))

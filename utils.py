@@ -15,7 +15,8 @@ def md(text: str) -> str:
 
 def find_last_code_block(text: str) -> str:
     # Regular expression to match code blocks enclosed within triple backticks
-    code_blocks = re.findall(r'```([\s\S]*?)```', text)
+    # The regular expression skips the optional language specifier
+    code_blocks = re.findall(r'```(?:[a-zA-Z0-9_+-]*)\n?([\s\S]*?)```', text)
 
     if code_blocks:
         return code_blocks[-1]

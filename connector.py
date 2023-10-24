@@ -10,6 +10,7 @@ import asyncio
 from llama_cpp import (Llama, clip_model_load, llava_image_embed_make_with_filename, llava_image_embed_make_with_bytes,
     llava_image_embed_p, llava_image_embed_free, llava_validate_embed_size, llava_eval_image_embed)
 from utils import md
+import prompting
 
 class VLLM:
     def prompt(self, prompt: str, image: Image.Image | Path | None = None) -> str:
@@ -132,8 +133,7 @@ class LLAVA(VLLM):
         return res
 
     def system_prompt(self):
-        SYS_PROMPT = "A chat between a curious human and an artificial intelligence assistant.  The assistant gives helpful, detailed, and polite answers to the human's questions.\n"
-        self.llm.eval(self.llm.tokenize(SYS_PROMPT.encode('utf8')))
+        self.llm.eval(self.llm.tokenize(prompting.LLAVA_SYS_PROMPT.encode('utf8')))
 
     def prompt(self, prompt: str, image: Image.Image | Path | None = None) -> str:
         self.llm.eval(self.llm.tokenize("\nUSER: ".encode('utf8')))
