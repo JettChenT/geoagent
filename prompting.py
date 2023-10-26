@@ -4,6 +4,7 @@ Write open streetmap queires to find these locations.
 In your queries, make use of OSM's proximity features, and use regular expressions over exact string matches, and always use them
 when you're not exactly sure of the specific wordings of signs etc.
 Finally, output a single query to find the image's likely location, including the headers and bounding boxes, etc.
+If you are able to guess the general region of the image. Please include that in the OSM query.
 
 A good example of a query would be:
 
@@ -33,9 +34,9 @@ Finally, output the entire modified OSM query.
 
 DELTA_TOO_LITTLE = """
 There are too few results for the given query.
-Modify the query to expand the search area. Such as increasing the proximity threshold.
-Also consider making the text queries less specific/restrictive. Consider switching to less strict regular expressions, 
+Consider making the text queries less specific/restrictive. Consider switching to less strict regular expressions, 
 or not using as many tag constraints, or removing some constraints altogether.
+Also consider using union (...) statements to include more acceptable places.
 Finally, output the entire modified OSM query.
 """
 
