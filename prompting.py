@@ -9,8 +9,8 @@ If you are able to guess the general region of the image. Please include that in
 A good example of a query would be:
 
 ```
-// Define the main street as the central reference point
-way["name"~"Monroe.*St.*NW"] -> .mainway;
+area["name"~"United States"];
+way["name"~"Monroe.*St.*NW"](area) -> .mainway;
 
 (
   nwr(around.mainway:500)["name"~"Korean.*Steak.*House"];
@@ -29,6 +29,7 @@ out center;
 DELTA_TOO_MUCH = """
 There are too many results for the given query. 
 Modify the query to narrow down the search area. Such as lowering the proximity threshold. Or making the text searchings more specific.
+Also consider changing or narrowing the search area if present.
 Finally, output the entire modified OSM query.
 """
 
@@ -37,6 +38,7 @@ There are too few results for the given query.
 Consider making the text queries less specific/restrictive. Consider switching to less strict regular expressions, 
 or not using as many tag constraints, or removing some constraints altogether.
 Also consider using union (...) statements to include more acceptable places.
+Also consider widening or removing the current search area.
 Finally, output the entire modified OSM query.
 """
 
