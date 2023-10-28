@@ -2,6 +2,7 @@ from overpy import Overpass
 import prompting
 from typing import List, Tuple
 
+
 class OSMJudge:
     LOWER_THRESHOLD = 1
     UPPER_THRESHOLD = 40
