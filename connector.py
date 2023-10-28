@@ -104,8 +104,16 @@ class LLAVA(VLLM):
 
     def load_image_embed(self, image: Image.Image) -> llava_image_embed_p:
         output = io.BytesIO()
-        image.save(output, format='JPEG')
-        return llava_image_embed_make_with_bytes(ctx_clip=self.ctx_clip, n_threads=1, image_bytes=output.getvalue(), image_bytes_length=output.tell())
+        image.save(output, format="PNG")
+        im_len = len(output.getvalue())
+        data_array = array.array("B", output.getvalue())
+        c_ubyte_ptr = (ctypes.c_ubyte * len(data_array)).from_buffer(data_array)
+        return llava_image_embed_make_with_bytes(
+            ctx_clip=self.ctx_clip,
+            n_threads=1,
+            image_bytes=c_ubyte_ptr,
+            image_bytes_length=im_len,
+        )
 
 
     def eval_img(self, image: Image.Image | Path):
@@ -149,9 +157,7 @@ class LLAVA(VLLM):
 def test_llava():
     llava_folder = Path(__file__).parent.parent/"models"/"llava"
     llava = LLAVA(llava_folder/"ggml-model-q4_k.gguf", llava_folder/"mmproj-model-f16.gguf")
-    _res = llava.prompt("describe this image in a single sentence", Path(__file__).parent/"images"/"NY.png")
-    print("---- PROMPT 1 DONE")
-    _fres = llava.prompt("write a diary about a visit to the place")
+    _res = llava.prompt("Hi there! How are you?")
 
 
 def test_gpt_connection():
@@ -161,5 +167,5 @@ def test_gpt_connection():
 
 # test
 if __name__ == '__main__':
-    test_gpt_connection()
-    # test_llava()
+    # test_gpt_connection()
+    test_llava()
