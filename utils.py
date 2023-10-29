@@ -1,5 +1,8 @@
 import re
 from markdownify import MarkdownConverter, abstract_inline_conversion
+from io import BytesIO
+import base64
+from PIL import Image
 
 
 class OAIConverter(MarkdownConverter):
@@ -23,3 +26,11 @@ def find_last_code_block(text: str) -> str:
     if code_blocks:
         return code_blocks[-1]
     return None
+
+
+def image_to_base64(im: Image) -> str:
+    buffer = BytesIO()
+    im.save(buffer, "PNG")
+    buffer.seek(0)
+    img_bytes = buffer.read()
+    return base64.b64encode(img_bytes).decode("utf-8")

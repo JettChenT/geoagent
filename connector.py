@@ -14,8 +14,9 @@ from llama_cpp import (
     llava_image_embed_free,
     llava_eval_image_embed,
 )
-from utils import md
+from utils import md, image_to_base64
 import prompting
+import json
 
 
 class VLLM:
@@ -46,14 +47,13 @@ class GPT4Vision(VLLM):
 
     def recv_incoming(self, _client, _server, message):
         print("received message:", message)
-        if (
-            message != "undefined"
-            and message is not None
-            and isinstance(message, str)
-            and len(message) > 40
-        ):
-            print("appending message")
-            self.incoming.append(md(message))
+        try:
+            msg_data = json.loads(message)
+            if msg_data["type"] == "message":
+                message = self.incoming.append(md(msg_data["message"]))
+                self.incoming.append(message)
+        except Exception:
+            return
 
     async def wait_for_message(self):
         while len(self.incoming) == 0:
@@ -64,15 +64,13 @@ class GPT4Vision(VLLM):
         return True
 
     def prompt(self, prompt: str, image: Image.Image | Path | None = None) -> str:
+        send_dat = {"message": prompt}
         if image is not None:
-            print(
-                "Automatic Image Upload not supported yet. Please upload the image manually."
-            )
-            print(f"The image is located at {image}")
-            input("Press Enter to continue...")
+            im = image if isinstance(image, Image.Image) else Image.open(image)
+            send_dat["image"] = image_to_base64(im)
         if not self.heartbeat():
             raise ConnectionRefusedError()
-        self.server.send_message_to_all(prompt + "\n")
+        self.server.send_message_to_all(json.dumps(send_dat) + "\n")
         return asyncio.run(self.wait_for_message())
 
 
@@ -189,13 +187,11 @@ def test_llava():
 
 def test_gpt_connection():
     gpt = GPT4Vision()
-    input("enter to start...")
-    print(
-        f"---RESULT\n{gpt.prompt('output a python implementation of hello world with 10 lines')}"
-    )
+    input("press enter to continue")
+    print(f"---RESULT\n{gpt.prompt('Describe this image', Path('./images/NY.png'))}")
 
 
 # test
 if __name__ == "__main__":
-    # test_gpt_connection()
-    test_llava()
+    test_gpt_connection()
+    # test_llava()
