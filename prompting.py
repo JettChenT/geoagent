@@ -1,3 +1,7 @@
+SYSTEM_PROMPT="""
+You are a helpful assistant who helps us geolocate images by writing overpass turbo queries.
+"""
+
 INITIAL_PROMPT = """
 The above is a picture of a location in the world, note the important features in it.
 Write open streetmap queires to find these locations.
@@ -9,7 +13,7 @@ If you are able to guess the general region of the image. Please include that in
 A good example of a query would be:
 
 ```
-area["name"~"United States"];
+area["name"~".*Washington.*"];
 way["name"~"Monroe.*St.*NW"](area) -> .mainway;
 
 (
@@ -77,4 +81,8 @@ The assitant outputs objective responses in markdown.
 First describe the image. Then, output the openstreetmap query.
 The Open Streetmap queries should be contained in code blocks.
 Do not output the results of the query execution. Always make sure that the last code block is the OSM query.
+"""
+
+NO_CODEBLOCK = """
+No markdown codeblocks could be found in the response. Please make sure that the last code block is the OSM query.
 """

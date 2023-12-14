@@ -1,7 +1,11 @@
+from pathlib import Path
+
+from PIL import Image
+
 from prompting import *
 from utils import find_last_code_block
 from rich import print
-from connector import *
+from connector.gptv import Gpt4Vision, VLLM
 from osm import OSMJudge
 
 
@@ -12,6 +16,7 @@ class Agent:
         self.vllm = vllm
         self.osm = OSMJudge()
         self.depth = 0
+        self.vllm.system(SYSTEM_PROMPT)
 
     def chain(self, prompt, image: Path | Image.Image | None = None):
         self.depth += 1
@@ -23,7 +28,10 @@ class Agent:
             raise RecursionError("Chain depth threshold exceeded. Aborting.")
         res = self.vllm.prompt(prompt, image)
         print("RESPONSE:", res)
-        osm_res = self.osm.query(find_last_code_block(res))
+        code_block = find_last_code_block(res)
+        if code_block is None:
+            return self.chain(NO_CODEBLOCK)
+        osm_res = self.osm.query(code_block)
         print("------- OSM Response --------")
         print(osm_res)
         if isinstance(osm_res, str):
@@ -46,6 +54,7 @@ class Agent:
 
 
 if __name__ == "__main__":
-    agent = Agent(GPT4Vision())
+    agent = Agent(Gpt4Vision(max_tokens=3000))
     # agent = Agent(LLAVA(Path('../models/llava/ggml-model-q4_k.gguf'), Path('../models/llava/mmproj-model-f16.gguf')))
-    print(agent.chain(INITIAL_PROMPT, Path("./images/NY.png")))
+    input("Press enter to begin.")
+    print(agent.chain(INITIAL_PROMPT, Path("./images/phoenix_taylor.png")))

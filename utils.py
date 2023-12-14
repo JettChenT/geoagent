@@ -18,7 +18,7 @@ def md(text: str) -> str:
     return OAIConverter(strip=["pre"]).convert(text)
 
 
-def find_last_code_block(text: str) -> str:
+def find_last_code_block(text: str) -> str | None:
     # Regular expression to match code blocks enclosed within triple backticks
     # The regular expression skips the optional language specifier
     code_blocks = re.findall(r"```(?:[a-zA-Z0-9_+-]*)\n?([\s\S]*?)```", text)

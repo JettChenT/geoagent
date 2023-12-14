@@ -28,4 +28,4 @@ class OSMJudge:
             return coords
         except Exception as e:
             print(e)
-            return str(e)
+            return str(e) + "\n Please Adjust the OSM query to fix this issue."
