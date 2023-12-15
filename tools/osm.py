@@ -4,32 +4,36 @@ import folium
 import prompting
 import io
 from PIL import Image
+import statistics
 
-LOWER_THRESHOLD = 1
-UPPER_THRESHOLD = 40
 PADDING = 0.001
 overpass = Overpass()
+STDEV_THRESHOLD = 0.001
 
 
-def query(query: str) -> List[Tuple[float, float]] | str:
+def query(q: str) -> List[Tuple[float, float]] | Tuple[str, Image.Image|None]:
     """
     Skims through the query string for a chunk of OSM Query, executes the query, and returns the resulting
     lat long pairs.
-    :param query:
+    :param q:
     :return: list of tuples if valid, otherwise returns a string representing the next prompt
     """
     try:
-        osm_result = overpass.query(query)
+        osm_result = overpass.query(q)
         coords = list(map(lambda x: (float(x.lat), float(x.lon)), osm_result.nodes))
-        print(coords)
-        if len(coords) < LOWER_THRESHOLD:
-            return prompting.DELTA_TOO_LITTLE
-        elif len(coords) > UPPER_THRESHOLD:
-            return prompting.DELTA_TOO_MUCH
+        x_cords = list(map(lambda x: x[0], coords))
+        y_cords = list(map(lambda x: x[1], coords))
+        if len(coords) == 0:
+            return prompting.DELTA_TOO_LITTLE, None
+        if len(coords) > 1:
+            x_std = statistics.stdev(x_cords)
+            y_std = statistics.stdev(y_cords)
+            if x_std > STDEV_THRESHOLD or y_std > STDEV_THRESHOLD:
+                return prompting.TOO_SPREAD, render(coords)
         return coords
     except Exception as e:
         print(e)
-        return str(e) + "\n Please Adjust the OSM query to fix this issue."
+        return str(e) + "\n Please Adjust the OSM query to fix this issue.", None
 
 
 def render(coords: List[Tuple[float, float]]) -> Image.Image:

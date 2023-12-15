@@ -33,8 +33,8 @@ class Agent:
         osm_res = osm.query(code_block)
         print("------- OSM Response --------")
         print(osm_res)
-        if isinstance(osm_res, str):
-            return self.chain(osm_res)
+        if isinstance(osm_res, tuple):
+            return self.chain(*osm_res)
         else:
             return self.human(osm_res)
 

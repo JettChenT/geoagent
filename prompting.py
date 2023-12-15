@@ -86,3 +86,10 @@ Do not output the results of the query execution. Always make sure that the last
 NO_CODEBLOCK = """
 No markdown codeblocks could be found in the response. Please make sure that the last code block is the OSM query.
 """
+
+TOO_SPREAD = """
+The results returned in the OSM query are too spread out, please narrow down the search area.
+Such as lowering the proximity threshold. Or making the text searchings more specific.
+Also consider changing or narrowing the search area if present.
+Finally, output the entire modified OSM query.
+"""
