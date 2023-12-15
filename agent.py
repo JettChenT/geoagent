@@ -6,7 +6,7 @@ from prompting import *
 from utils import find_last_code_block
 from rich import print
 from connector.gptv import Gpt4Vision, VLLM
-from osm import OSMJudge
+from tools import osm
 
 
 class Agent:
@@ -14,7 +14,6 @@ class Agent:
 
     def __init__(self, vllm: VLLM):
         self.vllm = vllm
-        self.osm = OSMJudge()
         self.depth = 0
         self.vllm.system(SYSTEM_PROMPT)
 
@@ -31,7 +30,7 @@ class Agent:
         code_block = find_last_code_block(res)
         if code_block is None:
             return self.chain(NO_CODEBLOCK)
-        osm_res = self.osm.query(code_block)
+        osm_res = osm.query(code_block)
         print("------- OSM Response --------")
         print(osm_res)
         if isinstance(osm_res, str):
