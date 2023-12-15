@@ -6,17 +6,8 @@ import os
 from PIL import Image
 from pathlib import Path
 from openai import OpenAI
-import base64
 from rich import print
-
-def encode_image(image: Image.Image|Path):
-    if isinstance(image, Path):
-        img_data = open(image, "rb").read()
-    else:
-        virtual_file = BytesIO()
-        image.save(virtual_file, format="PNG")
-        img_data = virtual_file.getvalue()
-    return f"data:image/jpeg;base64,{base64.b64encode(img_data).decode('utf-8')}"
+from utils import encode_image
 
 class Gpt4Vision(VLLM):
     def __init__(self, debug: bool = False, max_tokens: int = 300):

@@ -1,4 +1,6 @@
 import re
+from pathlib import Path
+
 from markdownify import MarkdownConverter, abstract_inline_conversion
 from io import BytesIO
 import base64
@@ -34,3 +36,12 @@ def image_to_base64(im: Image) -> str:
     buffer.seek(0)
     img_bytes = buffer.read()
     return base64.b64encode(img_bytes).decode("utf-8")
+
+def encode_image(image: Image.Image|Path):
+    if isinstance(image, Path):
+        img_data = open(image, "rb").read()
+    else:
+        virtual_file = BytesIO()
+        image.save(virtual_file, format="PNG")
+        img_data = virtual_file.getvalue()
+    return f"data:image/jpeg;base64,{base64.b64encode(img_data).decode('utf-8')}"
