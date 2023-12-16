@@ -31,3 +31,13 @@ https://osm-queries.ldodds.com/
 
 ### Features
 - When creating the chain, also use images for feedback loop
+
+## Foundational Models
+
+### OpenAI GPT Vision
+- Somehow, the API version of GPT Vision has a lot of restrictions around geolocation, and will reject such requests for a lot of the cases.
+- However, the ChatGPT version of it does not have such restrictions, albeit less convenient and slower to use.
+
+### Google Gemini
+- Google Gemini does not reject geolocation requests, and is the current preferred model.
+- However, it does not provide a chat-based abstraction. It only has the basic text->text model.
