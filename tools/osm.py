@@ -55,7 +55,7 @@ def _query(q: str) -> Tuple[str | List[Tuple[float, float]], Image.Image | None]
         return str(e) + "\n Please Adjust the OSM query to fix this issue.", None
 
 
-@tool("Overpass Turbo")
+@tool("Overpass Turbo", return_direct=True)
 def query(q: str) -> Any:
     """
     Skims through the query string for a chunk of OSM Query, executes the query, and returns the resulting
