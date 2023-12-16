@@ -17,6 +17,7 @@ def proc_output(output: str, img: Image.Image | None) -> Any:
     content = [{"type": "text", "text": output}]
     if img is not None:
         content.append({"type": "image_url", "image_url": encode_image(img)})
+    return content
 
 def render(coords: List[Tuple[float, float]]) -> Image.Image:
     """
@@ -81,7 +82,7 @@ out center;
     """
     res, img = _query(q)
     print("RESULT OSM:",  res)
-    return proc_output(str(res), img)
+    return str(res)
 
 
 

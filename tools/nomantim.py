@@ -18,3 +18,6 @@ def search_raw(query: str) -> str:
     if res is None:
         return f"No results found for query: {query}, please pass in a valid location to geolocate."
     return str(res.raw)
+
+if __name__ == '__main__':
+    print(search_raw("15th Ave and Encanto Blvd, Phoenix, AZ"))
