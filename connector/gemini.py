@@ -8,17 +8,16 @@ from langchain.agents.output_parsers import ReActSingleInputOutputParser
 from langchain.tools.render import render_text_description
 from langchain.agents import AgentExecutor
 import dotenv
-from langchain.prompts import PromptTemplate, ChatPromptTemplate
-
+from langchain.prompts import ChatPromptTemplate
+from langchain_google_genai import ChatGoogleGenerativeAI
 from utils import encode_image
 from tools import TOOLS
-import prompting
 
 dotenv.load_dotenv()
-chat = ChatOpenAI(model="gpt-4-vision-preview", max_tokens=3000)
+chat = ChatGoogleGenerativeAI(model="gemini-pro-vision")
 tools = TOOLS
 
-REACT_PROMPT = """Answer the following questions as best you can. You have access to the following tools:\n\n{tools}\n\nUse the following format:\n\nQuestion: the input question you must answer\nThought: you should always think about what to do\nAction: the action to take, should be one of [{tool_names}]\nAction Input: the input to the action\nObservation: the result of the action\n... (this Thought/Action/Action Input/Observation can repeat N times)\nThought: I now know the final answer\nFinal Answer: the final answer to the original input question\n\nBegin!\n\nQuestion: {input}\nThought:{agent_scratchpad}'"""
+REACT_PROMPT = """Answer the following questions as best you can. You have access to the following tools:\n\n{tools}\n\nUse the following format:\n\nQuestion: the input question you must answer\nThought: you should always think about what to do\nAction: the action to take, should be one of [{tool_names}]\nAction Input: the input to the action\nObservation\n : the result of the action\n... (this Thought/Action/Action Input/Observation can repeat N times)\nThought: I now know the final answer\nFinal Answer: the final answer to the original input question\n\nBegin!\n\nQuestion: {input}\nThought:{agent_scratchpad}'"""
 
 template = ChatPromptTemplate.from_messages(
     [
@@ -41,7 +40,7 @@ print(llm_with_stop)
 agent = (
     {
         "input": lambda x: x["input"],
-        "image_url": lambda x: x["image_url"],
+        "image_url": lambda x: x.get("image_url"),
         "agent_scratchpad": lambda x: format_log_to_str(x["intermediate_steps"]),
     }
     | prompt
@@ -55,7 +54,7 @@ agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 def tst_agent():
     res = agent_executor.invoke(
         {
-            "input": prompting.TOOL_PROMPT,
+            "input": "Where is this image located?",
             "image_url": encode_image(Path('./images/phoenix_taylor.png')),
         }
     )

@@ -2,6 +2,11 @@ SYSTEM_PROMPT="""
 You are a helpful assistant who helps us geolocate images by writing overpass turbo queries.
 """
 
+TOOL_PROMPT = """
+The above is a picture of a location in the world, note the important features in it.
+Use the tools you have to find the precise location of the place.
+"""
+
 INITIAL_PROMPT = """
 The above is a picture of a location in the world, note the important features in it.
 Write open streetmap queires to find these locations.
