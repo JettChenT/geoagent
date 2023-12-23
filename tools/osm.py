@@ -55,11 +55,13 @@ def _query(q: str) -> Tuple[str | List[Tuple[float, float]], Image.Image | None]
         return str(e) + "\n Please Adjust the OSM query to fix this issue.", None
 
 
-@tool("Overpass Turbo", return_direct=True)
+@tool("Overpass Turbo")
 def query(q: str) -> Any:
     """
     Skims through the query string for a chunk of OSM Query, executes the query, and returns the resulting
-    lat long pairs. For example, a valid input would be:
+    lat long pairs.
+    Use this tool to pinpoint locations on the map. Be specific about your conditions.
+    For example, a valid input would be:
     '''
     area["name"~".*Washington.*"];
 way["name"~"Monroe.*St.*NW"](area) -> .mainway;
@@ -84,7 +86,15 @@ out center;
     print("RESULT OSM:",  res)
     return str(res)
 
-
+@tool("Show Coordinates", return_direct=True)
+def show_coords(coords: str):
+    """
+    Shows the coordinates on a map. Use this when you are certain of the final coordinates and want to display that to user.
+    Eg. [(-122.123, 45.123), (-122.123, 45.123)]
+    :param coords:
+    :return:
+    """
+    print("RESULT COORDS:",  coords)
 
 if __name__ == '__main__':
     QUERY = """s

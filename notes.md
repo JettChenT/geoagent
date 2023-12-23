@@ -41,3 +41,8 @@ https://osm-queries.ldodds.com/
 ### Google Gemini
 - Google Gemini does not reject geolocation requests, and is the current preferred model.
 - However, it does not provide a chat-based abstraction. It only has the basic text->text model.
+
+## Possible Existing Solutions
+- MS Autogen: https://github.com/microsoft/autogen/pull/979 
+  - Not yet merged
+  - Looks more promising compared to Langchain

@@ -8,7 +8,7 @@ Use the tools you have to find the precise location of the place.
 """
 
 INITIAL_PROMPT = """
-The above is a picture of a location in the world, note the important features in it.
+The you will receive a picture of a location in the world, note the important features in it.
 Write open streetmap queires to find these locations.
 In your queries, make use of OSM's proximity features, and use regular expressions over exact string matches, and always use them
 when you're not exactly sure of the specific wordings of signs etc.
