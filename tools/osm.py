@@ -91,7 +91,7 @@ def show_coords(coords: str):
     """
     Shows the coordinates on a map. Use this when you are certain of the final coordinates and want to display that to user.
     Eg. [(-122.123, 45.123), (-122.123, 45.123)]
-    :param coords:
+    :param coords: (lat, lon) or [(lat, lon)...]
     :return:
     """
     print("RESULT COORDS:",  coords)
