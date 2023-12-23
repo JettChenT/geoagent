@@ -63,17 +63,13 @@ def query(q: str) -> Any:
     Use this tool to pinpoint locations on the map. Be specific about your conditions.
     For example, a valid input would be:
     '''
-    area["name"~".*Washington.*"];
-way["name"~"Monroe.*St.*NW"](area) -> .mainway;
+    area["name"~"<OSM Area name you got from nomantim...>"];
+way["name"~"<Some streetname that you saw...>"](area) -> .mainway;
 
 (
-  nwr(around.mainway:500)["name"~"Korean.*Steak.*House"];
+  nwr(around.mainway:500)["name"~"<name to some shop...>"];
 
-  // Find nearby businesses with CA branding
-  nwr(around.mainway:500)["name"~"^CA.*"];
-
-  // Look for a sign with the words "Do not block"
-  node(around.mainway:500)["traffic_sign"~"Do not block"];
+  node(around.mainway:500)["traffic_sign"~"<Some Traffic sign name...>"];
 );
 
 out center;

@@ -37,11 +37,34 @@ def image_to_base64(im: Image) -> str:
     img_bytes = buffer.read()
     return base64.b64encode(img_bytes).decode("utf-8")
 
-def encode_image(image: Image.Image|Path):
+def encode_image(image: Image.Image | Path, max_size_mb=2):
+    # Open the image from a file path if it's not already an Image object
     if isinstance(image, Path):
-        img_data = open(image, "rb").read()
-    else:
-        virtual_file = BytesIO()
-        image.save(virtual_file, format="PNG")
+        image = Image.open(image)
+
+    if image.mode == 'RGBA':
+        image = image.convert('RGB')
+    # Convert max_size_mb to bytes
+    max_encoded_size_bytes = (max_size_mb * 1024 * 1024) * 3 / 4 if max_size_mb else None
+
+    # Initial setup for quality
+    quality = 100
+    virtual_file = BytesIO()
+
+    while True:
+        virtual_file.seek(0)
+        virtual_file.truncate()
+        image.save(virtual_file, format="JPEG", quality=quality)
         img_data = virtual_file.getvalue()
-    return f"data:image/jpeg;base64,{base64.b64encode(img_data).decode('utf-8')}"
+        encoded_data = base64.b64encode(img_data).decode('utf-8')
+
+        # Check if the encoded data size is within the specified limit
+        if max_encoded_size_bytes is None or len(encoded_data) <= max_encoded_size_bytes:
+            break
+
+        # If not, decrease quality
+        quality -= 5
+        if quality <= 10:  # Prevent the quality from becoming too low
+            break
+
+    return f"data:image/jpeg;base64,{encoded_data}"

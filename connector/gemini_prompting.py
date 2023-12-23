@@ -72,7 +72,7 @@ Action2: the action to take, should be one of [{tool_names}]
 Action Input2: the input to the action2
 Observation2: the result of the action2
 Analyze2: Analyze the results of action2
-Thought3: So on... In this case you have realized that you have found the location of the image. 
+Thought3: So on... In this case you have realized that you have found the location of the image. If you have not found the location of the image, you can continue to use the tools to find the location of the image.
 Final Answer: The location of the image is ... 
 
 Begin!
@@ -84,7 +84,7 @@ messages = [
     Message(INITIAL_REACT_PROMPT.format(
         tool_names=", ".join([t.name for t in TOOLS]),
         tools = render_text_description(TOOLS),
-        input="<img https://ik.imagekit.io/sfwall/NY5_J2A4Si6Z6.png?updatedAt=1702987667392> Where is this image located?"
+        input="<img ./images/hartford.png> Where is this image located?"
     ))
 ]
 
