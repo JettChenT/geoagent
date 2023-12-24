@@ -6,7 +6,9 @@ import io
 from PIL import Image
 import statistics
 from langchain.tools import tool
+import utils
 from utils import encode_image
+import requests
 
 PADDING = 0.001
 overpass = Overpass()
@@ -49,7 +51,7 @@ def _query(q: str) -> Tuple[str | List[Tuple[float, float]], Image.Image | None]
             y_std = statistics.stdev(y_cords)
             if x_std > STDEV_THRESHOLD or y_std > STDEV_THRESHOLD:
                 return prompting.TOO_SPREAD, render(coords)
-        return coords, None
+        return coords, render(coords)
     except Exception as e:
         print(e)
         return str(e) + "\n Please Adjust the OSM query to fix this issue.", None
@@ -62,25 +64,22 @@ def query(q: str) -> Any:
     lat long pairs.
     Use this tool to pinpoint locations on the map. Be specific about your conditions.
     For example, a valid input would be:
-    '''
-    area["name"~"<OSM Area name you got from nomantim...>"];
-way["name"~"<Some streetname that you saw...>"](area) -> .mainway;
-
-(
-  nwr(around.mainway:500)["name"~"<name to some shop...>"];
-
-  node(around.mainway:500)["traffic_sign"~"<Some Traffic sign name...>"];
-);
-
-out center;
-    '''
+    'Starbucks next to train stations in New York'
     Do not include a codeblock in function call. Jus the raw query.
     :param q: The overpass turbo query you are running. ALWAYS pass in a full overpass turbo query.
     :return: list of tuples if valid, otherwise returns a string representing the next prompt
     """
-    res, img = _query(q)
-    print("RESULT OSM:",  res)
-    return str(res)
+    r = requests.post("https://aapi.tech-demos.de/overpassnl/overpassnl", json={"usertext": q})
+    if r.status_code != 200:
+        return f"Something went wrong with overpass query: {r.content}. Please try again."
+    osm_query = r.json()["osmquery"]
+    print("OSM QUERY:\n", osm_query)
+    res, img = _query(osm_query)
+    rsp = f"OSM Query result: {res}"
+    if isinstance(img, Image.Image):
+        loc = utils.save_img(img, "osm_query_res")
+        rsp += "\n" + utils.image_to_prompt(str(loc))
+    return rsp
 
 @tool("Show Coordinates", return_direct=True)
 def show_coords(coords: str):
@@ -93,23 +92,7 @@ def show_coords(coords: str):
     print("RESULT COORDS:",  coords)
 
 if __name__ == '__main__':
-    QUERY = """s
-area["name"~".*Washington.*"];
-way["name"~"Monroe.*St.*NW"](area) -> .mainway;
-
-(
-  nwr(around.mainway:500)["name"~"Korean.*Steak.*House"];
-
-  // Find nearby businesses with CA branding
-  nwr(around.mainway:500)["name"~"^CA.*"];
-  
-  // Look for a sign with the words "Do not block"
-  node(around.mainway:500)["traffic_sign"~"Do not block"];
-);
-
-out center;
-    """
+    QUERY = "Find me Korean Steak House in Washington next to Monroe St"
     print("querying...")
-    coords = query(QUERY)
-    print(f"found {len(coords)} results, rendering...")
-    render(coords).show()
+    q_res = query(QUERY)
+    print("query result:", q_res)
