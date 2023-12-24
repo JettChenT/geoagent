@@ -20,10 +20,6 @@ class Message(BaseModel):
     def __init__(self, msg):
         super().__init__(message=msg)
 
-def proc_image_url(url:str) -> str:
-    if url.startswith("http"):
-        return url
-    return utils.encode_image(Path(url))
 
 def proc_messages(messages: list[Message]) -> HumanMessage:
     """
@@ -43,7 +39,7 @@ def proc_messages(messages: list[Message]) -> HumanMessage:
             image_object = {
                 "type": "image_url",
                 "image_url" : {
-                    "url": proc_image_url(block),
+                    "url": utils.proc_image_url(block),
                 }
             }
             output.append(image_object)
@@ -84,7 +80,7 @@ messages = [
     Message(INITIAL_REACT_PROMPT.format(
         tool_names=", ".join([t.name for t in TOOLS]),
         tools = render_text_description(TOOLS),
-        input="<img ./images/hartford.png> Where is this image located?"
+        input=f"{utils.image_to_prompt('./images/hartford.png')} Where is this image located?"
     ))
 ]
 

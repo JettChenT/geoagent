@@ -5,7 +5,9 @@ from markdownify import MarkdownConverter, abstract_inline_conversion
 from io import BytesIO
 import base64
 from PIL import Image
+import requests
 
+RUN_DIR = 'run/'
 
 class OAIConverter(MarkdownConverter):
     def convert_code(self, el, text, convert_as_inline):
@@ -68,3 +70,46 @@ def encode_image(image: Image.Image | Path, max_size_mb=2):
             break
 
     return f"data:image/jpeg;base64,{encoded_data}"
+
+def image_to_prompt(loc: str):
+    """
+    Convert an image to its corresponding prompt representation
+    :param loc: URL or path to the image
+    :return:
+    """
+    return f"Image {loc}: \n <img {loc}>"
+
+def proc_image_url(url:str) -> str:
+    if url.startswith("http"):
+        return url
+    return encode_image(Path(url))
+
+def load_image(url: str) -> Image.Image:
+    if url.startswith("http"):
+        return Image.open(BytesIO(requests.get(url).content))
+    return Image.open(url)
+
+def find_valid_loc(prefix:str, postfix:str) -> Path:
+    """
+    Find the first valid location that exists
+    """
+    for i in range(100):
+        path = prefix + str(i) + postfix
+        if not Path(path).exists():
+            return Path(path)
+    raise FileNotFoundError("Could not find any valid location")
+
+def make_run_dir():
+    Path(RUN_DIR).mkdir(parents=True, exist_ok=True)
+
+def flush_run_dir():
+    Path(RUN_DIR).rmdir()
+
+def save_img(im: Image.Image, ident: str) -> Path:
+    """
+    Save an image to a file
+    """
+    make_run_dir()
+    p = find_valid_loc(RUN_DIR+ident, ".png")
+    im.save(p)
+    return p
