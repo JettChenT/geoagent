@@ -4,7 +4,7 @@ from langchain_core.tools import ToolException
 
 geolocator = Nominatim(user_agent="OSM Querying Geocoder", timeout=10)
 
-@tool("Nomantim Geocoder")
+@tool("Nominatim Geocoder")
 def search_raw(query: str) -> str:
     """
     Searches the OSM Wiki for a query. Use this if you are not sure about
@@ -22,7 +22,7 @@ def search_raw(query: str) -> str:
             return f"No results found for query: {query}, please pass in a valid location to geolocate."
         return str([r.raw for r in res])
     except Exception as e:
-        return "Error while querying Nomantim Geocoder" + str(e) + "\n Please pass in a valid query, or try a different tool."
+        return "Error while querying Nominatim Geocoder" + str(e) + "\n Please pass in a valid query, or try a different tool."
 
 if __name__ == '__main__':
     print(search_raw("7th Ave and W 12th St, New York City"))

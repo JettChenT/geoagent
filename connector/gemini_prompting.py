@@ -76,13 +76,7 @@ Begin!
 Question1: {input}
 Thought1: """
 
-messages = [
-    Message(INITIAL_REACT_PROMPT.format(
-        tool_names=", ".join([t.name for t in TOOLS]),
-        tools = render_text_description(TOOLS),
-        input=f"{utils.image_to_prompt('./images/hartford.png')} Where is this image located?"
-    ))
-]
+
 
 chat = ChatGoogleGenerativeAI(model="gemini-pro-vision")
 output_parser = ReActSingleInputOutputParser()
@@ -93,20 +87,44 @@ def find_tool(name: str) -> BaseTool:
         if tool.name in name:
             return tool
 
-for i in range(1, MAX_ITER+1):
-    print("current messages", messages[1:])
-    cur_m = [proc_messages(messages)]
-    res = chat.invoke(cur_m, stop=["Observation"])
-    print(res.content)
-    parsed: AgentAction | AgentFinish = output_parser.parse(res.content)
-    if isinstance(parsed, AgentFinish):
-        print(f"Finished !")
-        break
-    elif isinstance(parsed, AgentAction):
-        print("[blue]Action[/blue]: ", parsed.tool)
-        print("[blue]Action Input[/blue]: ", parsed.tool_input)
-        tool: BaseTool = find_tool(parsed.tool)
-        tool_res = tool._run(parsed.tool_input)
-        if tool.return_direct:
-            break
-        messages.append(Message(f"{res}\nObservation{i}: {tool_res}\nAnalyze{i}: "))
+def main(image_loc):
+    utils.flush_run_dir()
+    messages = [
+        Message(INITIAL_REACT_PROMPT.format(
+            tool_names=", ".join([t.name for t in TOOLS]),
+            tools = render_text_description(TOOLS),
+            input=f"{utils.image_to_prompt(image_loc)} Where is this image located?"
+        ))
+    ]
+    for i in range(1, MAX_ITER+1):
+        print("current messages", messages[1:])
+        cur_m = [proc_messages(messages)]
+        res = chat.invoke(cur_m, stop=["Observation"]).content
+        parsed: AgentAction | AgentFinish = output_parser.parse(res)
+        if isinstance(parsed, AgentFinish):
+            print(res)
+            isok = input("Is this ok? (y/n)")
+            if isok == "y":
+                print("Finished !")
+                break
+            feedback = input("Enter feedback:")
+            res += "\nFeedback: " + feedback
+            messages.append(Message(f"{res}\Analyze{i}: "))
+        elif isinstance(parsed, AgentAction):
+            print("[blue]Action[/blue]: ", parsed.tool)
+            print("[blue]Action Input[/blue]: ", parsed.tool_input)
+            tool: BaseTool | None = find_tool(parsed.tool)
+            if tool is None:
+                messages.append(Message(f"{res}\n Could not find tool {parsed.tool}, please adjust your input. \nAnalyze{i}: "))
+            tool_res = str(tool._run(utils.sanitize(parsed.tool_input)))
+            if tool.return_direct:
+                isok = input("Is this ok? (y/n)")
+                if isok == "y":
+                    print("Finished !")
+                    break
+                feedback = input("Enter feedback:")
+                tool_res += "\nFeedback: " + feedback
+            messages.append(Message(f"{res}\nObservation{i}: {tool_res}\nAnalyze{i}: "))
+
+if __name__ == '__main__':
+    main("./images/kns.png")

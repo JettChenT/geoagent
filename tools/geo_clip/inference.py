@@ -11,10 +11,15 @@ from tools import osm
 
 PAR_DIR = Path(__file__).parent
 
-model = GeoCLIP(gps_gallary_path=PAR_DIR/'model/gps_gallery_100K.csv')
-model.eval()
+model = None
+def initialize_model():
+    global model
+    model = GeoCLIP(gps_gallary_path=PAR_DIR / 'model/gps_gallery_100K.csv')
+    model.eval()
 
 def _predict(image: Image.Image , top_n=5) -> List[Tuple[Tuple[float, float], float]]:
+    if model is None:
+        initialize_model()
     with torch.no_grad():
         top_pred_gps, top_pred_prob = model.predict(image, top_k=5)
 
@@ -26,6 +31,7 @@ def geoclip_predict(img_file) -> str:
     """
     The Geoclip model is an image model that predicts the likely GPS location of an image based on its visual features.
     Feel free to use this as starting point for your investigation.
+    You can use this tool to find an estimate of the geographical area if you can not find clear hints from the image.
     :param img_file: the url or location of the image file
     """
     image = utils.load_image(img_file)

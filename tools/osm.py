@@ -38,9 +38,35 @@ def render(coords: List[Tuple[float, float]]) -> Image.Image:
     im = Image.open(io.BytesIO(imdat))
     return im
 
-def _query(q: str) -> Tuple[str | List[Tuple[float, float]], Image.Image | None]:
+
+def refine_prompt(original, problem) -> str:
+    return f"""
+    Original Query: ```{original}````
+    Problem: ```{problem}```
+    Please refine your query to fix the problem.
+    """
+
+def refine_query(original, problem) -> str:
+    prompt = refine_prompt(original, problem)
+    r = requests.post("https://aapi.tech-demos.de/overpassnl/overpassnl", json={"usertext": prompt})
+    if r.status_code != 200:
+        return f"Something went wrong with overpass query: {r.content}. Please try again."
+    return r.json()["osmquery"]
+
+
+def nl_query(q:str, dep:int = 0, thresh: int = 10):
+    osm_query = requests.post("https://aapi.tech-demos.de/overpassnl/overpassnl", json={"usertext": q}).json()["osmquery"]
     try:
-        osm_result = overpass.query(q)
+        osm_result = overpass.query(osm_query)
+        return osm_result
+    except Exception as e:
+        if dep > thresh:
+            return str(e)
+        return nl_query(refine_prompt(osm_query, str(e)), dep + 1, thresh)
+
+def _query(q: str, nl:bool = True) -> Tuple[str | List[Tuple[float, float]], Image.Image | None]:
+    try:
+        osm_result = nl_query(q) if nl else overpass.query(q)
         coords = list(map(lambda x: (float(x.lat), float(x.lon)), osm_result.nodes))
         x_cords = list(map(lambda x: x[0], coords))
         y_cords = list(map(lambda x: x[1], coords))
@@ -60,39 +86,32 @@ def _query(q: str) -> Tuple[str | List[Tuple[float, float]], Image.Image | None]
 @tool("Overpass Turbo")
 def query(q: str) -> Any:
     """
-    Skims through the query string for a chunk of OSM Query, executes the query, and returns the resulting
-    lat long pairs.
+    Queries the Open Streetmap database based on natural language, and return the resulting lat long pairs
     Use this tool to pinpoint locations on the map. Be specific about your conditions.
-    For example, a valid input would be:
-    'Starbucks next to train stations in New York'
-    Do not include a codeblock in function call. Jus the raw query.
-    :param q: The overpass turbo query you are running. ALWAYS pass in a full overpass turbo query.
+    :param q: the query you have in natural language. Example: Building whose name contains ... next to ... street in city ...
     :return: list of tuples if valid, otherwise returns a string representing the next prompt
     """
-    r = requests.post("https://aapi.tech-demos.de/overpassnl/overpassnl", json={"usertext": q})
-    if r.status_code != 200:
-        return f"Something went wrong with overpass query: {r.content}. Please try again."
-    osm_query = r.json()["osmquery"]
-    print("OSM QUERY:\n", osm_query)
-    res, img = _query(osm_query)
+    res, img = _query(q)
     rsp = f"OSM Query result: {res}"
     if isinstance(img, Image.Image):
         loc = utils.save_img(img, "osm_query_res")
-        rsp += "\n" + utils.image_to_prompt(str(loc))
+        rsp += "\n Here's a A visualization of the OSM results:" + utils.image_to_prompt(str(loc))
     return rsp
 
-@tool("Show Coordinates", return_direct=True)
+@tool("Return Coordinates", return_direct=True)
 def show_coords(coords: str):
     """
     Shows the coordinates on a map. Use this when you are certain of the final coordinates and want to display that to user.
     Eg. [(-122.123, 45.123), (-122.123, 45.123)]
+    If there are multiple coordinates but they are all pretty close to each other, that's fine.
+    But try not to use this tool if the coordinates are too spread out.
     :param coords: (lat, lon) or [(lat, lon)...]
     :return:
     """
     print("RESULT COORDS:",  coords)
 
 if __name__ == '__main__':
-    QUERY = "Find me Korean Steak House in Washington next to Monroe St"
+    QUERY = "Find me a restaurant named Korean Steak House in Washington next to Monroe St"
     print("querying...")
     q_res = query(QUERY)
     print("query result:", q_res)

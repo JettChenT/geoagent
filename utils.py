@@ -1,8 +1,9 @@
 import re
 from pathlib import Path
+import os
+from io import BytesIO
 
 from markdownify import MarkdownConverter, abstract_inline_conversion
-from io import BytesIO
 import base64
 from PIL import Image
 import requests
@@ -103,7 +104,8 @@ def make_run_dir():
     Path(RUN_DIR).mkdir(parents=True, exist_ok=True)
 
 def flush_run_dir():
-    Path(RUN_DIR).rmdir()
+    # remove everything in RUN_DIR
+    os.system(f"rm -rf {RUN_DIR}")
 
 def save_img(im: Image.Image, ident: str) -> Path:
     """
@@ -113,3 +115,6 @@ def save_img(im: Image.Image, ident: str) -> Path:
     p = find_valid_loc(RUN_DIR+ident, ".png")
     im.save(p)
     return p
+
+def sanitize(s: str) -> str:
+    return s.replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\\n", "").strip()
