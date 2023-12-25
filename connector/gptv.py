@@ -1,6 +1,11 @@
+import re
 from io import BytesIO
+from typing import List, Dict, Optional
 
-from . import VLLM
+from langchain_core.messages import HumanMessage
+
+import utils
+from . import LMM, Message, Context
 import dotenv
 import os
 from PIL import Image
@@ -9,42 +14,64 @@ from openai import OpenAI
 from rich import print
 from utils import encode_image
 
-class Gpt4Vision(VLLM):
-    def __init__(self, debug: bool = False, max_tokens: int = 300):
+def proc_messages(messages: List[Message]) -> List[Dict]:
+    """
+    Process messages from the chat history to a HumanMessage object. Cuz Gemini does not support chat mode yet.
+    :param messages:
+    :return:
+    """
+    img_tag_pattern = re.compile(r"<img (.*?)>")
+    res = []
+    for message in messages:
+        m = message.message
+        img_tags = img_tag_pattern.findall(m)
+        blocks = img_tag_pattern.split(m)
+        output = []
+        for block in blocks:
+            if block == "":
+                continue
+            if block in img_tags:
+                image_object = {
+                    "type": "image_url",
+                    "image_url" : {
+                        "url": utils.proc_image_url(block),
+                        "detail": "high"
+                    }
+                }
+                output.append(image_object)
+            else:
+                output.append({
+                    "type": "text",
+                    "text": block
+                })
+        res.append({
+            "role": message.role or "user",
+            "content": output
+        })
+    return res
+
+class Gpt4Vision(LMM):
+    def __init__(self, debug: bool = False, max_tokens: int = 3000):
         dotenv.load_dotenv()
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_API_BASE"))
-        self.messages = []
         self.debug = debug
         self.max_tokens = max_tokens
 
-    def system(self, prompt:str):
-        self.messages.append({
-            "role": "system",
-            "content": prompt
-        })
-
-    def prompt(self, prompt: str, image: Image.Image | Path | None = None) -> str:
-        content = [{"type": "text", "text": prompt}]
-        if image is not None:
-            content.append({"type": "image_url", "image_url": {"url":encode_image(image), "detail":"high"}})
-        self.messages.append({
-            "role": "user",
-            "content": content
-        })
+    def prompt(self, context: Context, stop: Optional[List[str]]) -> Message:
+        messages = proc_messages(context.messages)
         response = self.client.chat.completions.create(
             model = "gpt-4-vision-preview",
-            messages = self.messages,
-            max_tokens = self.max_tokens
+            messages = messages,
+            max_tokens = self.max_tokens,
+            stop = stop
         )
         if self.debug:
             print(response)
-        res = response.choices[0]
-        self.messages.append({
-            "role": "assistant",
-            "content": res.message.content
-        })
-        return res.message.content
+        res_msg = response.choices[0].message
+        return Message(res_msg.content, res_msg.role)
 
 if __name__ == '__main__':
-    gpt4 = Gpt4Vision(debug=True)
-    print(gpt4.prompt("Describe this image in detail.", Path("images/NY.png")))
+    ctx = Context()
+    ctx.add_message(Message(f"Describe this image in detail: {utils.image_to_prompt('./images/kns.png')}"))
+    gptv = Gpt4Vision()
+    print(gptv.prompt(ctx).message)

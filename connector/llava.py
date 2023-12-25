@@ -9,10 +9,10 @@ from llama_cpp.llava_cpp import clip_model_load, llava_image_embed_make_with_byt
 from objc._bridgesupport import ctypes
 
 import prompting
-from connector import VLLM
+from connector import LMM
 
 
-class LLAVA(VLLM):
+class LLAVA(LMM):
     """
     LLAMA CPP Based LLAVA implementation
     TODO: try using StreetCLIP for embedding

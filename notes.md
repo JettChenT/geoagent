@@ -15,10 +15,10 @@
 - Improving Overpass turbo querying itself to be more probabilistic
 
 ## Possible Pipelines
-- End-To-End: We provide a bunch of examples, VLLM is smart enough to generate a valid OSM query
+- End-To-End: We provide a bunch of examples, LMM is smart enough to generate a valid OSM query
 - Fully-Agent based: Not only do we provide OSM interpreter, we provide Nomantim, Google reverse image search, overpass documentation via function calling, etc
-- Fine-Tuning: We finetune VLLM to be able to better craft OSM queries
-- Feature Extraction: We use VLLM to extract features, then use a different model to generate OSM queries
+- Fine-Tuning: We finetune LMM to be able to better craft OSM queries
+- Feature Extraction: We use LMM to extract features, then use a different model to generate OSM queries
 
 ## Useful Resources
 https://osm-queries.ldodds.com/

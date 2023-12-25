@@ -10,9 +10,9 @@ from PIL import Image
 from websocket_server import WebsocketServer
 
 from utils import md, image_to_base64
-from . import VLLM
+from . import LMM
 
-class GPT4VisionBrowser(VLLM):
+class GPT4VisionBrowser(LMM):
     """
     Connector to GPT4, based on a web browser api
     TODO: switch to selenium controller for file upload
@@ -59,7 +59,7 @@ class GPT4VisionBrowser(VLLM):
         return asyncio.run(self.wait_for_message())
 
 
-class LLAVA_Server(VLLM):
+class LLAVA_Server(LMM):
     # TODO: implement context for LLAVA
     def __init__(self, endpoint="http://localhost:8080"):
         self.endpoint = endpoint

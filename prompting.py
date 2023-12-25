@@ -98,3 +98,28 @@ Such as lowering the proximity threshold. Or making the text searchings more spe
 Also consider changing or narrowing the search area if present.
 Finally, output the entire modified OSM query.
 """
+
+INITIAL_REACT_PROMPT = """Answer the following questions as best you can. You have access to the following tools:
+
+{tools}
+
+Use the following format:
+
+Question1: The overall guideline to what you are going to do
+Thought1: Think about what you should do
+Action1: the action to take, should be one of [{tool_names}]
+Action Input1: the input to the action1
+Observation1 : the result of the action1
+Analyze1: Analyze the results of action1
+Thought2: Think about what you should do based on analyze1
+Action2: the action to take, should be one of [{tool_names}]
+Action Input2: the input to the action2
+Observation2: the result of the action2
+Analyze2: Analyze the results of action2
+Thought3: So on... In this case you have realized that you have found the location of the image. If you have not found the location of the image, you can continue to use the tools to find the location of the image.
+Final Answer: The location of the image is ... 
+
+Begin!
+
+Question1: {input}
+Thought1: """

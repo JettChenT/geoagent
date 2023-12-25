@@ -54,7 +54,15 @@ def refine_query(original, problem) -> str:
     return r.json()["osmquery"]
 
 
-def nl_query(q:str, dep:int = 0, thresh: int = 10):
+def nl_query(q:str, dep:int = 0, thresh: int = 10, debug: bool = True):
+    if debug:
+        print(f"""
+        ----------
+        depth: {dep}
+        OSM LM Query:
+        {q},
+        -----------
+        """)
     osm_query = requests.post("https://aapi.tech-demos.de/overpassnl/overpassnl", json={"usertext": q}).json()["osmquery"]
     try:
         osm_result = overpass.query(osm_query)
@@ -62,11 +70,11 @@ def nl_query(q:str, dep:int = 0, thresh: int = 10):
     except Exception as e:
         if dep > thresh:
             return str(e)
-        return nl_query(refine_prompt(osm_query, str(e)), dep + 1, thresh)
+        return nl_query(refine_prompt(osm_query, str(e)), dep + 1, thresh, debug)
 
 def _query(q: str, nl:bool = True) -> Tuple[str | List[Tuple[float, float]], Image.Image | None]:
     try:
-        osm_result = nl_query(q) if nl else overpass.query(q)
+        osm_result = nl_query(f"{q}\n Please use regex and loose names when possible.") if nl else overpass.query(q)
         coords = list(map(lambda x: (float(x.lat), float(x.lon)), osm_result.nodes))
         x_cords = list(map(lambda x: x[0], coords))
         y_cords = list(map(lambda x: x[1], coords))
