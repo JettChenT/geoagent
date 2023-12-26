@@ -67,4 +67,4 @@ class Agent:
 if __name__ == "__main__":
     agent = Agent(Gpt4Vision())
     input("Press enter to begin.")
-    print(agent.run("./images/phoenix_taylor.png"))
+    print(agent.run("./images/anon/3.png"))

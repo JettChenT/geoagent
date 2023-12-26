@@ -32,6 +32,9 @@ def geoclip_predict(img_file) -> str:
     The Geoclip model is an image model that predicts the likely GPS location of an image based on its visual features.
     Feel free to use this as starting point for your investigation.
     You can use this tool to find an estimate of the geographical area if you can not find clear hints from the image.
+    Note that this model is not perfect and might give you wrong results.
+    Prefer using it if the image is landscape or has clear geographical/ cultural features.
+    Prefer not to use this in cities or urban areas.
     :param img_file: the url or location of the image file
     """
     image = utils.load_image(img_file)

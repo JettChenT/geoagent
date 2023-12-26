@@ -9,6 +9,7 @@ from langchain.tools import tool
 import utils
 from utils import encode_image
 import requests
+from coords import Coords
 
 PADDING = 0.001
 overpass = Overpass()
@@ -21,14 +22,13 @@ def proc_output(output: str, img: Image.Image | None) -> Any:
         content.append({"type": "image_url", "image_url": encode_image(img)})
     return content
 
-def render(coords: List[Tuple[float, float]]) -> Image.Image:
+def render(coords: Coords) -> Image.Image:
     """
     Visualizes the coordinates on a map
     :param coords:
     :return:
     """
-    x_cords = list(map(lambda x: x[0], coords))
-    y_cords = list(map(lambda x: x[1], coords))
+    x_cords, y_cords = coords.split_latlon()
     bbox = [[min(x_cords), min(y_cords)], [max(x_cords), max(y_cords)]]
     m = folium.Map()
     m.fit_bounds(bbox, padding=[PADDING] * 4)
@@ -72,12 +72,11 @@ def nl_query(q:str, dep:int = 0, thresh: int = 10, debug: bool = True):
             return str(e)
         return nl_query(refine_prompt(osm_query, str(e)), dep + 1, thresh, debug)
 
-def _query(q: str, nl:bool = True) -> Tuple[str | List[Tuple[float, float]], Image.Image | None]:
+def _query(q: str, nl:bool = True) -> Tuple[str | Coords, Image.Image | None]:
     try:
         osm_result = nl_query(f"{q}\n Please use regex and loose names when possible.") if nl else overpass.query(q)
-        coords = list(map(lambda x: (float(x.lat), float(x.lon)), osm_result.nodes))
-        x_cords = list(map(lambda x: x[0], coords))
-        y_cords = list(map(lambda x: x[1], coords))
+        coords = Coords(list(map(lambda x: (float(x.lat), float(x.lon)), osm_result.nodes)))
+        x_cords, y_cords = coords.split_latlon()
         if len(coords) == 0:
             return prompting.DELTA_TOO_LITTLE, None
         if len(coords) > 1:
@@ -101,6 +100,10 @@ def query(q: str) -> Any:
     """
     res, img = _query(q)
     rsp = f"OSM Query result: {res}"
+    if isinstance(res, Coords):
+        dump_loc = utils.find_valid_loc("osm_query_coords", ".csv")
+        res.to_csv(dump_loc)
+        rsp += f"\n The coordinates are stored at {dump_loc}"
     if isinstance(img, Image.Image):
         loc = utils.save_img(img, "osm_query_res")
         rsp += "\n Here's a A visualization of the OSM results:" + utils.image_to_prompt(str(loc))

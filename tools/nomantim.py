@@ -2,6 +2,10 @@ from geopy import Nominatim
 from langchain.tools import tool
 from langchain_core.tools import ToolException
 
+import utils
+from coords import Coords
+from .osm import render
+
 geolocator = Nominatim(user_agent="OSM Querying Geocoder", timeout=10)
 
 @tool("Nominatim Geocoder")
@@ -20,9 +24,15 @@ def search_raw(query: str) -> str:
         res = geolocator.geocode(query, exactly_one=False)
         if res is None:
             return f"No results found for query: {query}, please pass in a valid location to geolocate."
-        return str([r.raw for r in res])
+        raw_res = str([r.raw for r in res])
+        coords = Coords([(d.latitude, d.longitude) for d in res])
+        coords_render = render(coords)
+        loc = utils.save_img(coords_render, "nominatim_query_res")
+        dump_loc = utils.find_valid_loc("nominatim_query_res", ".csv")
+        coords.to_csv(dump_loc)
+        return f"""Nominatim Query Results: {raw_res} \n The coordinates are stored at {dump_loc} \n A rendering of the coordinates: {utils.image_to_prompt(str(loc))}"""
     except Exception as e:
         return "Error while querying Nominatim Geocoder" + str(e) + "\n Please pass in a valid query, or try a different tool."
 
 if __name__ == '__main__':
-    print(search_raw("7th Ave and W 12th St, New York City"))
+    print(search_raw("7th Ave, New York City"))

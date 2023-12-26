@@ -34,8 +34,7 @@ def proc_messages(messages: List[Message]) -> List[Dict]:
                 image_object = {
                     "type": "image_url",
                     "image_url" : {
-                        "url": utils.proc_image_url(block),
-                        "detail": "high"
+                        "url": utils.proc_image_url(block)
                     }
                 }
                 output.append(image_object)
