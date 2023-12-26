@@ -1,9 +1,8 @@
-from pathlib import Path
 from typing import List, Optional
 
-from PIL import Image
-from pydantic import BaseModel
 from langchain.tools import BaseTool
+from pydantic import BaseModel
+
 
 class Message(BaseModel):
     message: str
