@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import List, Tuple
 import pandas as pd
 
-class Coords(BaseModel):
+class Coords:
     coords: List[Tuple[float, float]] # lat, lon
 
     def __init__(self, coords: List[Tuple[float, float]]):
@@ -26,3 +26,6 @@ class Coords(BaseModel):
 
     def __repr__(self):
         return str(self.coords)
+
+    def __iter__(self):
+        yield from self.coords

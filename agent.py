@@ -8,10 +8,8 @@ from langchain_core.tools import BaseTool
 
 import utils
 from prompting import *
-from utils import find_last_code_block
 from rich import print
 from connector.gptv import Gpt4Vision
-from connector.gemini_lmm import Gemini
 from connector import LMM, Context, Message
 from tools import osm, TOOLS, find_tool
 
@@ -67,4 +65,4 @@ class Agent:
 if __name__ == "__main__":
     agent = Agent(Gpt4Vision())
     input("Press enter to begin.")
-    print(agent.run("./images/anon/3.png"))
+    print(agent.run("./images/anon/2.png"))

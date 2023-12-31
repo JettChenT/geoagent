@@ -2,21 +2,24 @@ from typing import List, Optional
 
 from langchain.tools import BaseTool
 from pydantic import BaseModel
+from attrs import define
 
 
-class Message(BaseModel):
+class Message:
     message: str
     role: str | None
 
     def __init__(self, msg, role: str | None = None):
-        super().__init__(message=msg, role=role)
+        self.message = msg
+        self.role = role
 
-class Context(BaseModel):
+class Context:
     messages: List[Message]
     tools: List[BaseTool]
 
     def __init__(self, tools: List[BaseTool] | None = None):
-        super().__init__(messages=[], tools=tools or [])
+        self.tools = tools
+        self.messages = []
 
     def add_message(self, msg: Message):
         self.messages.append(msg)
