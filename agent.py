@@ -11,7 +11,7 @@ from prompting import *
 from rich import print
 from connector.gptv import Gpt4Vision
 from connector import LMM, Context, Message
-from tools import osm, TOOLS, find_tool
+from tools import TOOLS, find_tool
 
 class Agent:
     DEPTH_THRESHOLD = 10

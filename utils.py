@@ -5,9 +5,12 @@ from io import BytesIO
 
 from markdownify import MarkdownConverter, abstract_inline_conversion
 import base64
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 import requests
+import sys
 
+# Mutable Global Variable: Whether to render a black bar at the bottom with the location of image
+GLOB_RENDER_BLACKBAR = False
 RUN_DIR = 'run/'
 
 class OAIConverter(MarkdownConverter):
@@ -39,6 +42,7 @@ def image_to_base64(im: Image) -> str:
     buffer.seek(0)
     img_bytes = buffer.read()
     return base64.b64encode(img_bytes).decode("utf-8")
+
 
 def encode_image(image: Image.Image | Path, max_size_mb=2):
     # Open the image from a file path if it's not already an Image object
@@ -72,49 +76,120 @@ def encode_image(image: Image.Image | Path, max_size_mb=2):
 
     return f"data:image/jpeg;base64,{encoded_data}"
 
-def image_to_prompt(loc: str):
+
+def read_image(image: Image.Image | Path, size_mb=0.9):
+    if isinstance(image, Path):
+        image = Image.open(image)
+
+    if image.mode == 'RGBA':
+        image = image.convert('RGB')
+    # Initial setup for quality
+    quality = 100
+    virtual_file = BytesIO()
+
+    while True:
+        virtual_file.seek(0)
+        virtual_file.truncate()
+        image.save(virtual_file, format="JPEG", quality=quality)
+        img_data = virtual_file.getvalue()
+        if size_mb is None or sys.getsizeof(img_data) / (1e6) <= size_mb:
+            break
+
+        # If not, decrease quality
+        quality -= 5
+        if quality <= 10:  # Prevent the quality from becoming too low
+            break
+
+    print(f"Image size: {sys.getsizeof(img_data) / (1e6)} MB")
+    return img_data
+
+
+def image_to_prompt(loc: str | Path):
     """
     Convert an image to its corresponding prompt representation
     :param loc: URL or path to the image
     :return:
     """
-    return f"Image {loc}: \n <img {loc}>"
+    if isinstance(loc, Path):
+        loc = str(loc)
+    return f"Image {loc}: <img {loc}>"
 
-def proc_image_url(url:str) -> str:
+
+def proc_image_url(url: str) -> str:
     if url.startswith("http"):
         return url
     return encode_image(Path(url))
+
 
 def load_image(url: str) -> Image.Image:
     if url.startswith("http"):
         return Image.open(BytesIO(requests.get(url).content))
     return Image.open(url)
 
-def find_valid_loc(prefix:str, postfix:str) -> Path:
+
+def find_valid_loc(prefix: str, postfix: str, pre_dir: str = RUN_DIR) -> Path:
     """
     Find the first valid location that exists
     """
     for i in range(100):
-        path = prefix + str(i) + postfix
+        path = pre_dir + prefix + str(i) + postfix
         if not Path(path).exists():
             return Path(path)
     raise FileNotFoundError("Could not find any valid location")
 
+
 def make_run_dir():
     Path(RUN_DIR).mkdir(parents=True, exist_ok=True)
+
 
 def flush_run_dir():
     # remove everything in RUN_DIR
     os.system(f"rm -rf {RUN_DIR}")
+
 
 def save_img(im: Image.Image, ident: str) -> Path:
     """
     Save an image to a file
     """
     make_run_dir()
-    p = find_valid_loc(RUN_DIR+ident, ".png")
+    p = find_valid_loc(ident, ".png")
+    if GLOB_RENDER_BLACKBAR:
+        im = render_text_description(im, str(p))
     im.save(p)
     return p
 
+
+def render_text_description(image: Image.Image, text: str, line_height=16) -> Image.Image:
+    """
+    Render a text description at the bottom of an image. Assumes that text is single line.
+    """
+    # Create a new image with a black background
+    bar = Image.new('RGB', (image.width, int(line_height*1.2)), 'black')
+
+    # Create a draw object and add text to the bar
+    draw = ImageDraw.Draw(bar)
+    font = ImageFont.truetype("./fonts/Inter-Regular.ttf", line_height)
+    text_width = draw.textlength(text, font)
+    position = ((bar.width - text_width) / 2, int(line_height * 0.1))
+    draw.text(position, text, fill='white', font=font)
+
+    # Concatenate the original image with the bar
+    image_with_bar = Image.new('RGB', (image.width, image.height + bar.height))
+    image_with_bar.paste(image, (0, 0))
+    image_with_bar.paste(bar, (0, image.height))
+
+    return image_with_bar
+
+
+def toggle_blackbar(to: bool = True):
+    global GLOB_RENDER_BLACKBAR
+    GLOB_RENDER_BLACKBAR = to
+
+
 def sanitize(s: str) -> str:
     return s.replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\\n", "").strip()
+
+if __name__ == '__main__':
+    orig_im = Image.open("sample/gusmeme.png")
+    im = render_text_description(orig_im, "hello")
+    im.show()

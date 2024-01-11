@@ -52,6 +52,8 @@ def proc_messages(messages: List[Message]) -> List[Dict]:
 class Gpt4Vision(LMM):
     def __init__(self, debug: bool = False, max_tokens: int = 3000):
         dotenv.load_dotenv()
+        # Adds black bar containing the location of the image, since gpt-vision api does not recognize image order.
+        utils.toggle_blackbar()
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_API_BASE"))
         self.debug = debug
         self.max_tokens = max_tokens
