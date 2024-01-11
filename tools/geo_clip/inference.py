@@ -7,6 +7,7 @@ from langchain.tools import tool
 
 from .model.GeoCLIP import GeoCLIP
 import utils
+from coords import Coords
 from tools import osm
 
 PAR_DIR = Path(__file__).parent
@@ -39,7 +40,8 @@ def geoclip_predict(img_file) -> str:
     """
     image = utils.load_image(img_file)
     tops = _predict(image)
-    viz = osm.render([it[0] for it in tops])
+
+    viz = osm.render(Coords([it[0] for it in tops]))
     saved = utils.save_img(viz, 'geoclip')
     cords_fmt = "\n".join([f"lat: {it[0][0]}, lon: {it[0][1]}, prob: {it[1]}" for it in tops])
     return f"""
