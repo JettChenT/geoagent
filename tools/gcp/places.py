@@ -36,7 +36,7 @@ SATELLITE_CAP = 80
 def plot_satellite(coords_loc: str):
     """
     Plots the satellite image of a given set of coordinates. Uses Google Maps Static API.
-    :param coords_loc:
+    :param coords_loc: the location of the coordinate csv file
     :return:
     """
     coords = Coords.from_csv(coords_loc)
@@ -51,7 +51,6 @@ def plot_satellite(coords_loc: str):
                                  "maptype": "satellite",
                                  "key": GOOGLE_MAPS_API_KEY
                                  })
-        print(r.status_code)
         im = Image.open(io.BytesIO(r.content))
         loc = utils.save_img(im, "satellite_res")
         retrieved.append((coord, loc))
