@@ -11,7 +11,6 @@ from utils import encode_image
 import requests
 from coords import Coords
 
-PADDING = 0.001
 overpass = Overpass()
 STDEV_THRESHOLD = 0.001
 
@@ -22,21 +21,7 @@ def proc_output(output: str, img: Image.Image | None) -> Any:
         content.append({"type": "image_url", "image_url": encode_image(img)})
     return content
 
-def render(coords: Coords) -> Image.Image:
-    """
-    Visualizes the coordinates on a map
-    :param coords:
-    :return:
-    """
-    x_cords, y_cords = coords.split_latlon()
-    bbox = [[min(x_cords), min(y_cords)], [max(x_cords), max(y_cords)]]
-    m = folium.Map()
-    m.fit_bounds(bbox, padding=[PADDING] * 4)
-    for coord in coords:
-        folium.Marker(coord).add_to(m)
-    imdat = m._to_png(5)
-    im = Image.open(io.BytesIO(imdat))
-    return im
+
 
 
 def refine_prompt(original, problem) -> str:
@@ -82,9 +67,9 @@ def _query(q: str, nl:bool = True) -> Tuple[str | Coords, Image.Image | None]:
         if len(coords) > 1:
             x_std = statistics.stdev(x_cords)
             y_std = statistics.stdev(y_cords)
-            if x_std > STDEV_THRESHOLD or y_std > STDEV_THRESHOLD:
-                return prompting.TOO_SPREAD, render(coords)
-        return coords, render(coords)
+            # if x_std > STDEV_THRESHOLD or y_std > STDEV_THRESHOLD:
+            #     return prompting.TOO_SPREAD, render(coords)
+        return coords, coords.render()
     except Exception as e:
         print(e)
         return str(e) + "\n Please Adjust the OSM query to fix this issue.", None

@@ -1,7 +1,6 @@
-import os
+from .auth import GOOGLE_MAPS_API_KEY
 
 from streetview import search_panoramas, get_streetview
-import dotenv
 from PIL import Image
 from langchain.tools import tool
 import utils
@@ -9,9 +8,6 @@ from coords import Coords
 import random
 import textwrap
 PANO_LIMIT = 10
-
-dotenv.load_dotenv()
-GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
 
 def get_pano(lat: float, lon: float) -> str | Image.Image:
     """
@@ -53,4 +49,4 @@ def get_panos(coords_path : str) -> str:
 
 if __name__ == '__main__':
     utils.toggle_blackbar()
-    print(get_panos("sample/nominatim_query_res0.csv"))
+    print(get_panos("./run/osm_query_coords0.csv"))
