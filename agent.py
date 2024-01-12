@@ -21,14 +21,20 @@ class Agent:
         self.depth = 0
         self.output_parser = ReActSingleInputOutputParser()
 
-    def run(self, image_loc: str):
+    def run(self, image_loc: str, additional: str = ""):
+        """
+        Run the agent
+        :param image_loc: path to the image
+        :param additional: additional context to the agent
+        :return:
+        """
         utils.flush_run_dir()
         ctx = Context(tools=TOOLS)
         ctx.add_message(Message(
             INITIAL_REACT_PROMPT.format(
                 tool_names=", ".join([t.name for t in TOOLS]),
                 tools=render_text_description(TOOLS),
-                input=f"{utils.image_to_prompt(image_loc)} Where is this image located?"
+                input=f"{utils.image_to_prompt(image_loc)} Where is this image located? {additional}"
             ))
         )
         for i in range(1, self.DEPTH_THRESHOLD + 1):
@@ -63,6 +69,6 @@ class Agent:
 
 
 if __name__ == "__main__":
-    agent = Agent(Gpt4Vision())
+    agent = Agent(Gpt4Vision(debug=True))
     input("Press enter to begin.")
-    print(agent.run("./images/anon/2.png"))
+    print(agent.run("./images/anon/5.png", "This is a shopping center in Kryvyi Rih"))

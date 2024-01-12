@@ -8,6 +8,7 @@ import base64
 from PIL import Image, ImageDraw, ImageFont
 import requests
 import sys
+import hashlib
 
 # Mutable Global Variable: Whether to render a black bar at the bottom with the location of image
 GLOB_RENDER_BLACKBAR = False
@@ -47,20 +48,23 @@ def image_to_base64(im: Image) -> str:
 def encode_image(image: Image.Image | Path, max_size_mb=2):
     # Open the image from a file path if it's not already an Image object
     if isinstance(image, Path):
+        raw = open(image, 'rb').read()
+        if max_size_mb is None or sys.getsizeof(raw) / (1e6) <= max_size_mb:
+            encoded_img = base64.b64encode(raw).decode('utf-8')
+            img_type = "png" if image.suffix == ".png" else "jpeg"
+            return f"data:image/{img_type};base64,{encoded_img}"
         image = Image.open(image)
 
-    if image.mode == 'RGBA':
+    if image.mode != 'RGB':
         image = image.convert('RGB')
     # Convert max_size_mb to bytes
     max_encoded_size_bytes = (max_size_mb * 1024 * 1024) * 3 / 4 if max_size_mb else None
 
     # Initial setup for quality
     quality = 100
-    virtual_file = BytesIO()
 
     while True:
-        virtual_file.seek(0)
-        virtual_file.truncate()
+        virtual_file = BytesIO()
         image.save(virtual_file, format="JPEG", quality=quality)
         img_data = virtual_file.getvalue()
         encoded_data = base64.b64encode(img_data).decode('utf-8')
@@ -68,8 +72,8 @@ def encode_image(image: Image.Image | Path, max_size_mb=2):
         # Check if the encoded data size is within the specified limit
         if max_encoded_size_bytes is None or len(encoded_data) <= max_encoded_size_bytes:
             break
-
         # If not, decrease quality
+        print("compressing image")
         quality -= 5
         if quality <= 10:  # Prevent the quality from becoming too low
             break
@@ -190,6 +194,7 @@ def sanitize(s: str) -> str:
     return s.replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\\n", "").strip()
 
 if __name__ == '__main__':
-    orig_im = Image.open("sample/gusmeme.png")
-    im = render_text_description(orig_im, "hello")
-    im.show()
+    print(hashlib.md5(encode_image(Path('./images/anon/2.png')).encode()).hexdigest())
+    # orig_im = Image.open("sample/gusmeme.png")
+    # im = render_text_description(orig_im, "hello")
+    # im.show()

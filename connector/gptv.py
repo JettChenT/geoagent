@@ -13,6 +13,7 @@ from pathlib import Path
 from openai import OpenAI
 from rich import print
 from utils import encode_image
+import hashlib
 
 def proc_messages(messages: List[Message]) -> List[Dict]:
     """
@@ -53,13 +54,15 @@ class Gpt4Vision(LMM):
     def __init__(self, debug: bool = False, max_tokens: int = 3000):
         dotenv.load_dotenv()
         # Adds black bar containing the location of the image, since gpt-vision api does not recognize image order.
-        utils.toggle_blackbar()
+        # utils.toggle_blackbar()
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_API_BASE"))
         self.debug = debug
         self.max_tokens = max_tokens
 
     def prompt(self, context: Context, stop: Optional[List[str]]) -> Message:
         messages = proc_messages(context.messages)
+        if self.debug:
+            print(f"HASH of messages: {hashlib.md5(str(messages).encode()).hexdigest()}")
         response = self.client.chat.completions.create(
             model = "gpt-4-vision-preview",
             messages = messages,
@@ -68,6 +71,9 @@ class Gpt4Vision(LMM):
         )
         if self.debug:
             print(response)
+        if not response.choices:
+            print(response)
+            raise Exception("No response from GPT-4 Vision")
         res_msg = response.choices[0].message
         return Message(res_msg.content, res_msg.role)
 

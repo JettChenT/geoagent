@@ -27,12 +27,13 @@ def get_pano(lat: float, lon: float) -> str | Image.Image:
     return get_streetview(pid, api_key=GOOGLE_MAPS_API_KEY)
 
 @tool("Get StreetViews")
-def get_panos(coords_path:str) -> str:
+def get_panos(coords_path : str) -> str:
     """
     Gets Google Streetview images of coordinates
-    :param coords_path: Path to coordinates
+    :param coords_path: Path to the csv file containing coordinates information
     :return:
     """
+    # TODO: pano tiles
     coords = Coords.from_csv(coords_path)
     # print(coords)
     pid_set = set()
