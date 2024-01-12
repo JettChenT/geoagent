@@ -10,6 +10,7 @@ import utils
 
 PADDING = 0.001
 
+# TODO: support for coords to preserve auxiliary information?
 class Coords:
     coords: List[Tuple[float, float]] # lat, lon
 
