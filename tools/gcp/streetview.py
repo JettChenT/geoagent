@@ -1,13 +1,15 @@
 from .auth import GOOGLE_MAPS_API_KEY
+from tools.output import debug
 
 from streetview import search_panoramas, get_streetview
 from PIL import Image
 from langchain.tools import tool
+from tqdm import tqdm
 import utils
 from coords import Coords
 import random
 import textwrap
-PANO_LIMIT = 10
+PANO_LIMIT = 70
 
 def get_pano(lat: float, lon: float) -> str | Image.Image:
     """
@@ -38,7 +40,8 @@ def get_panos(coords_path : str) -> str:
         pid_set = pid_set.union({(x.pano_id, (x.lat, x.lon)) for x in pids})
     # print(pid_set)
     res = "Google Streetview Results \n ------------ \n"
-    for (pid, coord) in random.sample(sorted(pid_set), min(len(pid_set), PANO_LIMIT)):
+    debug("Getting streetviews...")
+    for (pid, coord) in tqdm(random.sample(sorted(pid_set), min(len(pid_set), PANO_LIMIT))):
         im = get_streetview(pid, api_key=GOOGLE_MAPS_API_KEY)
         loc = utils.save_img(im, "streetview_res")
         res += textwrap.dedent(f"""\
@@ -49,4 +52,4 @@ def get_panos(coords_path : str) -> str:
 
 if __name__ == '__main__':
     utils.toggle_blackbar()
-    print(get_panos("./run/osm_query_coords0.csv"))
+    print(get_panos("./run/textsearch_coords2.csv"))

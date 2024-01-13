@@ -1,0 +1,3 @@
+"""
+Visual Place Recognition
+"""
