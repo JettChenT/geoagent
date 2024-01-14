@@ -41,7 +41,7 @@ def geoclip_predict(img_file) -> str:
     image = utils.load_image(img_file)
     tops = _predict(image)
 
-    viz = osm.render(Coords([it[0] for it in tops]))
+    viz = Coords([it[0] for it in tops]).render()
     saved = utils.save_img(viz, 'geoclip')
     cords_fmt = "\n".join([f"lat: {it[0][0]}, lon: {it[0][1]}, prob: {it[1]}" for it in tops])
     return f"""

@@ -18,7 +18,7 @@ class Coords:
 
     def __init__(self, coords: List[Tuple[float, float]], auxiliary: List[Any]|None = None):
         self.coords = coords
-        self.auxiliary = auxiliary or []
+        self.auxiliary = auxiliary or [None]*len(coords)
 
     def split_latlon(self) -> Tuple[List[float], List[float]]:
         return list(map(lambda x: x[0], self.coords)), list(map(lambda x: x[1], self.coords))
@@ -61,7 +61,7 @@ class Coords:
     @staticmethod
     def from_csv(path: str | Path):
         df = pd.read_csv(path)
-        return Coords(coords=df.values.tolist(),
+        return Coords(coords=df[['lat','lon']].values.tolist(),
                       auxiliary=[json.loads(x) for x in df["auxiliary"]] if "auxiliary" in df.columns else None)
 
     def __len__(self):

@@ -1,3 +1,4 @@
+import os
 import torch
 import numpy as np
 from PIL import Image
@@ -7,6 +8,7 @@ from pathlib import Path
 from langchain.tools import tool
 
 from coords import Coords
+import utils
 
 model = None
 base_transform = transforms.Compose([
@@ -14,6 +16,8 @@ base_transform = transforms.Compose([
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
 
+def using_mps():
+    return torch.backends.mps.is_available() and torch.backends.mps.is_built() and os.environ.get("USE_MPS", "0") == "1"
 
 def load_image(loc: str|Path):
     return Image.open(loc).convert("RGB")
@@ -23,7 +27,7 @@ def get_model():
     if model is not None:
         return model
     model = torch.hub.load("gmberton/eigenplaces", "get_trained_model", backbone="ResNet50", fc_output_dim=2048)
-    if torch.backends.mps.is_available() and torch.backends.mps.is_built():
+    if using_mps():
         mps_device = torch.device("mps")
         model.to(mps_device)
     return model
@@ -33,7 +37,7 @@ def weight_im(im: Image.Image | List[Image.Image]):
     if not isinstance(im, list):
         im = [im]
     input_tensor = torch.stack([base_transform(i) for i in im])
-    if torch.backends.mps.is_available() and torch.backends.mps.is_built():
+    if using_mps():
         mps_device = torch.device("mps")
         input_tensor = input_tensor.to(mps_device)
     output = mod(input_tensor)
@@ -65,17 +69,24 @@ def locate_image(im_loc: str, db_loc:str):
     db_coords = Coords.from_csv(db_loc)
     im = load_image(im_loc)
     res = loc_sim(im, [load_image(x['image_path']) for x in db_coords.auxiliary])
-    top_n = torch.argsort(res, descending=True)[:TOP_N]
-    res_paths = "".join([f"{db_coords.auxiliary[i]['panorama_id']}: {db_coords.auxiliary[i]['image_path']}\n" for i in top_n])
-    return f"""
-    Top {TOP_N} results:
-    {res_paths}
-    """
+    new_coords = Coords(
+        coords = db_coords.coords,
+        auxiliary = [{"confidence": float(x)} for x in res.flatten()]
+    )
+    top_n = torch.argsort(res, descending=True).flatten()[:TOP_N]
+    res = f"Top {TOP_N} possible locations based on visual place recognition: \n"
+    for t in range(TOP_N):
+        res += (f"Location {t+1}:\n"
+                f"Image: {utils.image_to_prompt(db_coords.auxiliary[top_n[t]]['image_path'])}\n"
+                f"Coordinate: {new_coords.coords[top_n[t]]}\n")
+    res += f"Full results: \n {new_coords.to_prompt()}"
+    return res
 
 if __name__ == '__main__':
-    res = loc_sim(
-        load_image('./tools/vpr/ds/query.png'),
-        [load_image(f'./run/streetview_res{i}.png') for i in range(70)]
-    )
-    print(list(enumerate(res)))
-    print(torch.argsort(res))
+    # res = loc_sim(
+    #     load_image('./tools/vpr/ds/query.png'),
+    #     [load_image(f'./bak/run_svst/streetview_res{i}.png') for i in range(70)]
+    # )
+    # print(list(enumerate(res)))
+    # print(torch.argsort(res))
+    print(locate_image._run('./tools/vpr/ds/query.png', './run/streetview_coords1.csv'))

@@ -2,10 +2,12 @@ import re
 from pathlib import Path
 import os
 from io import BytesIO
+from typing import List
 
 from markdownify import MarkdownConverter, abstract_inline_conversion
 import base64
 from PIL import Image, ImageDraw, ImageFont
+from langchain.tools import BaseTool
 import requests
 import sys
 import hashlib
@@ -152,6 +154,7 @@ def make_run_dir():
 def flush_run_dir():
     # remove everything in RUN_DIR
     os.system(f"rm -rf {RUN_DIR}")
+    make_run_dir()
 
 
 def save_img(im: Image.Image, ident: str) -> Path:
@@ -193,6 +196,12 @@ def toggle_blackbar(to: bool = True):
 
 def sanitize(s: str) -> str:
     return s.replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\\n", "").strip()
+
+def get_args(tool:BaseTool, tool_input:str) -> List[str]:
+    if len(tool.args.keys()) <= 1:
+        return [tool_input]
+    return tool_input.split(", ")
+
 
 if __name__ == '__main__':
     print(hashlib.md5(encode_image(Path('./images/anon/2.png')).encode()).hexdigest())

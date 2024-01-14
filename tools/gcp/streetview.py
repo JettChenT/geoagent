@@ -9,7 +9,8 @@ import utils
 from coords import Coords
 import random
 import textwrap
-PANO_LIMIT = 70
+PANO_LIMIT = 120
+PANO_VIEW_LIMIT = 15
 
 def get_pano(lat: float, lon: float) -> str | Image.Image:
     """
@@ -32,6 +33,8 @@ def get_panos(coords_path : str) -> str:
     :return:
     """
     # TODO: pano tiles
+    # Note: the sampling of streetview images could perhaps be improved in the future. Now it's just a SRS
+    # e.g. ensure that each coordinate is represented, and that the coordinates are not too close to each other.
     coords = Coords.from_csv(coords_path)
     # print(coords)
     pid_set = set()
@@ -43,19 +46,28 @@ def get_panos(coords_path : str) -> str:
     debug("Getting streetviews...")
     coord_l = []
     auxiliary_l = []
+    sample_previews = []
     for (pid, coord) in tqdm(random.sample(sorted(pid_set), min(len(pid_set), PANO_LIMIT))):
         im = get_streetview(pid, api_key=GOOGLE_MAPS_API_KEY)
         loc = utils.save_img(im, "streetview_res")
-        res += textwrap.dedent(f"""\
+        sample_previews.append(textwrap.dedent(f"""\
         Location: {coord}
         Streetview: {utils.image_to_prompt(loc)}
-        """)
+        """))
         coord_l.append(coord)
-        auxiliary_l.append({"panorama_id": pid, "image_path": loc})
+        auxiliary_l.append({"panorama_id": pid, "image_path": str(loc)})
+
+    for sample in random.sample(sample_previews, min(len(sample_previews), PANO_VIEW_LIMIT)):
+        res += sample+ "\n"
+    if len(sample_previews) > PANO_VIEW_LIMIT:
+        res += (f"{len(sample_previews) - PANO_VIEW_LIMIT} more results not shown. \n"
+                f"If the location can not be confirmed or you need to further narrow down the results,"
+                f"highly recommend using the `Streetview Locate` tool.")
+
     coords = Coords(coord_l, auxiliary_l)
     res += coords.to_prompt("streetview_")
     return res
 
 if __name__ == '__main__':
     utils.toggle_blackbar()
-    print(get_panos("./run/textsearch_coords2.csv"))
+    print(get_panos("./bak/run_svst/textsearch_coords2.csv"))

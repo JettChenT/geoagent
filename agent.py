@@ -57,7 +57,9 @@ class Agent:
                 if tool is None:
                     ctx.add_message(
                         Message(f"{res}\n Could not find tool {parsed.tool}, please adjust your input. \nAnalyze{i}: "))
-                tool_res = str(tool._run(utils.sanitize(parsed.tool_input)))
+                tool_res = str(tool._run(
+                    *utils.get_args(tool, utils.sanitize(parsed.tool_input)))
+                ) # TODO: Make multi-argument parsing more robust
                 if tool.return_direct:
                     isok = input("Is this ok? (y/n)")
                     if isok == "y":
@@ -71,4 +73,7 @@ class Agent:
 if __name__ == "__main__":
     agent = Agent(Gpt4Vision(debug=True))
     input("Press enter to begin.")
-    print(agent.run("./images/anon/5.png", "This is a shopping center in Kryvyi Rih"))
+    print(agent.run("./images/anon/5.png",
+                    "This is a shopping center in Kryvyi Rih. First use text search to find shopping centers in Kryvyi Rih. Then use streetview to find the one that looks like this."
+                    "After getting the streetview imagery, use the `Streetview Locate` tool to find the location of the image."))
+    # print(agent.run("./images/anon/2.png"))

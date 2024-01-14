@@ -2,8 +2,8 @@ from typing import List
 
 from langchain_core.tools import BaseTool
 
-from . import osm, osm_wiki, nominatim, geo_clip
-from .gcp import streetview
+from . import osm, osm_wiki, nominatim, geo_clip, vpr
+from .gcp import streetview, places
 
 # noinspection PyTypeChecker
 TOOLS: List[BaseTool] = [osm.query,
@@ -11,7 +11,10 @@ TOOLS: List[BaseTool] = [osm.query,
                          nominatim.search_raw,
                          osm.show_coords,
                          geo_clip.geoclip_predict,
-                         streetview.get_panos
+                         streetview.get_panos,
+                         vpr.locate_image,
+                         places.text_search,
+                         places.plot_satellite
                          ]
 
 tools_map = {tool.name: tool for tool in TOOLS}
