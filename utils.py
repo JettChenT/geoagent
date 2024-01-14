@@ -83,7 +83,10 @@ def encode_image(image: Image.Image | Path, max_size_mb=2):
 
 def read_image(image: Image.Image | Path, size_mb=0.9):
     if isinstance(image, Path):
+        orig_path = image
         image = Image.open(image)
+        if GLOB_RENDER_BLACKBAR:
+            image = render_text_description(image, str(orig_path))
 
     if image.mode == 'RGBA':
         image = image.convert('RGB')
@@ -135,7 +138,7 @@ def find_valid_loc(prefix: str, postfix: str, pre_dir: str = RUN_DIR) -> Path:
     """
     Find the first valid location that exists
     """
-    for i in range(100):
+    for i in range(100_000_000):
         path = pre_dir + prefix + str(i) + postfix
         if not Path(path).exists():
             return Path(path)
@@ -157,8 +160,6 @@ def save_img(im: Image.Image, ident: str) -> Path:
     """
     make_run_dir()
     p = find_valid_loc(ident, ".png")
-    if GLOB_RENDER_BLACKBAR:
-        im = render_text_description(im, str(p))
     im.save(p)
     return p
 

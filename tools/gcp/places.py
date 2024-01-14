@@ -3,6 +3,7 @@ from coords import Coords
 from PIL import Image
 import io
 import utils
+from langchain.tools import tool
 
 import requests
 
@@ -14,9 +15,12 @@ AUTH_HEAD = {
 def wrap_auth(head):
     return dict(head, **AUTH_HEAD)
 
+@tool
 def text_search(query: str):
     """
     Returns information about a location based on a text query. Uses Google Places API.
+    The CSV file returned would contain the coordinates of the location, as well as auxiliary information about the location, including
+    the name, address, and photo ids.
     :param query: the text query
     :return:
     """
@@ -27,12 +31,16 @@ def text_search(query: str):
                       )
     res_data = r.json()
     res_data_disp = [{'name':x['displayName']['text'], 'location': x['location']} for x in res_data['places']]
-    res_coords = Coords([(x['location']['latitude'], x['location']['longitude']) for x in res_data['places']])
+    res_coords = Coords(
+        [(x['location']['latitude'], x['location']['longitude']) for x in res_data['places']],
+        res_data['places']
+    )
     return f"Results for query: {res_data_disp}\n Coordinates: {res_coords.to_prompt('textsearch_')}"
 
 
 SATELLITE_CAP = 80
 
+@tool
 def plot_satellite(coords_loc: str):
     """
     Plots the satellite image of a given set of coordinates. Uses Google Maps Static API.

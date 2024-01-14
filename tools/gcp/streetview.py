@@ -41,6 +41,8 @@ def get_panos(coords_path : str) -> str:
     # print(pid_set)
     res = "Google Streetview Results \n ------------ \n"
     debug("Getting streetviews...")
+    coord_l = []
+    auxiliary_l = []
     for (pid, coord) in tqdm(random.sample(sorted(pid_set), min(len(pid_set), PANO_LIMIT))):
         im = get_streetview(pid, api_key=GOOGLE_MAPS_API_KEY)
         loc = utils.save_img(im, "streetview_res")
@@ -48,6 +50,10 @@ def get_panos(coords_path : str) -> str:
         Location: {coord}
         Streetview: {utils.image_to_prompt(loc)}
         """)
+        coord_l.append(coord)
+        auxiliary_l.append({"panorama_id": pid, "image_path": loc})
+    coords = Coords(coord_l, auxiliary_l)
+    res += coords.to_prompt("streetview_")
     return res
 
 if __name__ == '__main__':
