@@ -1,18 +1,10 @@
 from pathlib import Path
 
 import utils
-import json
-import dotenv
 import requests
-import os
 from rich import print
 from langchain.tools import tool
-
-dotenv.load_dotenv()
-
-SUBSCRIPTION_KEY = os.environ['BING_SEARCH_V7_SUBSCRIPTION_KEY']
-ENDPOINT = os.environ['BING_SEARCH_V7_ENDPOINT']
-HEADERS = {"Ocp-Apim-Subscription-Key": SUBSCRIPTION_KEY}
+from .auth import ENDPOINT, HEADERS
 
 @tool("Bing Search")
 def search_text(query, mkt='en-US'):
@@ -34,6 +26,7 @@ def search_image(img_path: str | Path, mkt='en-US'):
     :param mkt: The market to search in.
     :return:
     """
+    # TODO: Improve the output of this to the LLM
     if isinstance(img_path, str):
         img_path = Path(img_path)
     params = {'mkt': mkt}
@@ -43,4 +36,4 @@ def search_image(img_path: str | Path, mkt='en-US'):
     return response.json()
 
 if __name__ == '__main__':
-    print(search_image._run('./images/hartford.png'))
+    print(search_image._run('./images/anon/10.png'))

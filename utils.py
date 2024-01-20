@@ -47,7 +47,7 @@ def image_to_base64(im: Image) -> str:
     return base64.b64encode(img_bytes).decode("utf-8")
 
 
-def encode_image(image: Image.Image | Path, max_size_mb=2):
+def encode_image(image: Image.Image | Path, max_size_mb=20):
     # Open the image from a file path if it's not already an Image object
     if isinstance(image, Path):
         raw = open(image, 'rb').read()
@@ -202,9 +202,13 @@ def get_args(tool:BaseTool, tool_input:str) -> List[str]:
         return [tool_input]
     return tool_input.split(", ")
 
+def upload_image(image: Path) -> str:
+    """
+    Upload an image to cloud(sxcu.net) and return the url
+    """
+    res = requests.post("https://sxcu.net/api/files/create", files={"file": open(image, 'rb')})
+    res.raise_for_status()
+    return f"{res.json()['url']}{image.suffix}"
 
 if __name__ == '__main__':
-    print(hashlib.md5(encode_image(Path('./images/anon/2.png')).encode()).hexdigest())
-    # orig_im = Image.open("sample/gusmeme.png")
-    # im = render_text_description(orig_im, "hello")
-    # im.show()
+    print(upload_image(Path("./images/anon/10.png")))

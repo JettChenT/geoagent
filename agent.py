@@ -73,5 +73,5 @@ class Agent:
 if __name__ == "__main__":
     agent = Agent(Gpt4Vision())
     additional_info = input("Enter any additional information regarding this image or guidance on the geolocation process. \nPress enter to begin.\n")
-    print(agent.run("./images/anon/9.png",
+    print(agent.run("./images/anon/7.png",
                     additional_info))

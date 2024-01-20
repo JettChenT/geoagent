@@ -2,7 +2,7 @@ from typing import List
 
 from langchain_core.tools import BaseTool
 
-from . import osm, nominatim, geo_clip, vpr, bing
+from . import osm, nominatim, geo_clip, vpr, azure
 from .gcp import streetview, places
 
 # noinspection PyTypeChecker
@@ -15,8 +15,8 @@ TOOLS: List[BaseTool] = [osm.query,
                          vpr.locate_image,
                          places.text_search,
                          places.plot_satellite,
-                         bing.search_text,
-                         bing.search_image
+                         azure.bing.search_text,
+                         azure.bing.search_image
                          ]
 
 tools_map = {tool.name: tool for tool in TOOLS}
