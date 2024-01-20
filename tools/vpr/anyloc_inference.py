@@ -14,7 +14,6 @@ model = None
 TOP_N = 15
 base_transform = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
 
 def using_mps():
@@ -27,7 +26,7 @@ def get_model():
     global model
     if model is not None:
         return model
-    model = torch.hub.load("gmberton/eigenplaces", "get_trained_model", backbone="ResNet50", fc_output_dim=2048)
+    model = torch.hub.load("AnyLoc/DINO", "get_vlad_model", backbone="DINOv2")
     if using_mps():
         mps_device = torch.device("mps")
         model.to(mps_device)
@@ -38,6 +37,12 @@ def weight_im(im: Image.Image | List[Image.Image]):
     if not isinstance(im, list):
         im = [im]
     input_tensor = torch.stack([base_transform(i) for i in im])
+    b, c, h, w = input_tensor.shape
+    # DINO wants height and width as multiple of 14, therefore resize them
+    # to the nearest multiple of 14
+    h = round(h / 14) * 14
+    w = round(w / 14) * 14
+    input_tensor = transforms.functional.resize(input_tensor, [h, w], antialias=True)
     if using_mps():
         mps_device = torch.device("mps")
         input_tensor = input_tensor.to(mps_device)

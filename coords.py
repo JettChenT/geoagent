@@ -18,7 +18,7 @@ class Coords:
 
     def __init__(self, coords: List[Tuple[float, float]], auxiliary: List[Any]|None = None):
         self.coords = coords
-        self.auxiliary = auxiliary or [None]*len(coords)
+        self.auxiliary = auxiliary or [{}]*len(coords)
 
     def split_latlon(self) -> Tuple[List[float], List[float]]:
         return list(map(lambda x: x[0], self.coords)), list(map(lambda x: x[1], self.coords))

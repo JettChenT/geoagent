@@ -6,6 +6,7 @@ from typing import List
 import torchvision.transforms as transforms
 from pathlib import Path
 from langchain.tools import tool
+from .mixvpr import get_mixvpr
 
 from coords import Coords
 import utils
@@ -14,7 +15,6 @@ model = None
 TOP_N = 15
 base_transform = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
 
 def using_mps():
@@ -27,10 +27,7 @@ def get_model():
     global model
     if model is not None:
         return model
-    model = torch.hub.load("gmberton/eigenplaces", "get_trained_model", backbone="ResNet50", fc_output_dim=2048)
-    if using_mps():
-        mps_device = torch.device("mps")
-        model.to(mps_device)
+    model = get_mixvpr(4096)
     return model
 
 def weight_im(im: Image.Image | List[Image.Image]):
@@ -73,7 +70,7 @@ def locate_image(im_loc: str, db_loc:str):
         coords = db_coords.coords,
         auxiliary = [{"confidence": float(x), 'image_path': y['image_path']} for (x,y) in zip(res.flatten(), db_coords.auxiliary)]
     )
-    top_n = torch.argsort(res, descending=True).flatten()[:TOP_N]
+    top_n = torch.argsort(res).flatten()[:TOP_N]
     res = f"Top {TOP_N} possible locations based on visual place recognition: \n"
     for t in range(TOP_N):
         res += (f"Location {t+1}:\n"

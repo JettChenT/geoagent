@@ -71,9 +71,7 @@ class Agent:
 
 
 if __name__ == "__main__":
-    agent = Agent(Gpt4Vision(debug=True))
-    input("Press enter to begin.")
-    print(agent.run("./images/anon/5.png",
-                    "This is a shopping center in Kryvyi Rih. First use text search to find shopping centers in Kryvyi Rih. Then use streetview to find the one that looks like this."
-                    "After getting the streetview imagery, use the `Streetview Locate` tool to find the location of the image."))
-    # print(agent.run("./images/anon/2.png"))
+    agent = Agent(Gpt4Vision())
+    additional_info = input("Enter any additional information regarding this image or guidance on the geolocation process. \nPress enter to begin.\n")
+    print(agent.run("./images/anon/9.png",
+                    additional_info))
