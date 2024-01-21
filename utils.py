@@ -10,7 +10,6 @@ from PIL import Image, ImageDraw, ImageFont
 from langchain.tools import BaseTool
 import requests
 import sys
-import hashlib
 
 # Mutable Global Variable: Whether to render a black bar at the bottom with the location of image
 GLOB_RENDER_BLACKBAR = False

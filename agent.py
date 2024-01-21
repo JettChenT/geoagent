@@ -1,14 +1,12 @@
-from pathlib import Path
-
-from PIL import Image
 from langchain.agents.output_parsers import ReActSingleInputOutputParser
 from langchain.tools.render import render_text_description
 from langchain_core.agents import AgentAction, AgentFinish
 from langchain_core.tools import BaseTool
+from rich import print
 
+import config
 import utils
 from prompting import *
-from rich import print
 from connector.gptv import Gpt4Vision
 from connector import LMM, Context, Message
 from tools import TOOLS, find_tool
@@ -73,5 +71,5 @@ class Agent:
 if __name__ == "__main__":
     agent = Agent(Gpt4Vision())
     additional_info = input("Enter any additional information regarding this image or guidance on the geolocation process. \nPress enter to begin.\n")
-    print(agent.run("./images/anon/7.png",
+    print(agent.run("./images/anon/10.png",
                     additional_info))
