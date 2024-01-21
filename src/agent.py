@@ -66,9 +66,23 @@ class Agent:
                         )
                     )
                     continue
-                tool_res = str(
-                    tool._run(*utils.get_args(tool, utils.sanitize(parsed.tool_input)))
-                )  # TODO: Make multi-argument parsing more robust
+                try:
+                    tool_res = str(
+                        tool._run(*utils.get_args(tool, utils.sanitize(parsed.tool_input)))
+                    )  # TODO: Make multi-argument parsing more robust
+                except Exception as e:
+                    print(e)
+                    # ask if user would like to continue, if so, ask for potential feedback
+                    docontinue = input("Continue? (y/n)")
+                    if docontinue == "n":
+                        break
+                    feedback = input("Enter feedback if any:")
+                    ctx.add_message(
+                        Message(
+                            f"{res}\n Could not run tool {parsed.tool}: {e}, {feedback}\n please adjust. \nAnalyze{i}: "
+                        )
+                    )
+                    continue
                 if tool.return_direct:
                     isok = input("Is this ok? (y/n)")
                     if isok == "y":
