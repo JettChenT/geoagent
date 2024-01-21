@@ -9,8 +9,10 @@ from ... import utils
 from ...coords import Coords
 import random
 import textwrap
+
 PANO_LIMIT = 120
 PANO_VIEW_LIMIT = 15
+
 
 def get_pano(lat: float, lon: float) -> str | Image.Image:
     """
@@ -25,8 +27,9 @@ def get_pano(lat: float, lon: float) -> str | Image.Image:
     pid = res[0].pano_id
     return get_streetview(pid, api_key=GOOGLE_MAPS_API_KEY)
 
+
 @tool("Get StreetViews")
-def get_panos(coords_path : str) -> str:
+def get_panos(coords_path: str) -> str:
     """
     Gets Google Streetview images of coordinates
     :param coords_path: Path to the csv file containing coordinates information
@@ -47,27 +50,38 @@ def get_panos(coords_path : str) -> str:
     coord_l = []
     auxiliary_l = []
     sample_previews = []
-    for (pid, coord) in tqdm(random.sample(sorted(pid_set), min(len(pid_set), PANO_LIMIT))):
+    for pid, coord in tqdm(
+        random.sample(sorted(pid_set), min(len(pid_set), PANO_LIMIT))
+    ):
         im = get_streetview(pid, api_key=GOOGLE_MAPS_API_KEY)
         loc = utils.save_img(im, "streetview_res")
-        sample_previews.append(textwrap.dedent(f"""\
+        sample_previews.append(
+            textwrap.dedent(
+                f"""\
         Location: {coord}
         Streetview: {utils.image_to_prompt(loc)}
-        """))
+        """
+            )
+        )
         coord_l.append(coord)
         auxiliary_l.append({"panorama_id": pid, "image_path": str(loc)})
 
-    for sample in random.sample(sample_previews, min(len(sample_previews), PANO_VIEW_LIMIT)):
-        res += sample+ "\n"
+    for sample in random.sample(
+        sample_previews, min(len(sample_previews), PANO_VIEW_LIMIT)
+    ):
+        res += sample + "\n"
     if len(sample_previews) > PANO_VIEW_LIMIT:
-        res += (f"{len(sample_previews) - PANO_VIEW_LIMIT} more results not shown. \n"
-                f"If the location can not be confirmed or you need to further narrow down the results,"
-                f"highly recommend using the `Streetview Locate` tool.")
+        res += (
+            f"{len(sample_previews) - PANO_VIEW_LIMIT} more results not shown. \n"
+            f"If the location can not be confirmed or you need to further narrow down the results,"
+            f"highly recommend using the `Streetview Locate` tool."
+        )
 
     coords = Coords(coord_l, auxiliary_l)
     res += coords.to_prompt("streetview_")
     return res
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     utils.toggle_blackbar()
     print(get_panos("./bak/run_svst/textsearch_coords2.csv"))

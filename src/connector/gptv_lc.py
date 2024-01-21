@@ -46,35 +46,40 @@ Thought{n}: {agent_scratchpad}
 
 template = ChatPromptTemplate.from_messages(
     [
-        ("human",
-        [
-            {"type":"text", "text": REACT_PROMPT},
-            {"type": "image_url", "image_url": "{image_url}"}
-        ])
+        (
+            "human",
+            [
+                {"type": "text", "text": REACT_PROMPT},
+                {"type": "image_url", "image_url": "{image_url}"},
+            ],
+        )
     ]
 )
 
 prompt = template.partial(
-            tools=render_text_description(tools),
-            tool_names=", ".join([t.name for t in tools]),
-        )
+    tools=render_text_description(tools),
+    tool_names=", ".join([t.name for t in tools]),
+)
 
 llm_with_stop = chat.bind(stop=["\nObservation"])
 
 print(llm_with_stop)
 
 cnt = 0
+
+
 def get_cnt():
     global cnt
-    cnt+=1
+    cnt += 1
     return cnt
+
 
 agent = (
     {
         "input": lambda x: x["input"],
         "image_url": lambda x: x["image_url"],
         "agent_scratchpad": lambda x: format_log_to_str(x["intermediate_steps"]),
-        "n": lambda _: str(get_cnt())
+        "n": lambda _: str(get_cnt()),
     }
     | prompt
     | llm_with_stop
@@ -83,22 +88,24 @@ agent = (
 
 agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
+
 def test_agent_iterative():
     initial = {
-            "input": prompting.TOOL_PROMPT,
-            "image_url": encode_image(Path('./images/phoenix_taylor.png')),
-        }
+        "input": prompting.TOOL_PROMPT,
+        "image_url": encode_image(Path("./images/phoenix_taylor.png")),
+    }
     intermediate_steps = []
     n = 1
     while True:
         output = agent.invoke()
     return
 
+
 def test_agent():
     res = agent_executor.invoke(
         {
             "input": prompting.TOOL_PROMPT,
-            "image_url": encode_image(Path('./images/phoenix_taylor.png')),
+            "image_url": encode_image(Path("./images/phoenix_taylor.png")),
         }
     )
 

@@ -12,6 +12,7 @@ from websocket_server import WebsocketServer
 from ..utils import md, image_to_base64
 from . import LMM
 
+
 class GPT4VisionBrowser(LMM):
     """
     Connector to GPT4, based on a web browser api
@@ -34,7 +35,11 @@ class GPT4VisionBrowser(LMM):
         print("received message:", message)
         try:
             msg_data = json.loads(message)
-            if msg_data["type"] == "message" and msg_data["message"] and (md_conv:=md(msg_data["message"])):
+            if (
+                msg_data["type"] == "message"
+                and msg_data["message"]
+                and (md_conv := md(msg_data["message"]))
+            ):
                 message = self.incoming.append(md_conv)
                 self.incoming.append(message)
         except Exception:
@@ -66,8 +71,6 @@ class LLAVA_Server(LMM):
 
     def heartbeat(self) -> bool:
         return requests.get(self.endpoint).status_code == 200
-
-
 
     def prompt(self, prompt: str, image: Image.Image | Path | None = None) -> str:
         files = None

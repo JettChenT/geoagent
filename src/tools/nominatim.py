@@ -7,6 +7,7 @@ from ..coords import Coords
 
 geolocator = Nominatim(user_agent="OSM Querying Geocoder", timeout=10)
 
+
 @tool("Nominatim Geocoder")
 def search_raw(query: str) -> str:
     """
@@ -31,7 +32,12 @@ def search_raw(query: str) -> str:
         coords.to_csv(dump_loc)
         return f"""Nominatim Query Results: {raw_res} \n The coordinates are stored at {dump_loc} \n A rendering of the coordinates: {utils.image_to_prompt(loc)}"""
     except Exception as e:
-        return "Error while querying Nominatim Geocoder" + str(e) + "\n Please pass in a valid query, or try a different tool."
+        return (
+            "Error while querying Nominatim Geocoder"
+            + str(e)
+            + "\n Please pass in a valid query, or try a different tool."
+        )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     print(search_raw("7th Ave, New York City"))

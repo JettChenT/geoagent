@@ -4,6 +4,7 @@ from langchain_core.tools import ToolException
 
 API_URL = "https://wiki.openstreetmap.org/api.php"
 
+
 @tool("OSM Wiki Search")
 def search(query: str) -> str:
     """
@@ -12,12 +13,7 @@ def search(query: str) -> str:
     :param query:
     :return:
     """
-    params = {
-        "action": "query",
-        "list": "search",
-        "srsearch": query,
-        "format": "json"
-    }
+    params = {"action": "query", "list": "search", "srsearch": query, "format": "json"}
     try:
         res = requests.get(API_URL, params=params).json()
         return str(res)
@@ -25,5 +21,5 @@ def search(query: str) -> str:
         return "Error while querying OSM Wiki: " + str(e)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print(search("Washington"))

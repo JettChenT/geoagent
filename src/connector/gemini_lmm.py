@@ -26,21 +26,18 @@ def proc_messages(messages: List[Message]) -> HumanMessage:
         if block in img_tags:
             image_object = {
                 "type": "image_url",
-                "image_url" : {
+                "image_url": {
                     "url": utils.proc_image_url(block),
-                }
+                },
             }
             output.append(image_object)
         else:
-            output.append({
-                "type": "text",
-                "text": block
-            })
+            output.append({"type": "text", "text": block})
     return HumanMessage(content=output)
 
-class Gemini(LMM):
 
-    def __init__(self, model:str="gemini-pro-vision", stop: List[str] | None = None):
+class Gemini(LMM):
+    def __init__(self, model: str = "gemini-pro-vision", stop: List[str] | None = None):
         dotenv.load_dotenv()
         self.model = ChatGoogleGenerativeAI(model=model)
         self.stop = stop
@@ -53,8 +50,12 @@ class Gemini(LMM):
         return Message(res.content)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     ctx = Context()
-    ctx.add_message(Message(f"Describe this image in detail: {utils.image_to_prompt('./images/kns.png')}"))
+    ctx.add_message(
+        Message(
+            f"Describe this image in detail: {utils.image_to_prompt('./images/kns.png')}"
+        )
+    )
     gemini = Gemini()
     print(gemini.prompt(ctx).message)

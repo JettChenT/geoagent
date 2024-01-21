@@ -13,7 +13,8 @@ import sys
 
 # Mutable Global Variable: Whether to render a black bar at the bottom with the location of image
 GLOB_RENDER_BLACKBAR = False
-RUN_DIR = 'run/'
+RUN_DIR = "run/"
+
 
 class OAIConverter(MarkdownConverter):
     def convert_code(self, el, text, convert_as_inline):
@@ -49,17 +50,19 @@ def image_to_base64(im: Image) -> str:
 def encode_image(image: Image.Image | Path, max_size_mb=20):
     # Open the image from a file path if it's not already an Image object
     if isinstance(image, Path):
-        raw = open(image, 'rb').read()
+        raw = open(image, "rb").read()
         if max_size_mb is None or sys.getsizeof(raw) / (1e6) <= max_size_mb:
-            encoded_img = base64.b64encode(raw).decode('utf-8')
+            encoded_img = base64.b64encode(raw).decode("utf-8")
             img_type = "png" if image.suffix == ".png" else "jpeg"
             return f"data:image/{img_type};base64,{encoded_img}"
         image = Image.open(image)
 
-    if image.mode != 'RGB':
-        image = image.convert('RGB')
+    if image.mode != "RGB":
+        image = image.convert("RGB")
     # Convert max_size_mb to bytes
-    max_encoded_size_bytes = (max_size_mb * 1024 * 1024) * 3 / 4 if max_size_mb else None
+    max_encoded_size_bytes = (
+        (max_size_mb * 1024 * 1024) * 3 / 4 if max_size_mb else None
+    )
 
     # Initial setup for quality
     quality = 100
@@ -68,10 +71,13 @@ def encode_image(image: Image.Image | Path, max_size_mb=20):
         virtual_file = BytesIO()
         image.save(virtual_file, format="JPEG", quality=quality)
         img_data = virtual_file.getvalue()
-        encoded_data = base64.b64encode(img_data).decode('utf-8')
+        encoded_data = base64.b64encode(img_data).decode("utf-8")
 
         # Check if the encoded data size is within the specified limit
-        if max_encoded_size_bytes is None or len(encoded_data) <= max_encoded_size_bytes:
+        if (
+            max_encoded_size_bytes is None
+            or len(encoded_data) <= max_encoded_size_bytes
+        ):
             break
         # If not, decrease quality
         print("compressing image")
@@ -89,8 +95,8 @@ def read_image(image: Image.Image | Path, size_mb=0.9):
         if GLOB_RENDER_BLACKBAR:
             image = render_text_description(image, str(orig_path))
 
-    if image.mode == 'RGBA':
-        image = image.convert('RGB')
+    if image.mode == "RGBA":
+        image = image.convert("RGB")
     # Initial setup for quality
     quality = 100
     virtual_file = BytesIO()
@@ -166,22 +172,24 @@ def save_img(im: Image.Image, ident: str) -> Path:
     return p
 
 
-def render_text_description(image: Image.Image, text: str, line_height=16) -> Image.Image:
+def render_text_description(
+    image: Image.Image, text: str, line_height=16
+) -> Image.Image:
     """
     Render a text description at the bottom of an image. Assumes that text is single line.
     """
     # Create a new image with a black background
-    bar = Image.new('RGB', (image.width, int(line_height*1.2)), 'black')
+    bar = Image.new("RGB", (image.width, int(line_height * 1.2)), "black")
 
     # Create a draw object and add text to the bar
     draw = ImageDraw.Draw(bar)
     font = ImageFont.truetype("./fonts/Inter-Regular.ttf", line_height)
     text_width = draw.textlength(text, font)
     position = ((bar.width - text_width) / 2, int(line_height * 0.1))
-    draw.text(position, text, fill='white', font=font)
+    draw.text(position, text, fill="white", font=font)
 
     # Concatenate the original image with the bar
-    image_with_bar = Image.new('RGB', (image.width, image.height + bar.height))
+    image_with_bar = Image.new("RGB", (image.width, image.height + bar.height))
     image_with_bar.paste(image, (0, 0))
     image_with_bar.paste(bar, (0, image.height))
 
@@ -194,20 +202,32 @@ def toggle_blackbar(to: bool = True):
 
 
 def sanitize(s: str) -> str:
-    return s.replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\\n", "").replace("\"","").strip()
+    return (
+        s.replace("\n", " ")
+        .replace("\t", " ")
+        .replace("\r", " ")
+        .replace("\\n", "")
+        .replace('"', "")
+        .strip()
+    )
 
-def get_args(tool:BaseTool, tool_input:str) -> List[str]:
+
+def get_args(tool: BaseTool, tool_input: str) -> List[str]:
     if len(tool.args.keys()) <= 1:
         return [tool_input]
     return tool_input.split(", ")
+
 
 def upload_image(image: Path) -> str:
     """
     Upload an image to cloud(sxcu.net) and return the url
     """
-    res = requests.post("https://sxcu.net/api/files/create", files={"file": open(image, 'rb')})
+    res = requests.post(
+        "https://sxcu.net/api/files/create", files={"file": open(image, "rb")}
+    )
     res.raise_for_status()
     return f"{res.json()['url']}{image.suffix}"
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     print(upload_image(Path("./images/anon/10.png")))

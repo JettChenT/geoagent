@@ -22,8 +22,6 @@ def proc_output(output: str, img: Image.Image | None) -> Any:
     return content
 
 
-
-
 def refine_prompt(original, problem) -> str:
     return f"""
     Original Query: ```{original}````
@@ -31,24 +29,33 @@ def refine_prompt(original, problem) -> str:
     Please refine your query to fix the problem.
     """
 
+
 def refine_query(original, problem) -> str:
     prompt = refine_prompt(original, problem)
-    r = requests.post("https://aapi.tech-demos.de/overpassnl/overpassnl", json={"usertext": prompt})
+    r = requests.post(
+        "https://aapi.tech-demos.de/overpassnl/overpassnl", json={"usertext": prompt}
+    )
     if r.status_code != 200:
-        return f"Something went wrong with overpass query: {r.content}. Please try again."
+        return (
+            f"Something went wrong with overpass query: {r.content}. Please try again."
+        )
     return r.json()["osmquery"]
 
 
-def nl_query(q:str, dep:int = 0, thresh: int = 10, debug: bool = True):
+def nl_query(q: str, dep: int = 0, thresh: int = 10, debug: bool = True):
     if debug:
-        print(f"""
+        print(
+            f"""
         ----------
         depth: {dep}
         OSM LM Query:
         {q},
         -----------
-        """)
-    osm_query = requests.post("https://aapi.tech-demos.de/overpassnl/overpassnl", json={"usertext": q}).json()["osmquery"]
+        """
+        )
+    osm_query = requests.post(
+        "https://aapi.tech-demos.de/overpassnl/overpassnl", json={"usertext": q}
+    ).json()["osmquery"]
     try:
         osm_result = overpass.query(osm_query)
         return osm_result
@@ -57,10 +64,17 @@ def nl_query(q:str, dep:int = 0, thresh: int = 10, debug: bool = True):
             return str(e)
         return nl_query(refine_prompt(osm_query, str(e)), dep + 1, thresh, debug)
 
-def _query(q: str, nl:bool = True) -> Tuple[str | Coords, Image.Image | None]:
+
+def _query(q: str, nl: bool = True) -> Tuple[str | Coords, Image.Image | None]:
     try:
-        osm_result = nl_query(f"{q}\n Please use regex and loose names when possible.") if nl else overpass.query(q)
-        coords = Coords(list(map(lambda x: (float(x.lat), float(x.lon)), osm_result.nodes)))
+        osm_result = (
+            nl_query(f"{q}\n Please use regex and loose names when possible.")
+            if nl
+            else overpass.query(q)
+        )
+        coords = Coords(
+            list(map(lambda x: (float(x.lat), float(x.lon)), osm_result.nodes))
+        )
         x_cords, y_cords = coords.split_latlon()
         if len(coords) == 0:
             return prompting.DELTA_TOO_LITTLE, None
@@ -91,8 +105,12 @@ def query(q: str) -> Any:
         rsp += f"\n The coordinates are stored at {dump_loc}"
     if isinstance(img, Image.Image):
         loc = utils.save_img(img, "osm_query_res")
-        rsp += "\n Here's a A visualization of the OSM results:" + utils.image_to_prompt(str(loc))
+        rsp += (
+            "\n Here's a A visualization of the OSM results:"
+            + utils.image_to_prompt(str(loc))
+        )
     return rsp
+
 
 @tool("Return Coordinates", return_direct=True)
 def show_coords(coords: str):
@@ -104,10 +122,13 @@ def show_coords(coords: str):
     :param coords: (lat, lon) or [(lat, lon)...]
     :return:
     """
-    print("RESULT COORDS:",  coords)
+    print("RESULT COORDS:", coords)
 
-if __name__ == '__main__':
-    QUERY = "Find me a restaurant named Korean Steak House in Washington next to Monroe St"
+
+if __name__ == "__main__":
+    QUERY = (
+        "Find me a restaurant named Korean Steak House in Washington next to Monroe St"
+    )
     print("querying...")
     q_res = query(QUERY)
     print("query result:", q_res)

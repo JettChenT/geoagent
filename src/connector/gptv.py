@@ -15,6 +15,7 @@ from rich import print
 from ..utils import encode_image
 import hashlib
 
+
 def proc_messages(messages: List[Message]) -> List[Dict]:
     """
     Process messages from the chat history to a HumanMessage object. Cuz Gemini does not support chat mode yet.
@@ -34,40 +35,37 @@ def proc_messages(messages: List[Message]) -> List[Dict]:
             if block in img_tags:
                 image_object = {
                     "type": "image_url",
-                    "image_url" : {
-                        "url": utils.proc_image_url(block)
-                    }
+                    "image_url": {"url": utils.proc_image_url(block)},
                 }
                 output.append(image_object)
             else:
-                output.append({
-                    "type": "text",
-                    "text": block
-                })
-        res.append({
-            "role": message.role or "user",
-            "content": output
-        })
+                output.append({"type": "text", "text": block})
+        res.append({"role": message.role or "user", "content": output})
     return res
+
 
 class Gpt4Vision(LMM):
     def __init__(self, debug: bool = False, max_tokens: int = 3000):
         dotenv.load_dotenv()
         # Adds black bar containing the location of the image, since gpt-vision api does not recognize image order.
         # utils.toggle_blackbar()
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_API_BASE"))
+        self.client = OpenAI(
+            api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_API_BASE")
+        )
         self.debug = debug
         self.max_tokens = max_tokens
 
     def prompt(self, context: Context, stop: Optional[List[str]]) -> Message:
         messages = proc_messages(context.messages)
         if self.debug:
-            print(f"HASH of messages: {hashlib.md5(str(messages).encode()).hexdigest()}")
+            print(
+                f"HASH of messages: {hashlib.md5(str(messages).encode()).hexdigest()}"
+            )
         response = self.client.chat.completions.create(
-            model = "gpt-4-vision-preview",
-            messages = messages,
-            max_tokens = self.max_tokens,
-            stop = stop
+            model="gpt-4-vision-preview",
+            messages=messages,
+            max_tokens=self.max_tokens,
+            stop=stop,
         )
         if self.debug:
             print(response)
@@ -77,8 +75,13 @@ class Gpt4Vision(LMM):
         res_msg = response.choices[0].message
         return Message(res_msg.content, res_msg.role)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     ctx = Context()
-    ctx.add_message(Message(f"Describe this image in detail: {utils.image_to_prompt('./images/kns.png')}"))
+    ctx.add_message(
+        Message(
+            f"Describe this image in detail: {utils.image_to_prompt('./images/kns.png')}"
+        )
+    )
     gptv = Gpt4Vision()
     print(gptv.prompt(ctx).message)

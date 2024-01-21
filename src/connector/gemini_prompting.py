@@ -14,6 +14,7 @@ import dotenv
 
 dotenv.load_dotenv()
 
+
 def proc_messages(messages: list[Message]) -> HumanMessage:
     """
     Process messages from the chat history to a HumanMessage object. Cuz Gemini does not support chat mode yet.
@@ -31,42 +32,40 @@ def proc_messages(messages: list[Message]) -> HumanMessage:
         if block in img_tags:
             image_object = {
                 "type": "image_url",
-                "image_url" : {
+                "image_url": {
                     "url": utils.proc_image_url(block),
-                }
+                },
             }
             output.append(image_object)
         else:
-            output.append({
-                "type": "text",
-                "text": block
-            })
+            output.append({"type": "text", "text": block})
     return HumanMessage(content=output)
-
-
-
-
 
 
 chat = ChatGoogleGenerativeAI(model="gemini-pro-vision")
 output_parser = ReActSingleInputOutputParser()
 MAX_ITER = 10
 tools_map = {tool.name: tool for tool in TOOLS}
+
+
 def find_tool(name: str) -> BaseTool:
     for tool in TOOLS:
         if tool.name in name:
             return tool
 
+
 def main(image_loc):
     utils.flush_run_dir()
     messages = [
-        Message(INITIAL_REACT_PROMPT.format(
-            tool_names=", ".join([t.name for t in TOOLS]),
-            tools = render_text_description(TOOLS),
-            input=f"{utils.image_to_prompt(image_loc)} Where is this image located?"
-        ))
+        Message(
+            INITIAL_REACT_PROMPT.format(
+                tool_names=", ".join([t.name for t in TOOLS]),
+                tools=render_text_description(TOOLS),
+                input=f"{utils.image_to_prompt(image_loc)} Where is this image located?",
+            )
+        )
     ]
-    for i in range(1, MAX_ITER+1):
+    for i in range(1, MAX_ITER + 1):
         print("current messages", messages[1:])
         cur_m = [proc_messages(messages)]
         res = chat.invoke(cur_m, stop=["Observation"]).content
@@ -85,7 +84,11 @@ def main(image_loc):
             print("[blue]Action Input[/blue]: ", parsed.tool_input)
             tool: BaseTool | None = find_tool(parsed.tool)
             if tool is None:
-                messages.append(Message(f"{res}\n Could not find tool {parsed.tool}, please adjust your input. \nAnalyze{i}: "))
+                messages.append(
+                    Message(
+                        f"{res}\n Could not find tool {parsed.tool}, please adjust your input. \nAnalyze{i}: "
+                    )
+                )
             tool_res = str(tool._run(utils.sanitize(parsed.tool_input)))
             if tool.return_direct:
                 isok = input("Is this ok? (y/n)")
@@ -96,5 +99,6 @@ def main(image_loc):
                 tool_res += "\nFeedback: " + feedback
             messages.append(Message(f"{res}\nObservation{i}: {tool_res}\nAnalyze{i}: "))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main("./images/kns.png")

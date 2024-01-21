@@ -5,15 +5,18 @@ from pathlib import Path
 
 PAR_DIR = Path(__file__).parent
 
+
 class ImageEncoder(nn.Module):
     def __init__(self):
         super(ImageEncoder, self).__init__()
         self.CLIP = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
-        self.image_processor = AutoProcessor.from_pretrained("openai/clip-vit-large-patch14")
-        self.mlp = nn.Sequential(nn.Linear(768, 768),
-                                 nn.ReLU(),
-                                 nn.Linear(768, 512))
-        self.mlp.load_state_dict(torch.load(PAR_DIR/"weights/image_encoder_mlp_weights.pth"))
+        self.image_processor = AutoProcessor.from_pretrained(
+            "openai/clip-vit-large-patch14"
+        )
+        self.mlp = nn.Sequential(nn.Linear(768, 768), nn.ReLU(), nn.Linear(768, 512))
+        self.mlp.load_state_dict(
+            torch.load(PAR_DIR / "weights/image_encoder_mlp_weights.pth")
+        )
 
     def preprocess_image(self, image):
         return self.image_processor(images=image, return_tensors="pt")

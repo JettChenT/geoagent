@@ -3,7 +3,9 @@ from pathlib import Path
 import os
 
 
-def upload_file(file_path: Path, bucket_name: str = None, destination_blob_name: str = None):
+def upload_file(
+    file_path: Path, bucket_name: str = None, destination_blob_name: str = None
+):
     """
     Uploads a file to a bucket.
     :param bucket_name: The bucket to upload to.
@@ -11,7 +13,7 @@ def upload_file(file_path: Path, bucket_name: str = None, destination_blob_name:
     :param destination_blob_name: The name of the blob to create.
     :return:
     """
-    bucket_name = bucket_name or os.getenv('GCP_BUCKET_NAME') or "geolocation"
+    bucket_name = bucket_name or os.getenv("GCP_BUCKET_NAME") or "geolocation"
     destination_blob_name = destination_blob_name or file_path.name
     storage_client = storage.Client()
     bucket = storage_client.create_bucket(bucket_name)
@@ -19,6 +21,7 @@ def upload_file(file_path: Path, bucket_name: str = None, destination_blob_name:
     blob.upload_from_filename(file_path)
     blob.make_public()
     return blob.public_url
+
 
 #!/usr/bin/env python
 
@@ -55,7 +58,7 @@ def run_quickstart():
     # [END storage_quickstart]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # from dotenv import load_dotenv
     # load_dotenv()
     # upload_file(Path('./images/anon/10.png'))

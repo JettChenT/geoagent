@@ -11,6 +11,7 @@ from .connector import LMM, Message
 from .tools import TOOLS, find_tool
 from .context import Context
 
+
 class Agent:
     DEPTH_THRESHOLD = 10
 
@@ -28,12 +29,14 @@ class Agent:
         """
         utils.flush_run_dir()
         ctx = Context(tools=TOOLS)
-        ctx.add_message(Message(
-            INITIAL_REACT_PROMPT.format(
-                tool_names=", ".join([t.name for t in TOOLS]),
-                tools=render_text_description(TOOLS),
-                input=f"{utils.image_to_prompt(image_loc)} Where is this image located? {additional}"
-            ))
+        ctx.add_message(
+            Message(
+                INITIAL_REACT_PROMPT.format(
+                    tool_names=", ".join([t.name for t in TOOLS]),
+                    tools=render_text_description(TOOLS),
+                    input=f"{utils.image_to_prompt(image_loc)} Where is this image located? {additional}",
+                )
+            )
         )
         for i in range(1, self.DEPTH_THRESHOLD + 1):
             print("last message", ctx.messages[-1].message)
@@ -54,10 +57,13 @@ class Agent:
                 tool: BaseTool | None = find_tool(parsed.tool)
                 if tool is None:
                     ctx.add_message(
-                        Message(f"{res}\n Could not find tool {parsed.tool}, please adjust your input. \nAnalyze{i}: "))
-                tool_res = str(tool._run(
-                    *utils.get_args(tool, utils.sanitize(parsed.tool_input)))
-                ) # TODO: Make multi-argument parsing more robust
+                        Message(
+                            f"{res}\n Could not find tool {parsed.tool}, please adjust your input. \nAnalyze{i}: "
+                        )
+                    )
+                tool_res = str(
+                    tool._run(*utils.get_args(tool, utils.sanitize(parsed.tool_input)))
+                )  # TODO: Make multi-argument parsing more robust
                 if tool.return_direct:
                     isok = input("Is this ok? (y/n)")
                     if isok == "y":
@@ -65,11 +71,14 @@ class Agent:
                         break
                     feedback = input("Enter feedback:")
                     tool_res += "\nFeedback: " + feedback
-                ctx.add_message(Message(f"{res}\nObservation{i}: {tool_res}\nAnalyze{i}: "))
+                ctx.add_message(
+                    Message(f"{res}\nObservation{i}: {tool_res}\nAnalyze{i}: ")
+                )
 
 
 if __name__ == "__main__":
     agent = Agent(Gpt4Vision())
-    additional_info = input("Enter any additional information regarding this image or guidance on the geolocation process. \nPress enter to begin.\n")
-    print(agent.run("./images/anon/10.png",
-                    additional_info))
+    additional_info = input(
+        "Enter any additional information regarding this image or guidance on the geolocation process. \nPress enter to begin.\n"
+    )
+    print(agent.run("./images/anon/10.png", additional_info))

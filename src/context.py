@@ -2,6 +2,7 @@ from typing import List
 
 from langchain_core.tools import BaseTool
 
+
 class Message:
     message: str
     role: str | None
@@ -9,6 +10,7 @@ class Message:
     def __init__(self, msg, role: str | None = None):
         self.message = msg
         self.role = role
+
 
 class Context:
     messages: List[Message]

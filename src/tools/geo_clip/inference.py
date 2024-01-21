@@ -13,19 +13,26 @@ from ...tools import osm
 PAR_DIR = Path(__file__).parent
 
 model = None
+
+
 def initialize_model():
     global model
-    model = GeoCLIP(gps_gallary_path=PAR_DIR / 'model/gps_gallery_100K.csv')
+    model = GeoCLIP(gps_gallary_path=PAR_DIR / "model/gps_gallery_100K.csv")
     model.eval()
 
-def _predict(image: Image.Image , top_n=5) -> List[Tuple[Tuple[float, float], float]]:
+
+def _predict(image: Image.Image, top_n=5) -> List[Tuple[Tuple[float, float], float]]:
     if model is None:
         initialize_model()
     with torch.no_grad():
         top_pred_gps, top_pred_prob = model.predict(image, top_k=5)
 
-    tops = [(tuple(e.item() for e in top_pred_gps[i]), top_pred_prob[i].item()) for i in range(top_n)]
+    tops = [
+        (tuple(e.item() for e in top_pred_gps[i]), top_pred_prob[i].item())
+        for i in range(top_n)
+    ]
     return tops
+
 
 @tool("Geoclip")
 def geoclip_predict(img_file) -> str:
@@ -42,8 +49,10 @@ def geoclip_predict(img_file) -> str:
     tops = _predict(image)
 
     viz = Coords([it[0] for it in tops]).render()
-    saved = utils.save_img(viz, 'geoclip')
-    cords_fmt = "\n".join([f"lat: {it[0][0]}, lon: {it[0][1]}, prob: {it[1]}" for it in tops])
+    saved = utils.save_img(viz, "geoclip")
+    cords_fmt = "\n".join(
+        [f"lat: {it[0][0]}, lon: {it[0][1]}, prob: {it[1]}" for it in tops]
+    )
     return f"""
     GEOCLIP Prediction Results:
     Top 5 likely coordinates:
@@ -52,7 +61,8 @@ def geoclip_predict(img_file) -> str:
     {utils.image_to_prompt(str(saved))}
     """
 
+
 if __name__ == "__main__":
-    img_path = PAR_DIR/'images/Kauai.png'
+    img_path = PAR_DIR / "images/Kauai.png"
     tops = geoclip_predict(str(img_path))
     print(tops)

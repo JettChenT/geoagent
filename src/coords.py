@@ -11,17 +11,22 @@ from . import utils
 
 PADDING = 0.001
 
+
 # TODO: support for coords to preserve auxiliary information?
 class Coords:
-    coords: List[Tuple[float, float]] # lat, lon
+    coords: List[Tuple[float, float]]  # lat, lon
     auxiliary: List[Any]
 
-    def __init__(self, coords: List[Tuple[float, float]], auxiliary: List[Any]|None = None):
+    def __init__(
+        self, coords: List[Tuple[float, float]], auxiliary: List[Any] | None = None
+    ):
         self.coords = coords
-        self.auxiliary = auxiliary or [{}]*len(coords)
+        self.auxiliary = auxiliary or [{}] * len(coords)
 
     def split_latlon(self) -> Tuple[List[float], List[float]]:
-        return list(map(lambda x: x[0], self.coords)), list(map(lambda x: x[1], self.coords))
+        return list(map(lambda x: x[0], self.coords)), list(
+            map(lambda x: x[1], self.coords)
+        )
 
     def render(self) -> Image.Image:
         """
@@ -61,8 +66,12 @@ class Coords:
     @staticmethod
     def from_csv(path: str | Path):
         df = pd.read_csv(path)
-        return Coords(coords=df[['lat','lon']].values.tolist(),
-                      auxiliary=[json.loads(x) for x in df["auxiliary"]] if "auxiliary" in df.columns else None)
+        return Coords(
+            coords=df[["lat", "lon"]].values.tolist(),
+            auxiliary=[json.loads(x) for x in df["auxiliary"]]
+            if "auxiliary" in df.columns
+            else None,
+        )
 
     def __len__(self):
         return len(self.coords)

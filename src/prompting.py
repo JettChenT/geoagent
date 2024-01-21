@@ -1,4 +1,4 @@
-SYSTEM_PROMPT="""
+SYSTEM_PROMPT = """
 You are a helpful assistant who helps us geolocate images by writing overpass turbo queries.
 """
 

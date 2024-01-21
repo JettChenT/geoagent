@@ -4,8 +4,12 @@ from pathlib import Path
 
 from PIL import Image
 from llama_cpp import Llama
-from llama_cpp.llava_cpp import clip_model_load, llava_image_embed_make_with_bytes, llava_eval_image_embed, \
-    llava_image_embed_free
+from llama_cpp.llava_cpp import (
+    clip_model_load,
+    llava_image_embed_make_with_bytes,
+    llava_eval_image_embed,
+    llava_image_embed_free,
+)
 from objc._bridgesupport import ctypes
 
 import prompting
