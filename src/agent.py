@@ -4,12 +4,12 @@ from langchain_core.agents import AgentAction, AgentFinish
 from langchain_core.tools import BaseTool
 from rich import print
 
-import config
-import utils
-from prompting import *
-from connector.gptv import Gpt4Vision
-from connector import LMM, Context, Message
-from tools import TOOLS, find_tool
+from . import config, utils
+from .prompting import *
+from .connector.gptv import Gpt4Vision
+from .connector import LMM, Message
+from .tools import TOOLS, find_tool
+from .context import Context
 
 class Agent:
     DEPTH_THRESHOLD = 10

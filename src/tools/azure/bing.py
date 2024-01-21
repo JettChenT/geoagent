@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import utils
+from ... import utils
 import requests
 from rich import print
 from langchain.tools import tool

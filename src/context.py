@@ -1,9 +1,6 @@
-from typing import List, Optional
+from typing import List
 
-from langchain.tools import BaseTool
-from pydantic import BaseModel
-from attrs import define
-
+from langchain_core.tools import BaseTool
 
 class Message:
     message: str
@@ -23,10 +20,3 @@ class Context:
 
     def add_message(self, msg: Message):
         self.messages.append(msg)
-
-class LMM:
-    def prompt(self, context: Context, stop: Optional[List[str]]) -> Message:
-        pass
-
-    def heartbeat(self) -> bool:
-        pass

@@ -10,8 +10,8 @@ from langchain.prompts import ChatPromptTemplate
 from langchain_core.agents import AgentAction
 from langchain_core.messages import HumanMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
-from utils import encode_image
-from tools import TOOLS
+from ..utils import encode_image
+from ..tools import TOOLS
 from langchain.globals import set_debug
 
 # set_debug(True)

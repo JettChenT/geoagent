@@ -2,7 +2,7 @@ import re
 from typing import List
 
 from . import LMM, Context, Message
-import utils
+from .. import utils
 
 from langchain_core.messages import HumanMessage
 from langchain_google_genai import ChatGoogleGenerativeAI

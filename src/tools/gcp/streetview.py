@@ -1,12 +1,12 @@
 from .auth import GOOGLE_MAPS_API_KEY
-from tools.output import debug
+from ...tools.output import debug
 
 from streetview import search_panoramas, get_streetview
 from PIL import Image
 from langchain.tools import tool
 from tqdm import tqdm
-import utils
-from coords import Coords
+from ... import utils
+from ...coords import Coords
 import random
 import textwrap
 PANO_LIMIT = 120

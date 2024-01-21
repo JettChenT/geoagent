@@ -2,8 +2,8 @@ from geopy import Nominatim
 from langchain.tools import tool
 from langchain_core.tools import ToolException
 
-import utils
-from coords import Coords
+from .. import utils
+from ..coords import Coords
 
 geolocator = Nominatim(user_agent="OSM Querying Geocoder", timeout=10)
 

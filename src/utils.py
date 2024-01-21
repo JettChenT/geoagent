@@ -194,7 +194,7 @@ def toggle_blackbar(to: bool = True):
 
 
 def sanitize(s: str) -> str:
-    return s.replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\\n", "").strip()
+    return s.replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\\n", "").replace("\"","").strip()
 
 def get_args(tool:BaseTool, tool_input:str) -> List[str]:
     if len(tool.args.keys()) <= 1:

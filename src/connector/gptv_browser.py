@@ -9,7 +9,7 @@ import requests
 from PIL import Image
 from websocket_server import WebsocketServer
 
-from utils import md, image_to_base64
+from ..utils import md, image_to_base64
 from . import LMM
 
 class GPT4VisionBrowser(LMM):

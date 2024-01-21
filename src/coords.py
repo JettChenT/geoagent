@@ -7,7 +7,7 @@ import io
 import folium
 import json
 
-import utils
+from . import utils
 
 PADDING = 0.001
 

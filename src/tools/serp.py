@@ -5,11 +5,8 @@ import requests
 import dotenv
 from serpapi import GoogleSearch
 from PIL import Image
-import utils
+from .. import utils
 from langchain.tools import tool
-
-from utils import encode_image
-
 
 SERP_API_KEY = os.environ['SERP_API_KEY']
 TOP_N = 15

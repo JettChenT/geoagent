@@ -6,9 +6,9 @@ import torch
 from langchain.tools import tool
 
 from .model.GeoCLIP import GeoCLIP
-import utils
-from coords import Coords
-from tools import osm
+from ... import utils
+from ...coords import Coords
+from ...tools import osm
 
 PAR_DIR = Path(__file__).parent
 

@@ -4,7 +4,7 @@ from typing import List, Dict, Optional
 
 from langchain_core.messages import HumanMessage
 
-import utils
+from .. import utils
 from . import LMM, Message, Context
 import dotenv
 import os
@@ -12,7 +12,7 @@ from PIL import Image
 from pathlib import Path
 from openai import OpenAI
 from rich import print
-from utils import encode_image
+from ..utils import encode_image
 import hashlib
 
 def proc_messages(messages: List[Message]) -> List[Dict]:

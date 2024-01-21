@@ -1,8 +1,8 @@
 from .auth import GOOGLE_MAPS_API_KEY
-from coords import Coords
+from ...coords import Coords
 from PIL import Image
 import io
-import utils
+from ... import utils
 from langchain.tools import tool
 
 import requests

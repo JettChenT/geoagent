@@ -7,8 +7,8 @@ import torchvision.transforms as transforms
 from pathlib import Path
 from langchain.tools import tool
 
-from coords import Coords
-import utils
+from ...coords import Coords
+from ... import utils
 
 model = None
 TOP_N = 15
