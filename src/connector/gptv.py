@@ -55,7 +55,14 @@ class Gpt4Vision(LMM):
         self.debug = debug
         self.max_tokens = max_tokens
 
-    def prompt(self, context: Context, stop: Optional[List[str]]) -> Message:
+    def prompt(self, context: Context, stop: Optional[List[str]] = None, n:int = 1) -> List[Message]:
+        """
+        Prompt GPT-4 Vision
+        :param context: the state of the conversation
+        :param stop: stop tokens
+        :param n: number of responses
+        :return: List of messages
+        """
         messages = proc_messages(context.messages)
         if self.debug:
             print(
@@ -66,22 +73,22 @@ class Gpt4Vision(LMM):
             messages=messages,
             max_tokens=self.max_tokens,
             stop=stop,
+            n=n
         )
         if self.debug:
             print(response)
         if not response.choices:
             print(response)
             raise Exception("No response from GPT-4 Vision")
-        res_msg = response.choices[0].message
-        return Message(res_msg.content, res_msg.role)
+        return [Message(c.message.content, c.message.role) for c in response.choices]
 
 
 if __name__ == "__main__":
     ctx = Context()
     ctx.add_message(
         Message(
-            f"Describe this image in detail: {utils.image_to_prompt('./images/kns.png')}"
+            f"Describe this image in a sentence: {utils.image_to_prompt('./images/kns.png')}"
         )
     )
     gptv = Gpt4Vision()
-    print(gptv.prompt(ctx).message)
+    print(gptv.prompt(ctx, n=3))

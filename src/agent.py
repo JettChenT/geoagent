@@ -14,6 +14,7 @@ from .context import Context
 
 class Agent:
     DEPTH_THRESHOLD = 10
+    BRANCH_CNT = 3
 
     def __init__(self, vllm: LMM):
         self.vllm = vllm
@@ -40,8 +41,11 @@ class Agent:
         )
         for i in range(1, self.DEPTH_THRESHOLD + 1):
             print("last message", ctx.messages[-1].message)
-            res = self.vllm.prompt(ctx, stop=["Observation"]).message
-            print(res)
+            choices = self.vllm.prompt(ctx, stop=["Observation"], n=self.BRANCH_CNT)
+            for (i, r) in enumerate(choices):
+                print(f"Branch {i}: {r}")
+            chosen = int(input("Choose a branch: "))
+            res = choices[chosen].message
             parsed: AgentAction | AgentFinish = self.output_parser.parse(res)
             if isinstance(parsed, AgentFinish):
                 isok = input("Is this ok? (y/n)")
@@ -61,6 +65,7 @@ class Agent:
                             f"{res}\n Could not find tool {parsed.tool}, please adjust your input. \nAnalyze{i}: "
                         )
                     )
+                    continue
                 tool_res = str(
                     tool._run(*utils.get_args(tool, utils.sanitize(parsed.tool_input)))
                 )  # TODO: Make multi-argument parsing more robust
@@ -74,6 +79,7 @@ class Agent:
                 ctx.add_message(
                     Message(f"{res}\nObservation{i}: {tool_res}\nAnalyze{i}: ")
                 )
+                ctx.commit(transition=parsed)
 
 
 if __name__ == "__main__":
@@ -81,4 +87,4 @@ if __name__ == "__main__":
     additional_info = input(
         "Enter any additional information regarding this image or guidance on the geolocation process. \nPress enter to begin.\n"
     )
-    print(agent.run("./images/anon/10.png", additional_info))
+    print(agent.run("./images/anon/2.png", additional_info))

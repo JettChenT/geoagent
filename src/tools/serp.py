@@ -43,4 +43,4 @@ def search_img(img_path: str):
 
 if __name__ == "__main__":
     dotenv.load_dotenv()
-    print(search_img._run("./images/anon/10.png"))
+    print(search_img._run("./images/anon/2.png"))
