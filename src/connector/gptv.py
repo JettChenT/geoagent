@@ -55,7 +55,7 @@ class Gpt4Vision(LMM):
         self.debug = debug
         self.max_tokens = max_tokens
 
-    def prompt(self, context: Context, stop: Optional[List[str]] = None, n:int = 1) -> List[Message]:
+    def prompt(self, context: Context | List[Message], stop: Optional[List[str]] = None, n:int = 1) -> List[Message]:
         """
         Prompt GPT-4 Vision
         :param context: the state of the conversation
@@ -63,7 +63,8 @@ class Gpt4Vision(LMM):
         :param n: number of responses
         :return: List of messages
         """
-        messages = proc_messages(context.messages)
+        msg: List[Message] = context.messages if isinstance(context, Context) else context
+        messages = proc_messages(msg)
         if self.debug:
             print(
                 f"HASH of messages: {hashlib.md5(str(messages).encode()).hexdigest()}"

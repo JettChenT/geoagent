@@ -2,6 +2,7 @@ from typing import List
 
 from langchain_core.tools import BaseTool
 from typing_extensions import Self
+import numpy as np
 
 
 class Message:
@@ -19,17 +20,35 @@ class Message:
 class Context:
     """
     Context represents the state of an agent.
+    In the frame of a LATS search, this can also be seen as a node of the search tree.
     """
     def __init__(self,
                  tools: List[BaseTool] | None = None,
                  parent: Self|None = None,
                  cur_messages: List[Message] | None = None,
-                 transition = None
+                 transition=None,
+                 observation=None
                  ):
         self.tools = tools
-        self.parent = parent
         self.cur_messages = cur_messages or []
         self.transition = transition # The last action or action-equivalent taken by the agent
+        self.observation = observation # The last observation made by the agent
+
+        # LATS stuff
+        self.parent = parent
+        self.visits = 0
+        self.value = 0
+        self.children: List[Self] = []
+        self.depth = 0 if parent is None else parent.depth + 1
+        self.is_terminal = False
+        self.reward = 0
+        self.exhausted = False  # If all children are terminal
+        self.em = 0  # Exact match, evaluation metric
+
+    def uct(self):
+        if self.visits == 0:
+            return self.value
+        return self.value / self.visits + np.sqrt(2 * np.log(self.parent.visits) / self.visits)
 
     def add_message(self, msg: Message):
         self.cur_messages.append(msg)
@@ -45,12 +64,14 @@ class Context:
             message = []
         elif isinstance(message, Message):
             message = [message]
-        return Context(
+        res = Context(
             tools=self.tools,
             parent=self,
             cur_messages=message,
             transition=transition
         )
+        self.children.append(res)
+        return res
 
     @property
     def messages(self):

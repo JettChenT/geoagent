@@ -1,8 +1,11 @@
+from typing import Tuple
+
 from langchain.agents.output_parsers import ReActSingleInputOutputParser
 from langchain.tools.render import render_text_description
 from langchain_core.agents import AgentAction, AgentFinish
 from langchain_core.tools import BaseTool
 from rich import print
+import logging
 
 from . import config, utils
 from .prompting import *
@@ -11,15 +14,189 @@ from .connector import LMM, Message
 from .tools import TOOLS, find_tool
 from .context import Context
 
+def select_node(node: Context):
+    while node and node.children:
+        logging.info(f"Selecting from {len(node.children)} children at depth {node.depth}.")
+
+        terminal_children = [child for child in node.children if child.is_terminal]
+        terminal_status = [child.is_terminal for child in node.children]
+
+        if len(terminal_children) == len(node.children):
+            logging.info(f"All children are terminal at depth {node.depth}. Backtracking...")
+            if node.parent:
+                node.parent.children.remove(node)
+            node = node.parent
+            continue
+
+        node_with_reward_1 = next((child for child in terminal_children if child.reward == 1), None)
+        if node_with_reward_1:
+            logging.info(f"Found terminal node with reward 1 at depth {node.depth}.")
+            return node_with_reward_1
+
+        node = max((child for child in node.children if not child.is_terminal), key=lambda child: child.uct(),
+                   default=None)
+
+        while node.is_terminal and node.reward != 1:
+            node = max((child for child in node.parent.children if not child.is_terminal),
+                       key=lambda child: child.uct(), default=None)
+        logging.info(f"Selected node at depth {node.depth} with UCT {node.uct()}.")
+    return node
+
+
+def backprop(node: Context, value):
+    while node:
+        node.visits += 1
+        if node.is_terminal:
+            if node.reward == 0:
+                node.value = (node.value * (node.visits - 1) + (-1)) / node.visits
+            else:
+                node.value = (node.value * (node.visits - 1) + value) / node.visits
+        else:
+            node.value = (node.value * (node.visits - 1) + value) / node.visits
+
+        node = node.parent
+
+def collect_all_nodes(node: Context):
+    nodes = [node]
+    for child in node.children:
+        nodes.extend(collect_all_nodes(child))
+    return nodes
 
 class Agent:
     DEPTH_THRESHOLD = 10
+    ROLLOUT_THRESHOLD = 5
     BRANCH_CNT = 3
 
     def __init__(self, vllm: LMM):
         self.vllm = vllm
         self.depth = 0
         self.output_parser = ReActSingleInputOutputParser()
+
+    def expand_node(self, node: Context):
+        if node.depth >= self.DEPTH_THRESHOLD:
+            node.is_terminal = True
+            return
+        sampled = self.vllm.prompt(node, stop=["Observation"], n=self.BRANCH_CNT)
+        for s in sampled:
+            parsed = self.output_parser.parse(s.message)
+            new_st = node.commit(message=s, transition=parsed)
+            self.run_observe(new_st)
+            node.children.append(new_st)
+
+    def rollout(self, node: Context) -> Tuple[float, Context]:
+        dep = 0
+        rewards = [0]
+        while not node.is_terminal and dep < self.ROLLOUT_THRESHOLD:
+            self.expand_node(node)
+            for c in node.children:
+                if c.is_terminal: return c.reward, c
+            values = [self.get_value(c) for c in node.children]
+            mx_ind = values.index(max(values))
+            rewards.append(max(values))
+            node = node.children[mx_ind]
+            dep += 1
+            if dep == self.DEPTH_THRESHOLD:
+                rewards = [-1]
+        return sum(rewards)/len(rewards), node
+
+    def evaluate_node(self, node: Context):
+        votes = [self.get_value(c) for c in node.children]
+        for i,c in enumerate(node.children):
+            c.value = votes[i]
+        return sum(votes)/len(votes) if votes else 0
+
+    def run_observe(self, state: Context):
+        """
+        Make an observation. This mutates the state.
+        :param state:
+        :return:
+        """
+        parsed: AgentAction = state.transition
+        tool: BaseTool | None = find_tool(parsed.tool)
+        if tool is None:
+            state.add_message(
+                Message(
+                    f"Could not find tool {parsed.tool}, please adjust your input. \nAnalyze{state.depth}: "
+                )
+            )
+            return
+        try:
+            tool_res = str(
+                tool._run(*utils.get_args(tool, utils.sanitize(parsed.tool_input)))
+            )  # TODO: Make multi-argument parsing more robust
+        except Exception as e:
+            print(e)
+            # ask if user would like to continue, if so, ask for potential feedback
+            docontinue = input("Continue? (y/n)")
+            if docontinue == "n":
+                return
+            feedback = input("Enter feedback if any:")
+            state.add_message(
+                Message(
+                    f"Could not run tool {parsed.tool}: {e}, {feedback}\n please adjust. \nAnalyze{state.depth}: "
+                )
+            )
+            return
+        if tool.return_direct:
+            state.is_terminal = True
+            isok = input("Is this ok? (y/n)")
+            if isok == "y":
+                state.reward = 1
+            else:
+                feedback = input("Enter feedback:")
+                tool_res += "\nFeedback: " + feedback
+        state.add_message(
+            Message(f"Observation{state.depth}: {tool_res}\nAnalyze{state.depth}: ")
+        )
+        state.observation = tool_res
+
+    def get_value(self, node: Context):
+        messages = node.messages
+        messages.append(Message(VALUE_PROMPT))
+        res = self.vllm.prompt(messages)[0]
+        targ_line = res.message.splitlines()[-1]
+        for i in range(10,0,-1):
+            if str(i) in targ_line:
+                return i/10
+        return -1
+
+    def lats(self, image_loc:str, additional: str = ""):
+        root = Context(tools=TOOLS)
+        root.add_message(
+            Message(
+                INITIAL_REACT_PROMPT.format(
+                    tool_names=", ".join([t.name for t in TOOLS]),
+                    tools=render_text_description(TOOLS),
+                    input=f"{utils.image_to_prompt(image_loc)} Where is this image located? {additional}",
+                )
+            )
+        )
+        terminals = []
+
+        for i in range(1, self.DEPTH_THRESHOLD + 1):
+            node = select_node(root)
+            self.expand_node(node)
+            reward, terminal = self.rollout(max(node.children, key=lambda child: child.value))
+            terminals.append(terminal)
+            if terminal.reward == 1:
+                print("successful solution has been found!")
+                return terminal
+            backprop(terminal, reward)
+            terminal_nodes_with_reward_1 = [node for node in collect_all_nodes(root) if
+                                            node.is_terminal and node.reward == 1]
+            if terminal_nodes_with_reward_1:
+                return max(terminal_nodes_with_reward_1, key=lambda node: node.value)
+        all_nodes_list = collect_all_nodes(root)
+        all_nodes_list.extend(terminals)
+        best_child = max(all_nodes_list, key=lambda x: x.reward)
+        failed_trajectories = []
+        if best_child.reward == 1:
+            logging.info("Successful trajectory found")
+        else:
+            logging.info("Unsuccessful trajectory found")
+        if best_child is None:
+            best_child = root
+        return best_child
 
     def run(self, image_loc: str, additional: str = ""):
         """
@@ -101,4 +278,4 @@ if __name__ == "__main__":
     additional_info = input(
         "Enter any additional information regarding this image or guidance on the geolocation process. \nPress enter to begin.\n"
     )
-    print(agent.run("./images/anon/2.png", additional_info))
+    print(agent.lats("./images/anon/2.png", additional_info))
