@@ -1,5 +1,6 @@
-from typing import List
+from typing import List, Optional
 
+from langchain_core.agents import AgentAction
 from langchain_core.tools import BaseTool
 from typing_extensions import Self
 import numpy as np
@@ -26,7 +27,7 @@ class Context:
                  tools: List[BaseTool] | None = None,
                  parent: Self|None = None,
                  cur_messages: List[Message] | None = None,
-                 transition=None,
+                 transition: Optional[AgentAction]=None,
                  observation=None
                  ):
         self.tools = tools

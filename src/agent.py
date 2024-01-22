@@ -62,6 +62,11 @@ def collect_all_nodes(node: Context):
         nodes.extend(collect_all_nodes(child))
     return nodes
 
+def print_tree(node: Context, indent: int = 0):
+    print("\t" * indent, '*', str(node.cur_messages)[-20:])
+    for child in node.children:
+        print_tree(child, indent + 1)
+
 class Agent:
     DEPTH_THRESHOLD = 10
     ROLLOUT_THRESHOLD = 5
@@ -73,12 +78,26 @@ class Agent:
         self.output_parser = ReActSingleInputOutputParser()
 
     def expand_node(self, node: Context):
+        logging.info("expanding node.....")
         if node.depth >= self.DEPTH_THRESHOLD:
             node.is_terminal = True
             return
+        logging.info(f"Expanding node at depth {node.depth}")
         sampled = self.vllm.prompt(node, stop=["Observation"], n=self.BRANCH_CNT)
+        logging.info(f"Sampled {len(sampled)} messages")
         for s in sampled:
-            parsed = self.output_parser.parse(s.message)
+            logging.info(f"Sampled message: {s}")
+            try:
+                parsed = self.output_parser.parse(s.message)
+            except Exception as e:
+                print(e)
+                node.add_message(
+                    Message(
+                        f"Could not parse output: {e} \nAnalyze{node.depth}: "
+                    )
+                )
+                parsed = None
+            logging.info(f"Parsed message: {parsed}")
             new_st = node.commit(message=s, transition=parsed)
             self.run_observe(new_st)
             node.children.append(new_st)
@@ -111,21 +130,32 @@ class Agent:
         :param state:
         :return:
         """
-        parsed: AgentAction = state.transition
-        tool: BaseTool | None = find_tool(parsed.tool)
+        if state.transition is None:
+            state.add_message(Message(f"Could not parse output, please adjust your input. \nAnalyze{state.depth}: "))
+            return
+        if isinstance(state.transition, AgentFinish):
+            isok = input("Is this ok? (y/n)")
+            if isok == "y":
+                state.is_terminal = True
+                state.reward = 1
+            else:
+                feedback = input("Enter feedback:")
+                state.add_message(Message(f"Feedback: {feedback}\nAnalyze{state.depth}: "))
+            return
+        tool: BaseTool | None = find_tool(state.transition.tool)
         if tool is None:
             state.add_message(
                 Message(
-                    f"Could not find tool {parsed.tool}, please adjust your input. \nAnalyze{state.depth}: "
+                    f"Could not find tool {state.transition.tool}, please adjust your input. \nAnalyze{state.depth}: "
                 )
             )
             return
         try:
             tool_res = str(
-                tool._run(*utils.get_args(tool, utils.sanitize(parsed.tool_input)))
+                tool._run(*utils.get_args(tool, utils.sanitize(state.transition.tool_input)))
             )  # TODO: Make multi-argument parsing more robust
         except Exception as e:
-            print(e)
+            print('[red]Error[/red]: ', e)
             # ask if user would like to continue, if so, ask for potential feedback
             docontinue = input("Continue? (y/n)")
             if docontinue == "n":
@@ -133,7 +163,7 @@ class Agent:
             feedback = input("Enter feedback if any:")
             state.add_message(
                 Message(
-                    f"Could not run tool {parsed.tool}: {e}, {feedback}\n please adjust. \nAnalyze{state.depth}: "
+                    f"Could not run tool {state.transition.tool}: {e}, {feedback}\n please adjust. \nAnalyze{state.depth}: "
                 )
             )
             return
@@ -157,6 +187,7 @@ class Agent:
         targ_line = res.message.splitlines()[-1]
         for i in range(10,0,-1):
             if str(i) in targ_line:
+                logging.info(f"Found value {i} in {targ_line}")
                 return i/10
         return -1
 
@@ -175,6 +206,7 @@ class Agent:
 
         for i in range(1, self.DEPTH_THRESHOLD + 1):
             node = select_node(root)
+            logging.info(f"Selected node at depth {node.depth}: {node.messages[-1]}")
             self.expand_node(node)
             reward, terminal = self.rollout(max(node.children, key=lambda child: child.value))
             terminals.append(terminal)
@@ -278,4 +310,5 @@ if __name__ == "__main__":
     additional_info = input(
         "Enter any additional information regarding this image or guidance on the geolocation process. \nPress enter to begin.\n"
     )
-    print(agent.lats("./images/anon/2.png", additional_info))
+    logging.basicConfig(level=logging.INFO)
+    print(agent.lats("./images/anon/6.png", additional_info))

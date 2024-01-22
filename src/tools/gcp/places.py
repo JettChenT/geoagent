@@ -34,6 +34,9 @@ def text_search(query: str):
         ),
     )
     res_data = r.json()
+    if 'places' not in res_data:
+        print(res_data)
+        return f"Invalid response: {res_data}"
     res_data_disp = [
         {"name": x["displayName"]["text"], "location": x["location"]}
         for x in res_data["places"]
@@ -88,4 +91,4 @@ def plot_satellite(coords_loc: str):
 if __name__ == "__main__":
     from rich import print
 
-    print(plot_satellite("./run/textsearch_coords2.csv"))
+    print(text_search("Starbucks"))

@@ -126,5 +126,6 @@ Thought1: """
 
 VALUE_PROMPT = """
 Reflect on the current trajectory. Think about whether the current trajectory is promising on its path toward a successful geolocation.
-Finally, in a separate line, output a number in the range [1, 10] that represents how promising the current trajectory is.
+Finally, in a separate line, output a number in the range [1, 10] that represents how promising the current trajectory is. 
+Remember to output the number and the number only in the final line.
 """

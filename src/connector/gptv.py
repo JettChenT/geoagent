@@ -11,6 +11,7 @@ import os
 from PIL import Image
 from pathlib import Path
 from openai import OpenAI
+from openai._types import NOT_GIVEN
 from rich import print
 from ..utils import encode_image
 import hashlib
@@ -55,7 +56,7 @@ class Gpt4Vision(LMM):
         self.debug = debug
         self.max_tokens = max_tokens
 
-    def prompt(self, context: Context | List[Message], stop: Optional[List[str]] = None, n:int = 1) -> List[Message]:
+    def prompt(self, context: Context | List[Message], stop: List[str] | None = None, n:int = 1) -> List[Message]:
         """
         Prompt GPT-4 Vision
         :param context: the state of the conversation
@@ -63,6 +64,8 @@ class Gpt4Vision(LMM):
         :param n: number of responses
         :return: List of messages
         """
+        if stop is None:
+            stop = NOT_GIVEN
         msg: List[Message] = context.messages if isinstance(context, Context) else context
         messages = proc_messages(msg)
         if self.debug:
