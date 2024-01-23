@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from langchain_core.agents import AgentAction
+from langchain_core.agents import AgentAction, AgentFinish
 from langchain_core.tools import BaseTool
 from typing_extensions import Self
 import numpy as np
@@ -77,3 +77,15 @@ class Context:
     @property
     def messages(self):
         return (self.parent.messages if self.parent else []) + self.cur_messages
+
+    def __str__(self):
+        transition_render = 'NO_ACTION'
+        if isinstance(self.transition, AgentAction):
+            transition_render = f"{self.transition.tool} ({repr(self.transition.tool_input)})"
+        if isinstance(self.transition, AgentFinish):
+            transition_render = f"FINISH"
+        return (f"Context([yellow]{hex(id(self))}[/yellow] ;"
+                f"[green]{transition_render}[/green], "
+                f"value: [red]{self.value}[/red], visits: [red]{self.visits}[/red], "
+                f"depth: [blue]{self.depth}[/blue], reward: [blue]{self.reward}[/blue]) :: "
+                f"[blue] {repr(self.cur_messages[-1].message[-30:])} [/blue]")

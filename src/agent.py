@@ -62,14 +62,18 @@ def collect_all_nodes(node: Context):
         nodes.extend(collect_all_nodes(child))
     return nodes
 
-def print_tree(node: Context, indent: int = 0):
-    print("\t" * indent, '*', str(node.cur_messages)[-20:])
+
+def print_tree(node: Context, indent: int = 0, highlight: Context = None):
+    if node == highlight:
+        print(f"{'  ' * indent}[red]*[/red] {node}")
+    else:
+        print(f"{'  ' * indent}* {node}")
     for child in node.children:
-        print_tree(child, indent + 1)
+        print_tree(child, indent + 1, highlight)
 
 class Agent:
     DEPTH_THRESHOLD = 10
-    ROLLOUT_THRESHOLD = 5
+    ROLLOUT_THRESHOLD = 2
     BRANCH_CNT = 3
 
     def __init__(self, vllm: LMM):
@@ -78,34 +82,35 @@ class Agent:
         self.output_parser = ReActSingleInputOutputParser()
 
     def expand_node(self, node: Context):
-        logging.info("expanding node.....")
+        logging.info(f"expanding node {hex(id(node))}.....")
         if node.depth >= self.DEPTH_THRESHOLD:
             node.is_terminal = True
             return
-        logging.info(f"Expanding node at depth {node.depth}")
         sampled = self.vllm.prompt(node, stop=["Observation"], n=self.BRANCH_CNT)
         logging.info(f"Sampled {len(sampled)} messages")
         for s in sampled:
             logging.info(f"Sampled message: {s}")
+            new_st = node.commit(message=s)
             try:
                 parsed = self.output_parser.parse(s.message)
             except Exception as e:
                 print(e)
-                node.add_message(
+                new_st.add_message(
                     Message(
                         f"Could not parse output: {e} \nAnalyze{node.depth}: "
                     )
                 )
                 parsed = None
+            new_st.transition = parsed
             logging.info(f"Parsed message: {parsed}")
-            new_st = node.commit(message=s, transition=parsed)
             self.run_observe(new_st)
-            node.children.append(new_st)
 
     def rollout(self, node: Context) -> Tuple[float, Context]:
+        print("-----------Rolling out----------")
         dep = 0
         rewards = [0]
         while not node.is_terminal and dep < self.ROLLOUT_THRESHOLD:
+            print("Rollout depth", dep)
             self.expand_node(node)
             for c in node.children:
                 if c.is_terminal: return c.reward, c
@@ -114,12 +119,13 @@ class Agent:
             rewards.append(max(values))
             node = node.children[mx_ind]
             dep += 1
-            if dep == self.DEPTH_THRESHOLD:
+            if dep == self.ROLLOUT_THRESHOLD:
                 rewards = [-1]
         return sum(rewards)/len(rewards), node
 
     def evaluate_node(self, node: Context):
         votes = [self.get_value(c) for c in node.children]
+        print("setting votes...", votes)
         for i,c in enumerate(node.children):
             c.value = votes[i]
         return sum(votes)/len(votes) if votes else 0
@@ -207,11 +213,16 @@ class Agent:
         for i in range(1, self.DEPTH_THRESHOLD + 1):
             node = select_node(root)
             logging.info(f"Selected node at depth {node.depth}: {node.messages[-1]}")
+            print("-----Before expansion-----")
+            print_tree(root, highlight=node)
             self.expand_node(node)
+            print("-----After expansion-----")
+            print_tree(root)
             reward, terminal = self.rollout(max(node.children, key=lambda child: child.value))
             terminals.append(terminal)
             if terminal.reward == 1:
                 print("successful solution has been found!")
+                print_tree(root)
                 return terminal
             backprop(terminal, reward)
             terminal_nodes_with_reward_1 = [node for node in collect_all_nodes(root) if
@@ -311,4 +322,4 @@ if __name__ == "__main__":
         "Enter any additional information regarding this image or guidance on the geolocation process. \nPress enter to begin.\n"
     )
     logging.basicConfig(level=logging.INFO)
-    print(agent.lats("./images/anon/6.png", additional_info))
+    print(agent.lats("./images/anon/5.png", additional_info))
