@@ -119,6 +119,7 @@ Analyze2: Analyze the results of action2
 Thought3: So on... In this case you have realized that you have found the location of the image. If you have not found the location of the image, you can continue to use the tools to find the location of the image.
 Final Answer: The location of the image is ... The coordinates are ...
 
+Remember to output either the final answer or an action at each step, never both.
 Begin!
 
 Question1: {input}
