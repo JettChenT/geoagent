@@ -292,7 +292,7 @@ class Agent:
                         tool._run(*utils.get_args(tool, utils.sanitize(parsed.tool_input)))
                     )  # TODO: Make multi-argument parsing more robust
                 except Exception as e:
-                    print(e)
+                    print(f"Exception encountered when running tool {tool}", e)
                     # ask if user would like to continue, if so, ask for potential feedback
                     docontinue = input("Continue? (y/n)")
                     if docontinue == "n":
@@ -323,4 +323,4 @@ if __name__ == "__main__":
         "Enter any additional information regarding this image or guidance on the geolocation process. \nPress enter to begin.\n"
     )
     logging.basicConfig(level=logging.INFO)
-    print(agent.lats("./datasets/IM2GPS/2k_random_test_anon/4d29d379-d3dc-4266-a559-5e65aac6516d.jpg", additional_info))
+    print(agent.lats("./images/anon/1.png", additional_info))

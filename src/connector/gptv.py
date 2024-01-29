@@ -51,7 +51,8 @@ class Gpt4Vision(LMM):
         # Adds black bar containing the location of the image, since gpt-vision api does not recognize image order.
         # utils.toggle_blackbar()
         self.client = OpenAI(
-            api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_API_BASE")
+            api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_API_BASE"),
+            timeout=120
         )
         self.debug = debug
         self.max_tokens = max_tokens
@@ -75,21 +76,27 @@ class Gpt4Vision(LMM):
             print(
                 f"HASH of messages: {hashlib.md5(str(messages).encode()).hexdigest()}"
             )
-        response = self.client.chat.completions.create(
-            model="gpt-4-vision-preview",
-            messages=messages,
-            max_tokens=self.max_tokens,
-            stop=stop,
-            n=n,
-            temperature=temperature,
-            timeout=60,
-        )
+        choices = []
+        for i in range(n):
+            cur_msg = msg
+            if i > 0:
+                cur_msg.append(Message(f"Previously Generated messages: {list(map(lambda x: x.content, choices))}. "
+                                       f"Now, generate a different choice:"))
+            response = self.client.chat.completions.create(
+                model="gpt-4-vision-preview",
+                messages=proc_messages(cur_msg),
+                max_tokens=self.max_tokens,
+                stop=stop,
+                temperature=temperature,
+            )
+            if not response.choices:
+                print(response)
+                raise Exception("No response from GPT-4 Vision")
+            r = response.choices[0]
+            choices.append(r.message)
         if self.debug:
-            print(response)
-        if not response.choices:
-            print(response)
-            raise Exception("No response from GPT-4 Vision")
-        return [Message(c.message.content, c.message.role) for c in response.choices]
+            print(choices)
+        return [Message(c.content, c.role) for c in choices]
 
 
 if __name__ == "__main__":
@@ -100,4 +107,4 @@ if __name__ == "__main__":
         )
     )
     gptv = Gpt4Vision()
-    print(gptv.prompt(ctx))
+    print(gptv.prompt(ctx, n=3))
