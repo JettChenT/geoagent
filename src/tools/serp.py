@@ -26,7 +26,8 @@ def search_img(img_path: str):
     }
     search = GoogleSearch(params)
     results = search.get_dict()
-    # print(results)
+    if "visual_matches" not in results:
+        return f"Error: {results['error']}" if "error" in results else "No results found."
     visual_matches = results["visual_matches"]
     res = ""
     for i, v in enumerate(visual_matches[:TOP_N]):
@@ -43,4 +44,4 @@ def search_img(img_path: str):
 
 if __name__ == "__main__":
     dotenv.load_dotenv()
-    print(search_img._run("./images/anon/2.png"))
+    print(search_img._run("./datasets/IM2GPS/2k_random_test_anon/4d29d379-d3dc-4266-a559-5e65aac6516d.jpg"))

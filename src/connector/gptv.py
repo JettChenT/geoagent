@@ -56,9 +56,10 @@ class Gpt4Vision(LMM):
         self.debug = debug
         self.max_tokens = max_tokens
 
-    def prompt(self, context: Context | List[Message], stop: List[str] | None = None, n:int = 1) -> List[Message]:
+    def prompt(self, context: Context | List[Message], stop: List[str] | None = None, n:int = 1, temperature: float|None=None) -> List[Message]:
         """
         Prompt GPT-4 Vision
+        :param temperature: temperature of generation
         :param context: the state of the conversation
         :param stop: stop tokens
         :param n: number of responses
@@ -66,6 +67,8 @@ class Gpt4Vision(LMM):
         """
         if stop is None:
             stop = NOT_GIVEN
+        if temperature is None:
+            temperature = NOT_GIVEN
         msg: List[Message] = context.messages if isinstance(context, Context) else context
         messages = proc_messages(msg)
         if self.debug:
@@ -77,7 +80,8 @@ class Gpt4Vision(LMM):
             messages=messages,
             max_tokens=self.max_tokens,
             stop=stop,
-            n=n
+            n=n,
+            temperature=temperature
         )
         if self.debug:
             print(response)
@@ -91,8 +95,8 @@ if __name__ == "__main__":
     ctx = Context()
     ctx.add_message(
         Message(
-            f"Describe this image in a sentence: {utils.image_to_prompt('./images/kns.png')}"
+            f"Describe this image in a sentence: {utils.image_to_prompt('./datasets/IM2GPS/2k_random_test_anon/4d29d379-d3dc-4266-a559-5e65aac6516d.jpg')}"
         )
     )
     gptv = Gpt4Vision()
-    print(gptv.prompt(ctx, n=3))
+    print(gptv.prompt(ctx))

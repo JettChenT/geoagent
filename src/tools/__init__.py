@@ -10,14 +10,14 @@ TOOLS: List[BaseTool] = [
     # osm.query,
     # osm.wiki_search,
     osm.show_coords,
-    nominatim.search_raw,
+    # nominatim.search_raw,
     # geo_clip.geoclip_predict,
     streetview.get_panos,
     vpr.locate_image,
     places.text_search,
     places.plot_satellite,
-    # azure.bing.search_text,
-    azure.bing.search_image,
+    azure.bing.search_text,
+    # azure.bing.search_image,
     serp.search_img,
 ]
 

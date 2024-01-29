@@ -86,7 +86,7 @@ class Agent:
         if node.depth >= self.DEPTH_THRESHOLD:
             node.is_terminal = True
             return
-        sampled = self.vllm.prompt(node, stop=["Observation"], n=self.BRANCH_CNT)
+        sampled = self.vllm.prompt(node, stop=["Observation"], n=self.BRANCH_CNT, temperature=1.7)
         logging.info(f"Sampled {len(sampled)} messages")
         for s in sampled:
             logging.info(f"Sampled message: {s}")
@@ -189,7 +189,7 @@ class Agent:
     def get_value(self, node: Context):
         messages = node.messages
         messages.append(Message(VALUE_PROMPT))
-        res = self.vllm.prompt(messages)[0]
+        res = self.vllm.prompt(messages, temperature=0.1)[0]
         targ_line = res.message.splitlines()[-1]
         for i in range(10,0,-1):
             if str(i) in targ_line:
@@ -198,6 +198,7 @@ class Agent:
         return -1
 
     def lats(self, image_loc:str, additional: str = ""):
+        utils.flush_run_dir()
         root = Context(tools=TOOLS)
         root.add_message(
             Message(
@@ -218,7 +219,7 @@ class Agent:
             self.expand_node(node)
             print("-----After expansion-----")
             print_tree(root)
-            reward, terminal = self.rollout(max(node.children, key=lambda child: child.value))
+            reward, terminal = self.rollout(max(node.children, key=lambda child: self.get_value(child)))
             terminals.append(terminal)
             if terminal.reward == 1:
                 print("successful solution has been found!")
@@ -261,7 +262,7 @@ class Agent:
         )
         for i in range(1, self.DEPTH_THRESHOLD + 1):
             print("last message", ctx.messages[-1].message)
-            choices = self.vllm.prompt(ctx, stop=["Observation"], n=self.BRANCH_CNT)
+            choices = self.vllm.prompt(ctx, stop=["Observation"], n=self.BRANCH_CNT, temperature=1)
             for (i, r) in enumerate(choices):
                 print(f"Branch {i}: {r}")
             chosen = int(input("Choose a branch: "))
@@ -322,4 +323,4 @@ if __name__ == "__main__":
         "Enter any additional information regarding this image or guidance on the geolocation process. \nPress enter to begin.\n"
     )
     logging.basicConfig(level=logging.INFO)
-    print(agent.lats("./images/anon/5.png", additional_info))
+    print(agent.lats("./datasets/IM2GPS/2k_random_test_anon/4d29d379-d3dc-4266-a559-5e65aac6516d.jpg", additional_info))
