@@ -24,6 +24,7 @@ def search_img(img_path: str):
         "engine": "google_lens",
         "url": utils.upload_image(Path(img_path)),
     }
+    print(params)
     search = GoogleSearch(params)
     results = search.get_dict()
     if "visual_matches" not in results:
@@ -44,4 +45,4 @@ def search_img(img_path: str):
 
 if __name__ == "__main__":
     dotenv.load_dotenv()
-    print(search_img._run("./datasets/IM2GPS/2k_random_test_anon/4d29d379-d3dc-4266-a559-5e65aac6516d.jpg"))
+    print(search_img._run("./images/ukr_citycenter.jpg"))

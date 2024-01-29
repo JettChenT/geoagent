@@ -81,7 +81,8 @@ class Gpt4Vision(LMM):
             max_tokens=self.max_tokens,
             stop=stop,
             n=n,
-            temperature=temperature
+            temperature=temperature,
+            timeout=60,
         )
         if self.debug:
             print(response)

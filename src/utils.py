@@ -1,3 +1,4 @@
+import io
 import re
 from pathlib import Path
 import os
@@ -220,14 +221,24 @@ def get_args(tool: BaseTool, tool_input: str) -> List[str]:
 
 def upload_image(image: Path) -> str:
     """
-    Upload an image to cloud(sxcu.net) and return the url
+    Upload an image to cloud(sxcu.net) and return the url.
+    If the image is not a PNG, it is converted to PNG before upload.
     """
+    img = Image.open(image)
+    if image.suffix != ".png":
+        png_image_io = io.BytesIO()
+        img.save(png_image_io, format="PNG")
+        png_image_io.seek(0)
+        file_data = {"file": ("image.png", png_image_io, 'image/png')}
+    else:
+        file_data = {"file": open(image, "rb")}
+
     res = requests.post(
-        "https://sxcu.net/api/files/create", files={"file": open(image, "rb")}
+        "https://sxcu.net/api/files/create", files=file_data
     )
     res.raise_for_status()
-    return f"{res.json()['url']}{image.suffix}"
+    return f"{res.json()['url']}.png"
 
 
 if __name__ == "__main__":
-    print(upload_image(Path("./images/anon/10.png")))
+    print(upload_image(Path("./images/anon/ukr_citycenter.jpg")))
