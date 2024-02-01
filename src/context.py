@@ -1,4 +1,8 @@
 from typing import List, Optional
+from pathlib import Path
+import json
+import hashlib
+from .utils import DEBUG_DIR
 
 from langchain_core.agents import AgentAction, AgentFinish
 from langchain_core.tools import BaseTool
@@ -16,6 +20,12 @@ class Message:
 
     def __repr__(self):
         return f"Message({self.message}, {self.role})"
+
+    def to_json(self):
+        return {
+            "message": self.message,
+            "role": self.role
+        }
 
 
 class Context:
@@ -73,6 +83,37 @@ class Context:
         )
         self.children.append(res)
         return res
+
+    def digest(self):
+        return hashlib.md5(str(self.messages).encode()).hexdigest()
+
+    def dump(self, dst: Path | None = None):
+        """
+        Dump the context to a json file
+        :param dst:
+        :return:
+        """
+        dat = {
+            "messages": [m.to_json() for m in self.messages],
+            "transition": self.transition,
+            "value": self.value,
+            "visits": self.visits,
+        }
+        with open(dst, 'w') as f:
+            json.dump(dat, f)
+
+    @staticmethod
+    def load(src: Path) -> Self:
+        with open(src, 'r') as f:
+            dat = json.load(f)
+            messages = [Message(m['message'], m['role']) for m in dat['messages']]
+            ctx = Context(
+                cur_messages=messages,
+                transition=dat['transition'],
+            )
+            ctx.value = dat['value']
+            ctx.visits = dat['visits']
+            return ctx
 
     @property
     def messages(self):

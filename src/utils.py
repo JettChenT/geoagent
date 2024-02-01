@@ -11,10 +11,12 @@ from PIL import Image, ImageDraw, ImageFont
 from langchain.tools import BaseTool
 import requests
 import sys
+from uuid import uuid4
 
 # Mutable Global Variable: Whether to render a black bar at the bottom with the location of image
 GLOB_RENDER_BLACKBAR = False
 RUN_DIR = "run/"
+DEBUG_DIR = Path("./debug")
 
 
 class OAIConverter(MarkdownConverter):
@@ -130,10 +132,16 @@ def image_to_prompt(loc: str | Path):
     return f"Image {loc}: <img {loc}>"
 
 
+im_cache = {}
 def proc_image_url(url: str) -> str:
     if url.startswith("http"):
         return url
-    return encode_image(Path(url))
+    global im_cache
+    if url in im_cache:
+        return im_cache[url]
+    res = upload_image(Path(url))
+    im_cache[url] = res
+    return res
 
 
 def load_image(url: str) -> Image.Image:
@@ -224,6 +232,9 @@ def upload_image(image: Path) -> str:
     Upload an image to cloud(sxcu.net) and return the url.
     If the image is not a PNG, it is converted to PNG before upload.
     """
+    if os.getenv("UPLOAD_IMAGE_USE") == 'gcp':
+        from .tools.gcp import storage as gcp_storage
+        return gcp_storage.upload_file(image, destination_blob_name=f"{str(image)}{uuid4()}.png")
     img = Image.open(image)
     if image.suffix != ".png":
         png_image_io = io.BytesIO()

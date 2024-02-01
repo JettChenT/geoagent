@@ -111,6 +111,7 @@ class Agent:
         rewards = [0]
         while not node.is_terminal and dep < self.ROLLOUT_THRESHOLD:
             print("Rollout depth", dep)
+            print("current node", str(node))
             self.expand_node(node)
             for c in node.children:
                 if c.is_terminal: return c.reward, c
@@ -318,9 +319,9 @@ class Agent:
 
 
 if __name__ == "__main__":
-    agent = Agent(Gpt4Vision())
+    agent = Agent(Gpt4Vision(debug=True))
     additional_info = input(
         "Enter any additional information regarding this image or guidance on the geolocation process. \nPress enter to begin.\n"
     )
     logging.basicConfig(level=logging.INFO)
-    print(agent.lats("./images/anon/1.png", additional_info))
+    print(agent.lats("./images/anon/12.png", additional_info))

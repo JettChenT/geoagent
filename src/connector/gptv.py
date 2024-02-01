@@ -13,7 +13,7 @@ from pathlib import Path
 from openai import OpenAI
 from openai._types import NOT_GIVEN
 from rich import print
-from ..utils import encode_image
+from ..utils import encode_image, DEBUG_DIR
 import hashlib
 
 
@@ -52,7 +52,7 @@ class Gpt4Vision(LMM):
         # utils.toggle_blackbar()
         self.client = OpenAI(
             api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_API_BASE"),
-            timeout=120
+            timeout=360
         )
         self.debug = debug
         self.max_tokens = max_tokens
@@ -71,6 +71,12 @@ class Gpt4Vision(LMM):
         if temperature is None:
             temperature = NOT_GIVEN
         msg: List[Message] = context.messages if isinstance(context, Context) else context
+        if self.debug and isinstance(context, Context):
+            tar_path = DEBUG_DIR / f"{context.digest()}.json"
+            context.dump(tar_path)
+            print(f"Dumped context to {tar_path}")
+        if self.debug:
+            print(msg)
         messages = proc_messages(msg)
         if self.debug:
             print(
@@ -88,6 +94,7 @@ class Gpt4Vision(LMM):
                 max_tokens=self.max_tokens,
                 stop=stop,
                 temperature=temperature,
+                timeout=360
             )
             if not response.choices:
                 print(response)
@@ -100,11 +107,9 @@ class Gpt4Vision(LMM):
 
 
 if __name__ == "__main__":
-    ctx = Context()
-    ctx.add_message(
-        Message(
-            f"Describe this image in a sentence: {utils.image_to_prompt('./datasets/IM2GPS/2k_random_test_anon/4d29d379-d3dc-4266-a559-5e65aac6516d.jpg')}"
-        )
-    )
-    gptv = Gpt4Vision()
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    ctx = Context.load(Path("debug/ab3c7050a2bf8ca76ddd33c9d02bd4d3.json"))
+    print(str(ctx))
+    gptv = Gpt4Vision(debug=True)
     print(gptv.prompt(ctx, n=3))
