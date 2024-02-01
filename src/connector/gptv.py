@@ -15,6 +15,7 @@ from openai._types import NOT_GIVEN
 from rich import print
 from ..utils import encode_image, DEBUG_DIR
 import hashlib
+import backoff
 
 
 def proc_messages(messages: List[Message]) -> List[Dict]:
@@ -57,6 +58,7 @@ class Gpt4Vision(LMM):
         self.debug = debug
         self.max_tokens = max_tokens
 
+    @backoff.on_exception(backoff.expo, Exception, max_tries=5)
     def prompt(self, context: Context | List[Message], stop: List[str] | None = None, n:int = 1, temperature: float|None=None) -> List[Message]:
         """
         Prompt GPT-4 Vision
@@ -108,8 +110,8 @@ class Gpt4Vision(LMM):
 
 if __name__ == "__main__":
     import logging
-    logging.basicConfig(level=logging.INFO)
-    ctx = Context.load(Path("debug/ab3c7050a2bf8ca76ddd33c9d02bd4d3.json"))
+    logging.basicConfig(level=logging.DEBUG)
+    ctx = Context.load(Path("debug/1168b62ccedf5b30b8c35bbae12a7920.json"))
     print(str(ctx))
     gptv = Gpt4Vision(debug=True)
     print(gptv.prompt(ctx, n=3))

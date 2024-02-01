@@ -95,7 +95,7 @@ class Context:
         """
         dat = {
             "messages": [m.to_json() for m in self.messages],
-            "transition": self.transition,
+            "transition": str(self.transition),
             "value": self.value,
             "visits": self.visits,
         }
