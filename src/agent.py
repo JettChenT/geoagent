@@ -1,4 +1,6 @@
+import os
 from typing import Tuple
+from enum import Enum
 
 from langchain.agents.output_parsers import ReActSingleInputOutputParser
 from langchain.tools.render import render_text_description
@@ -71,15 +73,20 @@ def print_tree(node: Context, indent: int = 0, highlight: Context = None):
     for child in node.children:
         print_tree(child, indent + 1, highlight)
 
+class RunType(Enum):
+    INTERACTIVE = 1
+    EVALUATE = 2
+
 class Agent:
     DEPTH_THRESHOLD = 10
     ROLLOUT_THRESHOLD = 2
     BRANCH_CNT = 3
 
-    def __init__(self, vllm: LMM):
+    def __init__(self, vllm: LMM, run_type: RunType = RunType.INTERACTIVE):
         self.vllm = vllm
         self.depth = 0
         self.output_parser = ReActSingleInputOutputParser()
+        self.run_type = run_type
 
     def expand_node(self, node: Context):
         logging.info(f"expanding node {hex(id(node))}.....")
@@ -164,6 +171,13 @@ class Agent:
         except Exception as e:
             print('[red]Error[/red]: ', e)
             # ask if user would like to continue, if so, ask for potential feedback
+            if self.run_type == RunType.EVALUATE:
+                state.add_message(
+                    Message(
+                        f"Could not run tool {state.transition.tool}: {e}\n please adjust. \nAnalyze{state.depth}: "
+                    )
+                )
+                return
             docontinue = input("Continue? (y/n)")
             if docontinue == "n":
                 return
@@ -176,12 +190,13 @@ class Agent:
             return
         if tool.return_direct:
             state.is_terminal = True
-            isok = input("Is this ok? (y/n)")
-            if isok == "y":
-                state.reward = 1
-            else:
-                feedback = input("Enter feedback:")
-                tool_res += "\nFeedback: " + feedback
+            if self.run_type == RunType.INTERACTIVE:
+                isok = input("Is this ok? (y/n)")
+                if isok == "y":
+                    state.reward = 1
+                else:
+                    feedback = input("Enter feedback:")
+                    tool_res += "\nFeedback: " + feedback
         state.add_message(
             Message(f"Observation{state.depth}: {tool_res}\nAnalyze{state.depth}: ")
         )
@@ -324,4 +339,9 @@ if __name__ == "__main__":
         "Enter any additional information regarding this image or guidance on the geolocation process. \nPress enter to begin.\n"
     )
     logging.basicConfig(level=logging.INFO)
-    print(agent.lats("./images/anon/12.png", additional_info))
+    if os.getenv("TRACE"):
+        import functiontrace
+        import _functiontrace
+        functiontrace.setup_dependencies()
+        _functiontrace.begin_tracing("./trace")
+    print(agent.lats("./datasets/google-landmark/index/0/1/0/010c0edcdc5284c9.jpg", additional_info))
