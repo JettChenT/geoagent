@@ -7,11 +7,11 @@ from .gcp import streetview, places
 
 # noinspection PyTypeChecker
 TOOLS: List[BaseTool] = [
-    # osm.query,
+    osm.query,
     # osm.wiki_search,
     osm.show_coords,
     # nominatim.search_raw,
-    # geo_clip.geoclip_predict,
+    geo_clip.geoclip_predict,
     streetview.get_panos,
     vpr.locate_image,
     places.text_search,

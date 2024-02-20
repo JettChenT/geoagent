@@ -1,13 +1,15 @@
 import os
 from typing import Tuple
 from enum import Enum
+import logging
+import asyncio
+import threading
 
 from langchain.agents.output_parsers import ReActSingleInputOutputParser
 from langchain.tools.render import render_text_description
 from langchain_core.agents import AgentAction, AgentFinish
 from langchain_core.tools import BaseTool
 from rich import print
-import logging
 
 from . import config, utils
 from .prompting import *
@@ -101,6 +103,8 @@ class Agent:
             return
         sampled = self.vllm.prompt(node, stop=["Observation"], n=self.BRANCH_CNT, temperature=1.7)
         logging.info(f"Sampled {len(sampled)} messages")
+        tasks = []
+        existing = set()
         for s in sampled:
             logging.info(f"Sampled message: {s}")
             new_st = node.commit(message=s)
@@ -114,9 +118,18 @@ class Agent:
                     )
                 )
                 parsed = None
+            if k := (parsed.tool, utils.sanitize(parsed.tool_input)) in existing:
+                continue
+            existing.add(k)
             new_st.transition = parsed
             logging.info(f"Parsed message: {parsed}")
-            self.run_observe(new_st)
+            t = threading.Thread(target=self.run_observe, args=(new_st,))
+            t.start()
+            tasks.append(t)
+
+        logging.info(f"Waiting for {len(tasks)} tasks to finish")
+        for t in tasks:
+            t.join()
 
     def rollout(self, node: Context) -> Tuple[float, Context]:
         print("-----------Rolling out----------")
@@ -345,5 +358,5 @@ if __name__ == "__main__":
         "Enter any additional information regarding this image or guidance on the geolocation process. \nPress enter to begin.\n"
     )
     logging.basicConfig(level=logging.INFO)
-    res = agent.lats("./datasets/google-landmark/index/0/1/0/010c0edcdc5284c9.jpg", additional_info)
+    res = agent.lats("./datasets/google-landmark/index/0/4/3/0430767744d2cdd5.jpg", additional_info)
     print(res)

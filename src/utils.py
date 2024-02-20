@@ -12,6 +12,7 @@ from langchain.tools import BaseTool
 import requests
 import sys
 from uuid import uuid4
+import random
 
 # Mutable Global Variable: Whether to render a black bar at the bottom with the location of image
 GLOB_RENDER_BLACKBAR = False
@@ -139,7 +140,11 @@ def proc_image_url(url: str) -> str:
     global im_cache
     if url in im_cache:
         return im_cache[url]
-    res = upload_image(Path(url))
+    match os.getenv("UPLOAD_IMAGE_USE"):
+        case 'gcp' | 'upload':
+            res = upload_image(Path(url))
+        case _:
+            res = encode_image(Path(url))
     im_cache[url] = res
     return res
 
@@ -155,7 +160,8 @@ def find_valid_loc(prefix: str, postfix: str, pre_dir: str = RUN_DIR) -> Path:
     Find the first valid location that exists
     """
     for i in range(100_000_000):
-        path = pre_dir + prefix + str(i) + postfix
+        k = random.randbytes(4).hex()[2:]
+        path = pre_dir + prefix + k + postfix
         if not Path(path).exists():
             return Path(path)
     raise FileNotFoundError("Could not find any valid location")

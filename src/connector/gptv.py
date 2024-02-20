@@ -10,8 +10,8 @@ import dotenv
 import os
 from PIL import Image
 from pathlib import Path
-from openai import OpenAI
-from openai._types import NOT_GIVEN
+from openai import OpenAI, ChatCompletion
+from openai._types import NOT_GIVEN, NotGiven
 from rich import print
 from ..utils import encode_image, DEBUG_DIR
 import hashlib
@@ -59,7 +59,20 @@ class Gpt4Vision(LMM):
         self.max_tokens = max_tokens
 
     @backoff.on_exception(backoff.expo, Exception, max_tries=5)
-    def prompt(self, context: Context | List[Message], stop: List[str] | None = None, n:int = 1, temperature: float|None=None) -> List[Message]:
+    def _create_completions(self, model: str, messages: List[Dict], max_tokens: int | NotGiven = NOT_GIVEN,
+                            stop: List[str] | NotGiven = NOT_GIVEN, temperature: float | NotGiven = NOT_GIVEN,
+                            timeout: float | NotGiven = NOT_GIVEN) -> ChatCompletion:
+        return self.client.chat.completions.create(
+            model=model,
+            messages=messages,
+            max_tokens=max_tokens,
+            stop=stop,
+            temperature=temperature,
+            timeout=timeout
+        )
+
+    def prompt(self, context: Context | List[Message], stop: List[str] | None = None, n: int = 1,
+               temperature: float | None = None) -> List[Message]:
         """
         Prompt GPT-4 Vision
         :param temperature: temperature of generation
@@ -90,7 +103,7 @@ class Gpt4Vision(LMM):
             if i > 0:
                 cur_msg.append(Message(f"Previously Generated messages: {list(map(lambda x: x.content, choices))}. "
                                        f"Now, generate a different choice:"))
-            response = self.client.chat.completions.create(
+            response = self._create_completions(
                 model="gpt-4-vision-preview",
                 messages=proc_messages(cur_msg),
                 max_tokens=self.max_tokens,
@@ -110,7 +123,7 @@ class Gpt4Vision(LMM):
 
 if __name__ == "__main__":
     import logging
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     ctx = Context.load(Path("debug/1168b62ccedf5b30b8c35bbae12a7920.json"))
     print(str(ctx))
     gptv = Gpt4Vision(debug=True)
