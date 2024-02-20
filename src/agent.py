@@ -118,7 +118,7 @@ class Agent:
                     )
                 )
                 parsed = None
-            if k := (parsed.tool, utils.sanitize(parsed.tool_input)) in existing:
+            if (k := parsed.to_json() if isinstance(parsed, AgentFinish) else (parsed.tool, utils.sanitize(parsed.tool_input))) in existing:
                 continue
             existing.add(k)
             new_st.transition = parsed

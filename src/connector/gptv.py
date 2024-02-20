@@ -124,7 +124,7 @@ class Gpt4Vision(LMM):
 if __name__ == "__main__":
     import logging
     logging.basicConfig(level=logging.INFO)
-    ctx = Context.load(Path("debug/1168b62ccedf5b30b8c35bbae12a7920.json"))
+    ctx = Context.load(Path("debug/f3235736bd2057481f95433be63ed3e0.json"))
     print(str(ctx))
     gptv = Gpt4Vision(debug=True)
     print(gptv.prompt(ctx, n=3))
