@@ -118,7 +118,7 @@ class Agent:
                     )
                 )
                 parsed = None
-            if (k := parsed.to_json() if isinstance(parsed, AgentFinish) else (parsed.tool, utils.sanitize(parsed.tool_input))) in existing:
+            if (k := str(parsed.to_json()) if isinstance(parsed, AgentFinish) else (parsed.tool, utils.sanitize(parsed.tool_input))) in existing:
                 continue
             existing.add(k)
             new_st.transition = parsed
@@ -358,5 +358,5 @@ if __name__ == "__main__":
         "Enter any additional information regarding this image or guidance on the geolocation process. \nPress enter to begin.\n"
     )
     logging.basicConfig(level=logging.INFO)
-    res = agent.lats("./datasets/google-landmark/index/0/4/3/0430767744d2cdd5.jpg", additional_info)
+    res = agent.lats("./datasets/google-landmark/index/0/1/3/013c5f1226a0e19c.jpg", additional_info)
     print(res)
