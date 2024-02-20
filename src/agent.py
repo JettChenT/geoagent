@@ -16,6 +16,12 @@ from .connector import LMM, Message
 from .tools import TOOLS, find_tool
 from .context import Context
 
+if os.getenv("FUNTRACE"):
+    import functiontrace
+    import _functiontrace
+    functiontrace.setup_dependencies()
+    _functiontrace.begin_tracing("./trace")
+
 def select_node(node: Context):
     while node and node.children:
         logging.info(f"Selecting from {len(node.children)} children at depth {node.depth}.")
@@ -339,9 +345,5 @@ if __name__ == "__main__":
         "Enter any additional information regarding this image or guidance on the geolocation process. \nPress enter to begin.\n"
     )
     logging.basicConfig(level=logging.INFO)
-    if os.getenv("TRACE"):
-        import functiontrace
-        import _functiontrace
-        functiontrace.setup_dependencies()
-        _functiontrace.begin_tracing("./trace")
-    print(agent.lats("./datasets/google-landmark/index/0/1/0/010c0edcdc5284c9.jpg", additional_info))
+    res = agent.lats("./datasets/google-landmark/index/0/1/0/010c0edcdc5284c9.jpg", additional_info)
+    print(res)
