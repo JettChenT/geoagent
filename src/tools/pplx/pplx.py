@@ -7,10 +7,11 @@ PPLX_KEY = os.getenv("PPLX_KEY")
 client = OpenAI(api_key=PPLX_KEY, base_url="https://api.perplexity.ai")
 
 @tool("perplexity ask")
-def ask(question: str):
+def ask(question: str) -> str:
     """
-    Ask a question to the perplexity online model
-    :param question:
+    Ask a question to the perplexity online model. Use this as a search engine.
+    Note that it does not have access to image. Only send text queries that do not require visual information.
+    :param question: the question to ask
     :return:
     """
     messages = [
@@ -30,4 +31,4 @@ def ask(question: str):
     return response.choices[0].message.content
 
 if __name__ == '__main__':
-    print(ask("What is the capital of France?"))
+    print(ask("What is the coordinates for Apple HQ?"))
