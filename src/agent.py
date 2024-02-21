@@ -118,7 +118,7 @@ class Agent:
                         f"Could not parse output: {e} \nAnalyze{node.depth}: "
                     )
                 )
-                parsed = None
+                continue
             if (k := str(parsed.to_json()) if isinstance(parsed, AgentFinish) else (parsed.tool, utils.sanitize(parsed.tool_input))) in existing:
                 continue
             existing.add(k)

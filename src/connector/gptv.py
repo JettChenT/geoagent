@@ -64,8 +64,9 @@ def _generate_batch(lm, messages: List[Message], n: int) -> List[ChatCompletionM
                            f"For each choice, follow the same format, "
                            f"but with a different potential action that can lead to the result."
                            f"after the `Observation:`."
-                           f"Remember to generate only one Thought Action Observation sequence for each choice."
-                           f"Do not generate the results of an `Observation:`, "
+                           f"Remember to generate only one Thought Action sequence for each choice."
+                           f"After generating the Action Input, directly move on to the next choice."
+                           f"DO NOT generate 'Observation:' ."
                            f"always move on to the next choice starting with the exact letters `<SEP>` "
                            f"ALWAYS include the exact letters `<SEP>` between each choice."
                            f"After you generated all the choices, "
@@ -79,7 +80,7 @@ def _generate_batch(lm, messages: List[Message], n: int) -> List[ChatCompletionM
     return list(map(
         lambda x: ChatCompletionMessage(content=x, role="assistant"),
         res.choices[0].message.content.split("<SEP>")
-    ))
+    ))[:n]
 
 
 def _generate_sample(lm, messages: List[Message], n: int) -> List[ChatCompletionMessage]:
