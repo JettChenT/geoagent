@@ -83,14 +83,15 @@ def print_tree(node: Context, indent: int = 0, highlight: Context = None):
 
 class RunType(Enum):
     INTERACTIVE = 1
-    EVALUATE = 2
+    PARALLEL = 2
+    EVALUATE = 1
 
 class Agent:
     DEPTH_THRESHOLD = 10
     ROLLOUT_THRESHOLD = 2
     BRANCH_CNT = 3
 
-    def __init__(self, vllm: LMM, run_type: RunType = RunType.INTERACTIVE):
+    def __init__(self, vllm: LMM, run_type: RunType = RunType.PARALLEL):
         self.vllm = vllm
         self.depth = 0
         self.output_parser = ReActSingleInputOutputParser()
@@ -101,7 +102,7 @@ class Agent:
         if node.depth >= self.DEPTH_THRESHOLD:
             node.is_terminal = True
             return
-        sampled = self.vllm.prompt(node, stop=["Observation"], n=self.BRANCH_CNT, temperature=1.7)
+        sampled = self.vllm.prompt(node, stop=["Observation"], n=self.BRANCH_CNT)
         logging.info(f"Sampled {len(sampled)} messages")
         tasks = []
         existing = set()
@@ -125,6 +126,8 @@ class Agent:
             logging.info(f"Parsed message: {parsed}")
             t = threading.Thread(target=self.run_observe, args=(new_st,))
             t.start()
+            if self.run_type == RunType.INTERACTIVE:
+                t.join()
             tasks.append(t)
 
         logging.info(f"Waiting for {len(tasks)} tasks to finish")
@@ -190,7 +193,7 @@ class Agent:
         except Exception as e:
             print('[red]Error[/red]: ', e)
             # ask if user would like to continue, if so, ask for potential feedback
-            if self.run_type == RunType.EVALUATE:
+            if self.run_type != RunType.INTERACTIVE:
                 state.add_message(
                     Message(
                         f"Could not run tool {state.transition.tool}: {e}\n please adjust. \nAnalyze{state.depth}: "
@@ -358,5 +361,5 @@ if __name__ == "__main__":
         "Enter any additional information regarding this image or guidance on the geolocation process. \nPress enter to begin.\n"
     )
     logging.basicConfig(level=logging.INFO)
-    res = agent.lats("./datasets/google-landmark/index/0/1/3/013c5f1226a0e19c.jpg", additional_info)
+    res = agent.lats("./datasets/IM2GPS/human_geolocation_test_anon/86688e77-bd47-453b-8bee-f27943ddd921.jpg", additional_info)
     print(res)

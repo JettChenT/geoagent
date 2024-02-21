@@ -1,8 +1,11 @@
 import re
 from io import BytesIO
 from typing import List, Dict, Optional
+from enum import Enum
+from functools import partial
 
 from langchain_core.messages import HumanMessage
+from openai.types.chat import ChatCompletion, ChatCompletionMessage
 
 from .. import utils
 from . import LMM, Message, Context
@@ -10,12 +13,18 @@ import dotenv
 import os
 from PIL import Image
 from pathlib import Path
-from openai import OpenAI, ChatCompletion
+from openai import OpenAI
 from openai._types import NOT_GIVEN, NotGiven
 from rich import print
 from ..utils import encode_image, DEBUG_DIR
 import hashlib
 import backoff
+
+
+class MultiGenStrategy(Enum):
+    SAMPLE = 1
+    SEQUENTIAL = 2
+    BATCH = 3
 
 
 def proc_messages(messages: List[Message]) -> List[Dict]:
@@ -46,8 +55,63 @@ def proc_messages(messages: List[Message]) -> List[Dict]:
     return res
 
 
+def _generate_batch(lm, messages: List[Message], n: int) -> List[ChatCompletionMessage]:
+    # this should only be used with the ReACT flow
+    if n == 1:
+        return _generate_sequential(lm, messages, n)
+    msg_mod = messages.copy()
+    msg_mod.append(Message(f"Please generate {n} different choices."
+                           f"For each choice, follow the same format, "
+                           f"but with a different potential action that can lead to the result."
+                           f"after the `Observation:`."
+                           f"Remember to generate only one Thought Action Observation sequence for each choice."
+                           f"Do not generate the results of an `Observation:`, "
+                           f"always move on to the next choice starting with the exact letters `<SEP>` "
+                           f"ALWAYS include the exact letters `<SEP>` between each choice."
+                           f"After you generated all the choices, "
+                           f"ALWAYS include the phrase `<END>` to indicate the end of the choices."
+                           f"Remember, <SEP> and <END> are case sensitive."
+                           f"Now, generate your choices: "))
+    res = lm(messages=proc_messages(msg_mod), stop=["<END>"])
+    if not res.choices:
+        print(res)
+        raise Exception("No response from GPT-4 Vision")
+    return list(map(
+        lambda x: ChatCompletionMessage(content=x, role="assistant"),
+        res.choices[0].message.content.split("<SEP>")
+    ))
+
+
+def _generate_sample(lm, messages: List[Message], n: int) -> List[ChatCompletionMessage]:
+    res = lm(messages=messages, n=n)
+    if not res.choices:
+        print(res)
+        raise Exception("No response from GPT-4 Vision")
+    return [r.message for r in res.choices]
+
+
+def _generate_sequential(lm, messages: List[Message], n: int) -> List[ChatCompletionMessage]:
+    choices = []
+    for i in range(n):
+        cur_msg = messages.copy()
+        if i > 0:
+            cur_msg.append(Message(f"Previously Generated messages: {list(map(lambda x: x.content, choices))}. "
+                                   f"Now, generate a different choice:"))
+        response = lm(messages=proc_messages(cur_msg))
+        if not response.choices:
+            print(response)
+            raise Exception("No response from GPT-4 Vision")
+        r = response.choices[0]
+        choices.append(r.message)
+    return choices
+
+
 class Gpt4Vision(LMM):
-    def __init__(self, debug: bool = False, max_tokens: int = 3000):
+    def __init__(self,
+                 debug: bool = False,
+                 max_tokens: int = 3000,
+                 multi_gen_strategy: MultiGenStrategy = MultiGenStrategy.BATCH
+                 ):
         dotenv.load_dotenv()
         # Adds black bar containing the location of the image, since gpt-vision api does not recognize image order.
         # utils.toggle_blackbar()
@@ -57,22 +121,25 @@ class Gpt4Vision(LMM):
         )
         self.debug = debug
         self.max_tokens = max_tokens
+        self.multi_gen_strategy = multi_gen_strategy
 
     @backoff.on_exception(backoff.expo, Exception, max_tries=5)
     def _create_completions(self, model: str, messages: List[Dict], max_tokens: int | NotGiven = NOT_GIVEN,
                             stop: List[str] | NotGiven = NOT_GIVEN, temperature: float | NotGiven = NOT_GIVEN,
-                            timeout: float | NotGiven = NOT_GIVEN) -> ChatCompletion:
+                            timeout: float | NotGiven = NOT_GIVEN, n: int | NotGiven = NOT_GIVEN) -> ChatCompletion:
         return self.client.chat.completions.create(
             model=model,
             messages=messages,
             max_tokens=max_tokens,
             stop=stop,
             temperature=temperature,
-            timeout=timeout
+            timeout=timeout,
+            n=n
         )
 
-    def prompt(self, context: Context | List[Message], stop: List[str] | None = None, n: int = 1,
-               temperature: float | None = None) -> List[Message]:
+    def prompt(self, context: Context | List[Message], stop: List[str] | NotGiven = NOT_GIVEN, n: int = 1,
+               temperature: float | NotGiven = NOT_GIVEN,
+               multi_gen_strategy: MultiGenStrategy | None = None) -> List[Message]:
         """
         Prompt GPT-4 Vision
         :param temperature: temperature of generation
@@ -81,10 +148,7 @@ class Gpt4Vision(LMM):
         :param n: number of responses
         :return: List of messages
         """
-        if stop is None:
-            stop = NOT_GIVEN
-        if temperature is None:
-            temperature = NOT_GIVEN
+        multi_gen_strategy = multi_gen_strategy or self.multi_gen_strategy
         msg: List[Message] = context.messages if isinstance(context, Context) else context
         if self.debug and isinstance(context, Context):
             tar_path = DEBUG_DIR / f"{context.digest()}.json"
@@ -98,24 +162,21 @@ class Gpt4Vision(LMM):
                 f"HASH of messages: {hashlib.md5(str(messages).encode()).hexdigest()}"
             )
         choices = []
-        for i in range(n):
-            cur_msg = msg
-            if i > 0:
-                cur_msg.append(Message(f"Previously Generated messages: {list(map(lambda x: x.content, choices))}. "
-                                       f"Now, generate a different choice:"))
-            response = self._create_completions(
-                model="gpt-4-vision-preview",
-                messages=proc_messages(cur_msg),
-                max_tokens=self.max_tokens,
-                stop=stop,
-                temperature=temperature,
-                timeout=360
-            )
-            if not response.choices:
-                print(response)
-                raise Exception("No response from GPT-4 Vision")
-            r = response.choices[0]
-            choices.append(r.message)
+        pmpt = partial(self._create_completions,
+                       model="gpt-4-vision-preview",
+                       max_tokens=self.max_tokens,
+                       stop=stop,
+                       temperature=temperature,
+                       timeout=360
+                       )
+        match multi_gen_strategy:
+            case MultiGenStrategy.SAMPLE:
+                choices = _generate_sample(pmpt, msg, n)
+            case MultiGenStrategy.SEQUENTIAL:
+                choices = _generate_sequential(pmpt, msg, n)
+            case MultiGenStrategy.BATCH:
+                choices = _generate_batch(pmpt, msg, n)
+
         if self.debug:
             print(choices)
         return [Message(c.content, c.role) for c in choices]
@@ -123,8 +184,9 @@ class Gpt4Vision(LMM):
 
 if __name__ == "__main__":
     import logging
+
     logging.basicConfig(level=logging.INFO)
-    ctx = Context.load(Path("debug/f3235736bd2057481f95433be63ed3e0.json"))
+    ctx = Context.load(Path("debug/8c046045d9533fc2b6c858c57e71b91c.json"))
     print(str(ctx))
-    gptv = Gpt4Vision(debug=True)
+    gptv = Gpt4Vision(debug=True, multi_gen_strategy=MultiGenStrategy.BATCH)
     print(gptv.prompt(ctx, n=3))
