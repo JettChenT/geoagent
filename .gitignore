@@ -183,3 +183,8 @@ logs/
 run/
 out/
 debug/
+bak/
+trace/
+trained_models/
+data/
+.DS_Store
