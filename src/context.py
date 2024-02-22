@@ -187,6 +187,10 @@ class Context:
     def observation(self, obs):
         self._observation = obs
 
+    @notify_update
+    def notify(self):
+        return
+
     def __str__(self):
         transition_render = 'NO_ACTION'
         if isinstance(self.transition, AgentAction):
