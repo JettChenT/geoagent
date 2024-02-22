@@ -38,7 +38,7 @@ def get_panos(coords_path: str) -> str:
     # TODO: pano tiles
     # Note: the sampling of streetview images could perhaps be improved in the future. Now it's just a SRS
     # e.g. ensure that each coordinate is represented, and that the coordinates are not too close to each other.
-    coords = Coords.from_csv(coords_path)
+    coords = Coords.load(coords_path)
     # print(coords)
     pid_set = set()
     for coord in coords:

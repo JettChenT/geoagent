@@ -28,8 +28,8 @@ def search_raw(query: str) -> str:
         coords = Coords([(d.latitude, d.longitude) for d in res])
         coords_render = coords.render()
         loc = utils.save_img(coords_render, "nominatim_query_res")
-        dump_loc = utils.find_valid_loc("nominatim_query_res", ".csv")
-        coords.to_csv(dump_loc)
+        dump_loc = utils.find_valid_loc("nominatim_query_res", ".geojson")
+        coords.to_geojson(dump_loc)
         return f"""Nominatim Query Results: {raw_res} \n The coordinates are stored at {dump_loc} \n A rendering of the coordinates: {utils.image_to_prompt(loc)}"""
     except Exception as e:
         return (

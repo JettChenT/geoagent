@@ -100,8 +100,8 @@ def query(q: str) -> Any:
     res, img = _query(q)
     rsp = f"OSM Query result: {res}"
     if isinstance(res, Coords):
-        dump_loc = utils.find_valid_loc("osm_query_coords", ".csv")
-        res.to_csv(dump_loc)
+        dump_loc = utils.find_valid_loc("osm_query_coords", ".geojson")
+        res.to_geojson(dump_loc)
         rsp += f"\n The coordinates are stored at {dump_loc}"
     if isinstance(img, Image.Image):
         loc = utils.save_img(img, "osm_query_res")

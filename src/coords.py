@@ -53,15 +53,15 @@ class Coords:
             loc = utils.save_img(im, f"{prefix}coords")
             res += f"A rendering of the coordinates: {utils.image_to_prompt(loc)}"
         if store:
-            loc = utils.find_valid_loc(f"{prefix}coords", ".csv")
-            self.to_csv(loc)
+            loc = utils.find_valid_loc(f"{prefix}coords", ".geojson")
+            self.to_geojson(loc)
             res += f"The coordinates are stored at {loc}"
         return res
 
     def to_csv(self, path: str | Path):
         df = pd.DataFrame(self.coords, columns=["lat", "lon"])
         df["auxiliary"] = [json.dumps(x) for x in self.auxiliary]
-        df.to_csv(path, index=False)
+        df.to_geojson(path, index=False)
 
     @staticmethod
     def from_csv(path: str | Path):
@@ -73,6 +73,47 @@ class Coords:
             else None,
         )
 
+    def to_geojson(self, path: str | Path):
+        features = []
+        for coord, aux in zip(self.coords, self.auxiliary):
+            features.append(
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": coord[::-1]
+                    },
+                    "properties": aux
+                }
+            )
+        with open(path, 'w') as f:
+            json.dump({
+                "type": "FeatureCollection",
+                "features": features
+            }, f)
+
+    @staticmethod
+    def from_geojson(path: str | Path):
+        with open(path, 'r') as f:
+            data = json.load(f)
+        coords = []
+        auxiliary = []
+        for feature in data["features"]:
+            coords.append(feature["geometry"]["coordinates"][::-1])
+            auxiliary.append(feature["properties"])
+        return Coords(coords, auxiliary)
+
+    @staticmethod
+    def load(path: str | Path) -> 'Coords':
+        if isinstance(path, str):
+            path = Path(path)
+        match path.suffix:
+            case ".csv":
+                return Coords.load(path)
+            case ".geojson":
+                return Coords.from_geojson(path)
+            case _:
+                raise ValueError("Unsupported file format")
     def __len__(self):
         return len(self.coords)
 

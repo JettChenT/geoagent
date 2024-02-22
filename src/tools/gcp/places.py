@@ -61,7 +61,7 @@ def plot_satellite(coords_loc: str):
     :param coords_loc: the location of the coordinate csv file
     :return:
     """
-    coords = Coords.from_csv(coords_loc)
+    coords = Coords.load(coords_loc)
     if len(coords) > SATELLITE_CAP:
         return f"Too many coordinates: {len(coords)} > {SATELLITE_CAP}"
     retrieved = []

@@ -84,7 +84,7 @@ def locate_image(im_loc: str, db_loc: str):
     :param db_loc: the location of a coordinate csv file whose auxiliary information contains the location to the downloaded streetview images
     :return:
     """
-    db_coords = Coords.from_csv(db_loc)
+    db_coords = Coords.load(db_loc)
     im = load_image(im_loc)
     res = loc_sim(im, [load_image(x["image_path"]) for x in db_coords.auxiliary])
     new_coords = Coords(

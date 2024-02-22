@@ -23,8 +23,10 @@ from .subscriber import Subscriber, SIOSubscriber
 if os.getenv("FUNTRACE"):
     import functiontrace
     import _functiontrace
+
     functiontrace.setup_dependencies()
     _functiontrace.begin_tracing("./trace")
+
 
 def select_node(node: Context):
     while node and node.children:
@@ -68,6 +70,7 @@ def backprop(node: Context, value):
 
         node = node.parent
 
+
 def collect_all_nodes(node: Context):
     nodes = [node]
     for child in node.children:
@@ -83,10 +86,12 @@ def print_tree(node: Context, indent: int = 0, highlight: Context = None):
     for child in node.children:
         print_tree(child, indent + 1, highlight)
 
+
 class RunType(Enum):
     INTERACTIVE = 1
     PARALLEL = 2
     EVALUATE = 1
+
 
 class Agent:
     DEPTH_THRESHOLD = 10
@@ -122,7 +127,8 @@ class Agent:
                     )
                 )
                 continue
-            if (k := str(parsed.to_json()) if isinstance(parsed, AgentFinish) else (parsed.tool, utils.sanitize(parsed.tool_input))) in existing:
+            if (k := str(parsed.to_json()) if isinstance(parsed, AgentFinish) else (
+            parsed.tool, utils.sanitize(parsed.tool_input))) in existing:
                 continue
             existing.add(k)
             new_st.transition = parsed
@@ -154,14 +160,14 @@ class Agent:
             dep += 1
             if dep == self.ROLLOUT_THRESHOLD:
                 rewards = [-1]
-        return sum(rewards)/len(rewards), node
+        return sum(rewards) / len(rewards), node
 
     def evaluate_node(self, node: Context):
         votes = [self.get_value(c) for c in node.children]
         print("setting votes...", votes)
-        for i,c in enumerate(node.children):
+        for i, c in enumerate(node.children):
             c.value = votes[i]
-        return sum(votes)/len(votes) if votes else 0
+        return sum(votes) / len(votes) if votes else 0
 
     def run_observe(self, state: Context):
         """
@@ -232,13 +238,13 @@ class Agent:
         messages.append(Message(VALUE_PROMPT))
         res = self.vllm.prompt(messages, temperature=0.1)[0]
         targ_line = res.message.splitlines()[-1]
-        for i in range(10,0,-1):
+        for i in range(10, 0, -1):
             if str(i) in targ_line:
                 logging.info(f"Found value {i} in {targ_line}")
-                return i/10
+                return i / 10
         return -1
 
-    def lats(self, image_loc:str, additional: str = ""):
+    def lats(self, image_loc: str, additional: str = ""):
         utils.flush_run_dir()
         root = Context(tools=TOOLS, subscriber=self.subscriber)
         root.add_message(
