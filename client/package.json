@@ -10,10 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@dagrejs/dagre": "^1.0.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "reactflow": "^11.10.4",
     "socket.io-client": "^4.7.4",
+    "use-debounce": "^10.0.0",
     "zustand": "^4.5.1"
   },
   "devDependencies": {

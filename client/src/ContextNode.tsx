@@ -51,10 +51,13 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
           <span className="font-bold">Transition:</span>
           {data.transition && "tool" in data.transition ? (
             <span className="text-gray-500 font-mono">
-              {data.transition.tool}
+              {data.transition.tool} ({data.transition.tool_input})
             </span>
           ) : (
-            <span className="text-gray-500 font-mono"> Finished</span>
+            <span className="text-gray-500 font-mono">
+              {" "}
+              {data.transition["type"]}{" "}
+            </span>
           )}
         </div>
         <div className="text-sm text-left">

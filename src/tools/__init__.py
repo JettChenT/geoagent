@@ -7,7 +7,7 @@ from .gcp import streetview, places
 
 # noinspection PyTypeChecker
 TOOLS: List[BaseTool] = [
-    osm.query,
+    # osm.query,
     # osm.wiki_search,
     osm.show_coords,
     # nominatim.search_raw,

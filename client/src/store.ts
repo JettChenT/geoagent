@@ -23,6 +23,8 @@ export type EditorState = {
   getNodeById: (nodeId: string) => Node<ContextData> | undefined;
   createNode: (node: Node<ContextData>) => void;
   createChildNode: (node: Node<ContextData>, parentId: string) => void;
+  setNodes: (nodes: Node<ContextData>[]) => void;
+  setEdges: (edges: Edge[]) => void;
 };
 
 const useStore = create<EditorState>((set, get) => ({
@@ -61,13 +63,28 @@ const useStore = create<EditorState>((set, get) => ({
     });
   },
   createChildNode: (node, parentId) => {
-    set((state) => ({
-      nodes: [...state.nodes, node],
-      edges: [
-        ...state.edges,
-        { id: `e${parentId}-${node.id}`, source: parentId, target: node.id },
-      ],
-    }));
+    set((state) => {
+      if (!state.nodes.some((n) => n.id === node.id)) {
+        return {
+          nodes: [...state.nodes, node],
+          edges: [
+            ...state.edges,
+            {
+              id: `e${parentId}-${node.id}`,
+              source: parentId,
+              target: node.id,
+            },
+          ],
+        };
+      }
+      return state;
+    });
+  },
+  setNodes: (nodes) => {
+    set({ nodes });
+  },
+  setEdges: (edges) => {
+    set({ edges });
   },
 }));
 

@@ -1,5 +1,12 @@
-import React, { useEffect, useRef, useState } from "react";
-import ReactFlow, { Background, Controls, Panel } from "reactflow";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import ReactFlow, {
+  Background,
+  Controls,
+  Panel,
+  ReactFlowProvider,
+  useReactFlow,
+} from "reactflow";
+import Dagre from "@dagrejs/dagre";
 import { shallow } from "zustand/shallow";
 
 import "reactflow/dist/style.css";
@@ -7,10 +14,31 @@ import "reactflow/dist/style.css";
 import useStore, { EditorState } from "./store";
 import ContextNode from "./ContextNode";
 import { socket } from "./socket";
+import { useDebouncedCallback } from "use-debounce";
 import { getOutgoers } from "reactflow";
 
 const nodeTypes = {
   contextNode: ContextNode,
+};
+
+const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
+
+const getLayoutedElements = (nodes, edges, options) => {
+  g.setGraph({ rankdir: options.direction });
+
+  edges.forEach((edge) => g.setEdge(edge.source, edge.target));
+  nodes.forEach((node) => g.setNode(node.id, node));
+
+  Dagre.layout(g);
+
+  return {
+    nodes: nodes.map((node) => {
+      const { x, y } = g.node(node.id);
+
+      return { ...node, position: { x, y } };
+    }),
+    edges,
+  };
 };
 
 function App() {
@@ -24,10 +52,25 @@ function App() {
     createChildNode,
     updateContextData,
     getNodeById,
+    setEdges,
+    setNodes,
   } = useStore();
   const reactFlowWrapper = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
   const [isConnected, setIsConnected] = useState(socket.connected);
+  const { fitView } = useReactFlow();
+
+  const onLayout = useDebouncedCallback((direction) => {
+    let { edges, nodes } = useStore.getState();
+    const layouted = getLayoutedElements(nodes, edges, { direction });
+
+    setNodes([...layouted.nodes]);
+    setEdges([...layouted.edges]);
+
+    window.requestAnimationFrame(() => {
+      fitView();
+    });
+  }, 100);
 
   useEffect(() => {
     socket.on("connect", () => {
@@ -45,6 +88,7 @@ function App() {
         data: dat,
       });
     });
+
     socket.on("add_node", (par_id, node_id, dat) => {
       console.log("add_node", par_id, node_id, dat);
       let par_node = getNodeById(par_id);
@@ -53,15 +97,14 @@ function App() {
           id: node_id,
           type: "contextNode",
           position: {
-            x: par_node.position.x + 100,
-            y:
-              par_node.position.y +
-              100 * getOutgoers(par_node, nodes, edges).length,
+            x: 100,
+            y: 100,
           },
           data: dat,
         },
         par_id
       );
+      onLayout("LR");
     });
     socket.on("update_node", (node_id, dat) => {
       updateContextData(node_id, dat);
