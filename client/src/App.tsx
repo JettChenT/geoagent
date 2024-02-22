@@ -7,6 +7,7 @@ import "reactflow/dist/style.css";
 import useStore, { EditorState } from "./store";
 import ContextNode from "./ContextNode";
 import { socket } from "./socket";
+import { getOutgoers } from "reactflow";
 
 const nodeTypes = {
   contextNode: ContextNode,
@@ -35,7 +36,8 @@ function App() {
     socket.on("disconnect", () => {
       setIsConnected(false);
     });
-    socket.on("root-node", (node_id, dat) => {
+    socket.on("root_node", (node_id, dat) => {
+      console.log("root_node", node_id, dat);
       createNode({
         id: node_id,
         type: "contextNode",
@@ -43,19 +45,25 @@ function App() {
         data: dat,
       });
     });
-    socket.on("add-node", (par_id, node_id, dat) => {
+    socket.on("add_node", (par_id, node_id, dat) => {
+      console.log("add_node", par_id, node_id, dat);
       let par_node = getNodeById(par_id);
       createChildNode(
         {
           id: node_id,
           type: "contextNode",
-          position: { x: 100, y: 100 },
+          position: {
+            x: par_node.position.x + 100,
+            y:
+              par_node.position.y +
+              100 * getOutgoers(par_node, nodes, edges).length,
+          },
           data: dat,
         },
         par_id
       );
     });
-    socket.on("update-node", (node_id, dat) => {
+    socket.on("update_node", (node_id, dat) => {
       updateContextData(node_id, dat);
     });
   }, []);

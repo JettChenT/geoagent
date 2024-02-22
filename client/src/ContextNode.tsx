@@ -17,7 +17,6 @@ type AgentFinish = {
 };
 
 export type ContextData = {
-  id: string;
   cur_messages: Message[];
   observation: string | any;
   transition: AgentAction | AgentFinish | null;
@@ -25,27 +24,48 @@ export type ContextData = {
 };
 
 export default function ContextNode({ id, data }: NodeProps<ContextData>) {
+  const lastMessage =
+    data.cur_messages.length > 0
+      ? data.cur_messages[data.cur_messages.length - 1].message
+      : "No messages";
+
   return (
-    <div className="react-flow__node-default w-56 min-h-48 bg-white rounded shadow nowheel">
-      <div className="p-2">
-        <div className="text-lg font-bold">Context</div>
-        <div className="text-sm text-gray-500">{id}</div>
-        <div className="text-sm text-gray-500">
-          Messages: {data.cur_messages.length}
+    <div className="react-flow__node-default w-56 bg-white rounded shadow nowheel overflow-auto">
+      <div className="p-2 space-y-1">
+        <div className="text-lg font-bold text-left">Context</div>
+        <div className="text-sm text-left">
+          <span className="font-bold">ID:</span>
+          <span className="text-gray-500 font-mono"> {id}</span>
         </div>
-        <div className="text-sm text-gray-500">
-          Observation: {data.observation}
-        </div>
-        {data.transition && "tool" in data.transition ? (
-          <div className="text-sm text-gray-500">
-            Transition: {data.transition.tool}
+        <div className="text-sm text-left">
+          <span className="font-bold">Last Message:</span>
+          <div className="text-gray-500 font-mono overflow-auto max-h-16">
+            {lastMessage}
           </div>
-        ) : (
-          <div className="text-sm text-gray-500">Transition Finished</div>
-        )}
-        <div className="text-sm text-gray-500">Auxiliary: {data.auxiliary}</div>
+        </div>
+        <div className="text-sm text-left">
+          <span className="font-bold">Observation:</span>
+          <span className="text-gray-500 font-mono"> {data.observation}</span>
+        </div>
+        <div className="text-sm text-left">
+          <span className="font-bold">Transition:</span>
+          {data.transition && "tool" in data.transition ? (
+            <span className="text-gray-500 font-mono">
+              {data.transition.tool}
+            </span>
+          ) : (
+            <span className="text-gray-500 font-mono"> Finished</span>
+          )}
+        </div>
+        <div className="text-sm text-left">
+          <span className="font-bold">Auxiliary:</span>
+          <div className="text-gray-500 font-mono overflow-auto max-h-16">
+            {JSON.stringify(data.auxiliary)}
+          </div>
+        </div>
       </div>
-      <Handle type="source" position={Position.Bottom} />
+      <Handle type="source" position={Position.Right} />
+      <Handle type="target" position={Position.Left} />
     </div>
   );
 }

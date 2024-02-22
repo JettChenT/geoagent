@@ -5,7 +5,6 @@ import {
   Node,
   NodeChange,
   addEdge,
-  getIncomers,
   OnNodesChange,
   OnEdgesChange,
   OnConnect,
@@ -14,14 +13,6 @@ import {
 } from "reactflow";
 import { ContextData } from "./ContextNode";
 
-
-export type LLM_config = {
-  // Defaulting to OpenAI for now
-  api_base: string;
-  api_key: string;
-  model: string;
-};
-
 export type EditorState = {
   nodes: Node<ContextData>[];
   edges: Edge[];
@@ -29,10 +20,9 @@ export type EditorState = {
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
   updateContextData: (nodeId: string, data: ContextData) => void;
-  getNodeById: (nodeId: string) => Node<ContextData> | undefined; 
+  getNodeById: (nodeId: string) => Node<ContextData> | undefined;
   createNode: (node: Node<ContextData>) => void;
   createChildNode: (node: Node<ContextData>, parentId: string) => void;
-
 };
 
 const useStore = create<EditorState>((set, get) => ({
@@ -71,14 +61,14 @@ const useStore = create<EditorState>((set, get) => ({
     });
   },
   createChildNode: (node, parentId) => {
-    const parent = get().nodes.find((n) => n.id === parentId);
-    if (parent) {
-      parent.data.auxiliary = node;
-      set({
-        nodes: get().nodes,
-      });
-    }
-  }
+    set((state) => ({
+      nodes: [...state.nodes, node],
+      edges: [
+        ...state.edges,
+        { id: `e${parentId}-${node.id}`, source: parentId, target: node.id },
+      ],
+    }));
+  },
 }));
 
 export default useStore;

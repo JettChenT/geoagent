@@ -1,5 +1,5 @@
 import os
-from typing import Tuple
+from typing import Tuple, Optional
 from enum import Enum
 import logging
 import asyncio
@@ -17,6 +17,8 @@ from .connector.gptv import Gpt4Vision
 from .connector import LMM, Message
 from .tools import TOOLS, find_tool
 from .context import Context
+from .sock import start_srv
+from .subscriber import Subscriber, SIOSubscriber
 
 if os.getenv("FUNTRACE"):
     import functiontrace
@@ -91,11 +93,12 @@ class Agent:
     ROLLOUT_THRESHOLD = 2
     BRANCH_CNT = 3
 
-    def __init__(self, vllm: LMM, run_type: RunType = RunType.PARALLEL):
+    def __init__(self, vllm: LMM, run_type: RunType = RunType.PARALLEL, subscriber: Optional[Subscriber] = None):
         self.vllm = vllm
         self.depth = 0
         self.output_parser = ReActSingleInputOutputParser()
         self.run_type = run_type
+        self.subscriber = subscriber
 
     def expand_node(self, node: Context):
         logging.info(f"expanding node {hex(id(node))}.....")
@@ -237,7 +240,7 @@ class Agent:
 
     def lats(self, image_loc:str, additional: str = ""):
         utils.flush_run_dir()
-        root = Context(tools=TOOLS)
+        root = Context(tools=TOOLS, subscriber=self.subscriber)
         root.add_message(
             Message(
                 INITIAL_REACT_PROMPT.format(
@@ -356,10 +359,12 @@ class Agent:
 
 
 if __name__ == "__main__":
-    agent = Agent(Gpt4Vision(debug=True))
+    srv, sub_thread = start_srv()
+    sio_sub = SIOSubscriber(srv)
+    agent = Agent(Gpt4Vision(debug=True), subscriber=sio_sub)
     additional_info = input(
         "Enter any additional information regarding this image or guidance on the geolocation process. \nPress enter to begin.\n"
     )
     logging.basicConfig(level=logging.INFO)
-    res = agent.lats("./datasets/IM2GPS/human_geolocation_test_anon/86688e77-bd47-453b-8bee-f27943ddd921.jpg", additional_info)
+    res = agent.lats("./images/anon/2.png", additional_info)
     print(res)

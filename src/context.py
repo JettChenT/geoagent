@@ -7,6 +7,7 @@ from .utils import DEBUG_DIR
 from langchain_core.agents import AgentAction, AgentFinish
 from langchain_core.tools import BaseTool
 from typing_extensions import Self
+from .subscriber import Subscriber
 import numpy as np
 
 
@@ -37,13 +38,15 @@ class Context:
                  tools: List[BaseTool] | None = None,
                  parent: Self|None = None,
                  cur_messages: List[Message] | None = None,
-                 transition: Optional[AgentAction]=None,
-                 observation=None
+                 transition: Optional[AgentAction] = None,
+                 observation=None,
+                 subscriber: Optional[Subscriber] = None,
                  ):
         self.tools = tools
         self.cur_messages = cur_messages or []
         self.transition = transition # The last action or action-equivalent taken by the agent
         self.observation = observation # The last observation made by the agent
+        self.subscriber = subscriber
 
         # LATS stuff
         self.parent = parent
@@ -56,11 +59,35 @@ class Context:
         self.exhausted = False  # If all children are terminal
         self.em = 0  # Exact match, evaluation metric
 
+        if self.parent:
+            self._push("add_node", (
+                hex(id(self.parent)),
+                hex(id(self)),
+                self.to_json()
+            ))
+        else:
+            self._push("root_node", (
+                hex(id(self)),
+                self.to_json()
+            ))
+
     def uct(self):
         if self.visits == 0:
             return self.value
         return self.value / self.visits + np.sqrt(2 * np.log(self.parent.visits) / self.visits)
 
+    @staticmethod
+    def notify_update(func):
+        def wrapper(self, *args, **kwargs):
+            res = func(self, *args, **kwargs)
+            self._push("update_node", (
+                hex(id(self)),
+                self.to_json()
+            ))
+            return res
+        return wrapper
+
+    @notify_update
     def add_message(self, msg: Message):
         self.cur_messages.append(msg)
 
@@ -79,13 +106,44 @@ class Context:
             tools=self.tools,
             parent=self,
             cur_messages=message,
-            transition=transition
+            transition=transition,
+            subscriber=self.subscriber
         )
         self.children.append(res)
         return res
 
     def digest(self):
         return hashlib.md5(str(self.messages).encode()).hexdigest()
+
+    def to_json(self):
+        transition = {
+            "type": "NO_ACTION"
+        }
+        match self.transition:
+            case AgentAction():
+                transition = {
+                    "type": "AgentAction",
+                    "tool": self.transition.tool,
+                    "tool_input": self.transition.tool_input
+                }
+            case AgentFinish():
+                transition = {
+                    "type": "AgentFinish",
+                }
+        return {
+            "cur_messages": [m.to_json() for m in self.messages],
+            "transition": transition,
+            "observation": self.observation,
+            "auxiliary": {
+                "visits": self.visits,
+                "value": self.value,
+                "depth": self.depth,
+            }
+        }
+
+    def _push(self, msg_type, msg):
+        if self.subscriber:
+            self.subscriber.push(msg_type, msg)
 
     def dump(self, dst: Path | None = None):
         """
@@ -118,6 +176,16 @@ class Context:
     @property
     def messages(self):
         return (self.parent.messages if self.parent else []) + self.cur_messages
+
+
+    @property
+    def observation(self):
+        return self._observation
+
+    @notify_update
+    @observation.setter
+    def observation(self, obs):
+        self._observation = obs
 
     def __str__(self):
         transition_render = 'NO_ACTION'
