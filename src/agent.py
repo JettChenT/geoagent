@@ -16,7 +16,7 @@ from .prompting import *
 from .connector.gptv import Gpt4Vision
 from .connector import LMM, Message
 from .tools import TOOLS, find_tool
-from .context import Context
+from .context import Context, CtxState
 from .sock import start_srv
 from .subscriber import Subscriber, SIOSubscriber
 
@@ -110,6 +110,7 @@ class Agent:
         if node.depth >= self.DEPTH_THRESHOLD:
             node.is_terminal = True
             return
+        node.set_state(CtxState.Expanding)
         sampled = self.vllm.prompt(node, stop=["Observation"], n=self.BRANCH_CNT)
         logging.info(f"Sampled {len(sampled)} messages")
         tasks = []
@@ -142,16 +143,19 @@ class Agent:
         logging.info(f"Waiting for {len(tasks)} tasks to finish")
         for t in tasks:
             t.join()
+        node.set_state(CtxState.Normal)
 
     def rollout(self, node: Context) -> Tuple[float, Context]:
         print("-----------Rolling out----------")
         dep = 0
         rewards = [0]
+        node.set_state(CtxState.Rollout)
         while not node.is_terminal and dep < self.ROLLOUT_THRESHOLD:
             print("Rollout depth", dep)
             print("current node", str(node))
             self.expand_node(node)
             for c in node.children:
+                node.set_state(CtxState.Normal)
                 if c.is_terminal: return c.reward, c
             values = [self.get_value(c) for c in node.children]
             mx_ind = values.index(max(values))
@@ -160,13 +164,16 @@ class Agent:
             dep += 1
             if dep == self.ROLLOUT_THRESHOLD:
                 rewards = [-1]
+        node.set_state(CtxState.Normal)
         return sum(rewards) / len(rewards), node
 
     def evaluate_node(self, node: Context):
+        node.set_state(CtxState.Evaluating)
         votes = [self.get_value(c) for c in node.children]
         print("setting votes...", votes)
         for i, c in enumerate(node.children):
             c.value = votes[i]
+        node.set_state(CtxState.Normal)
         return sum(votes) / len(votes) if votes else 0
 
     def run_observe(self, state: Context):
@@ -231,9 +238,10 @@ class Agent:
         state.add_message(
             Message(f"Observation{state.depth}: {tool_res}\nAnalyze{state.depth}: ")
         )
-        state.observation = tool_res
+        state.set_observation(tool_res)
 
     def get_value(self, node: Context):
+        node.set_state(CtxState.Evaluating)
         messages = node.messages
         messages.append(Message(VALUE_PROMPT))
         res = self.vllm.prompt(messages, temperature=0.1)[0]
@@ -242,6 +250,7 @@ class Agent:
             if str(i) in targ_line:
                 logging.info(f"Found value {i} in {targ_line}")
                 return i / 10
+        node.set_state(CtxState.Normal)
         return -1
 
     def lats(self, image_loc: str, additional: str = ""):

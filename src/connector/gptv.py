@@ -69,9 +69,7 @@ def _generate_batch(lm, messages: List[Message], n: int) -> List[ChatCompletionM
                            f"DO NOT generate 'Observation:' ."
                            f"always move on to the next choice starting with the exact letters `<SEP>` "
                            f"ALWAYS include the exact letters `<SEP>` between each choice."
-                           f"After you generated all the choices, "
-                           f"ALWAYS include the phrase `<END>` to indicate the end of the choices."
-                           f"Remember, <SEP> and <END> are case sensitive."
+                           f"Remember, <SEP> is case sensitive."
                            f"Now, generate your choices: "))
     res = lm(messages=proc_messages(msg_mod), stop=["<END>"])
     if not res.choices:

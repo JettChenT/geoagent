@@ -12,7 +12,7 @@ import { shallow } from "zustand/shallow";
 import "reactflow/dist/style.css";
 
 import useStore, { EditorState } from "./store";
-import ContextNode from "./ContextNode";
+import ContextNode, { proc_incoming } from "./ContextNode";
 import { socket } from "./socket";
 import { useDebouncedCallback } from "use-debounce";
 import { getOutgoers } from "reactflow";
@@ -85,13 +85,12 @@ function App() {
         id: node_id,
         type: "contextNode",
         position: { x: 100, y: 100 },
-        data: dat,
+        data: proc_incoming(dat),
       });
     });
 
     socket.on("add_node", (par_id, node_id, dat) => {
       console.log("add_node", par_id, node_id, dat);
-      let par_node = getNodeById(par_id);
       createChildNode(
         {
           id: node_id,
@@ -100,14 +99,16 @@ function App() {
             x: 100,
             y: 100,
           },
-          data: dat,
+          data: proc_incoming(dat),
         },
         par_id
       );
       onLayout("LR");
     });
     socket.on("update_node", (node_id, dat) => {
-      updateContextData(node_id, dat);
+      console.log("update_node", node_id, dat);
+      updateContextData(node_id, proc_incoming(dat));
+      onLayout("LR");
     });
   }, []);
 

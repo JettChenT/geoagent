@@ -2,13 +2,22 @@ from typing import List, Optional
 from pathlib import Path
 import json
 import hashlib
-from .utils import DEBUG_DIR
+from enum import Enum
+from contextlib import contextmanager
 
 from langchain_core.agents import AgentAction, AgentFinish
 from langchain_core.tools import BaseTool
 from typing_extensions import Self
 from .subscriber import Subscriber
 import numpy as np
+
+
+class CtxState(Enum):
+    Normal = 'normal'
+    Running = 'running'
+    Expanding = 'expanding'
+    Evaluating = 'evaluating'
+    Rollout = 'rollout'
 
 
 class Message:
@@ -34,19 +43,22 @@ class Context:
     Context represents the state of an agent.
     In the frame of a LATS search, this can also be seen as a node of the search tree.
     """
+
     def __init__(self,
                  tools: List[BaseTool] | None = None,
-                 parent: Self|None = None,
+                 parent: Self | None = None,
                  cur_messages: List[Message] | None = None,
                  transition: Optional[AgentAction] = None,
                  observation=None,
                  subscriber: Optional[Subscriber] = None,
+                 state: CtxState = CtxState.Normal
                  ):
         self.tools = tools
         self.cur_messages = cur_messages or []
-        self.transition = transition # The last action or action-equivalent taken by the agent
-        self.observation = observation # The last observation made by the agent
+        self.transition = transition  # The last action or action-equivalent taken by the agent
+        self.observation = observation  # The last observation made by the agent
         self.subscriber = subscriber
+        self.run_state = state
 
         # LATS stuff
         self.parent = parent
@@ -85,13 +97,14 @@ class Context:
                 self.to_json()
             ))
             return res
+
         return wrapper
 
     @notify_update
     def add_message(self, msg: Message):
         self.cur_messages.append(msg)
 
-    def commit(self, message: List[Message] | Message | None = None, transition = None) -> Self:
+    def commit(self, message: List[Message] | Message | None = None, transition=None) -> Self:
         """
         Commit the context to a new one. Used for state transitions
         :param message:
@@ -129,11 +142,13 @@ class Context:
             case AgentFinish():
                 transition = {
                     "type": "AgentFinish",
+                    "return_values": self.transition.return_values,
                 }
         return {
             "cur_messages": [m.to_json() for m in self.messages],
             "transition": transition,
             "observation": self.observation,
+            "state": self.run_state.value,
             "auxiliary": {
                 "visits": self.visits,
                 "value": self.value,
@@ -177,15 +192,13 @@ class Context:
     def messages(self):
         return (self.parent.messages if self.parent else []) + self.cur_messages
 
-
-    @property
-    def observation(self):
-        return self._observation
+    @notify_update
+    def set_observation(self, obs):
+        self.observation = obs
 
     @notify_update
-    @observation.setter
-    def observation(self, obs):
-        self._observation = obs
+    def set_state(self, state: CtxState):
+        self.run_state = state
 
     @notify_update
     def notify(self):
