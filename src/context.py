@@ -1,3 +1,4 @@
+import functools
 from typing import List, Optional
 from pathlib import Path
 import json
@@ -204,6 +205,26 @@ class Context:
     def notify(self):
         return
 
+    @staticmethod
+    def wrap_state(state: CtxState):
+        def wrapper(func):
+            @functools.wraps(func)
+            def wrapped(*args, **kwargs):
+                possible_nodes = ([arg for arg in args if isinstance(arg, Context)]
+                                  + [v for v in kwargs.values() if isinstance(v, Context)])
+                if not possible_nodes:
+                    return func(*args, **kwargs)
+                node = possible_nodes[0]
+                prev_state = node.run_state
+                node.set_state(state)
+                res = func(*args, **kwargs)
+                node.set_state(prev_state)
+                return res
+
+            return wrapped
+
+        return wrapper
+
     def __str__(self):
         transition_render = 'NO_ACTION'
         if isinstance(self.transition, AgentAction):
@@ -211,6 +232,7 @@ class Context:
         if isinstance(self.transition, AgentFinish):
             transition_render = f"FINISH"
         return (f"Context([yellow]{hex(id(self))}[/yellow] ;"
+                f"[blue]{self.run_state.value}[/blue],"
                 f"[green]{transition_render}[/green], "
                 f"value: [red]{self.value}[/red], visits: [red]{self.visits}[/red], "
                 f"depth: [blue]{self.depth}[/blue], reward: [blue]{self.reward}[/blue]) :: "

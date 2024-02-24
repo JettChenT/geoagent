@@ -54,15 +54,13 @@ def image_to_base64(im: Image) -> str:
 def encode_image(image: Image.Image | Path, max_size_mb=20):
     # Open the image from a file path if it's not already an Image object
     if isinstance(image, Path):
-        raw = open(image, "rb").read()
-        if max_size_mb is None or sys.getsizeof(raw) / (1e6) <= max_size_mb:
-            encoded_img = base64.b64encode(raw).decode("utf-8")
-            img_type = "png" if image.suffix == ".png" else "jpeg"
-            return f"data:image/{img_type};base64,{encoded_img}"
-        image = Image.open(image)
+        im = Image.open(image)
+        if GLOB_RENDER_BLACKBAR:
+            image = render_text_description(im, str(image))
 
     if image.mode != "RGB":
         image = image.convert("RGB")
+
     # Convert max_size_mb to bytes
     max_encoded_size_bytes = (
         (max_size_mb * 1024 * 1024) * 3 / 4 if max_size_mb else None
@@ -130,7 +128,7 @@ def image_to_prompt(loc: str | Path):
     """
     if isinstance(loc, Path):
         loc = str(loc)
-    return f"Image {loc}: <img {loc}>"
+    return f"<img {loc}> The location to this image is {loc}."
 
 
 im_cache = {}
@@ -238,10 +236,14 @@ def upload_image(image: Path) -> str:
     Upload an image to cloud(sxcu.net) and return the url.
     If the image is not a PNG, it is converted to PNG before upload.
     """
+    img = Image.open(image)
+    if GLOB_RENDER_BLACKBAR:
+        img = render_text_description(img, str(image))
     if os.getenv("UPLOAD_IMAGE_USE") == 'gcp':
         from .tools.gcp import storage as gcp_storage
-        return gcp_storage.upload_file(image, destination_blob_name=f"{str(image)}{uuid4()}.png")
-    img = Image.open(image)
+        tmp_path = find_valid_loc("tmp", ".png")
+        img.save(tmp_path)
+        return gcp_storage.upload_file(tmp_path, destination_blob_name=f"{str(image)}{uuid4()}.png")
     if image.suffix != ".png":
         png_image_io = io.BytesIO()
         img.save(png_image_io, format="PNG")

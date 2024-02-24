@@ -130,3 +130,13 @@ Reflect on the current trajectory. Think about whether the current trajectory is
 Finally, in a separate line, output a number in the range [1, 10] that represents how promising the current trajectory is. 
 Remember to output the number and the number only in the final line.
 """
+
+REWARD_PROMPT = """
+The current trajectory has reached a terminal state, returning a coordinate.
+Reflect on the current trajectory, and output a number in the range [0,10] that represents 
+whether a successful geolocation has been performed. 
+0 could represent an unsuccessful geolocation in which the coordinates are not returned or are based on pure speculation;
+10 could represent a successful geolocation in which the coordinates are returned and are based on solid evidence.
+If you are not entirely sure, you can output a number in between, but don't do that too often.
+Remember to output the number and the number only in the final line.
+"""

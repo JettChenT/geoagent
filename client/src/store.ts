@@ -46,13 +46,14 @@ const useStore = create<EditorState>((set, get) => ({
     });
   },
   updateContextData: (nodeId, data) => {
-    const node = get().nodes.find((n) => n.id === nodeId);
-    if (node) {
-      node.data = data;
-      set({
-        nodes: get().nodes,
-      });
-    }
+    set((state) => {
+      console.log("updateContextData", nodeId, data);
+      const nodes = state.nodes.map((node) =>
+        node.id === nodeId ? { ...node, data: { ...node.data, ...data } } : node
+      );
+      console.log("new nodes", nodes);
+      return { nodes };
+    });
   },
   getNodeById: (nodeId) => {
     return get().nodes.find((n) => n.id === nodeId);

@@ -3,8 +3,14 @@ import asyncio
 import socketio
 from aiohttp import web
 from threading import Thread
+import os
+from .config import *
 
 sio = socketio.AsyncServer(cors_allowed_origins='*')
+sio.instrument(auth={
+    'username': 'admin',
+    'password': os.environ['ADMIN_PASSWORD'],
+})
 app = web.Application()
 sio.attach(app)
 

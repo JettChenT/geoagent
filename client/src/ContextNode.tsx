@@ -119,7 +119,6 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
         <div className="text-sm text-left">
           <span className="font-bold">State:</span>
           <span className="font-mono"> {stext(data.state)}</span>
-          <span className="font-mono"> {data.state}</span>
         </div>
       </div>
       <Handle type="source" position={Position.Right} />

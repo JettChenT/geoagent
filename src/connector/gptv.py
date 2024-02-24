@@ -67,9 +67,9 @@ def _generate_batch(lm, messages: List[Message], n: int) -> List[ChatCompletionM
                            f"Remember to generate only one Thought Action sequence for each choice."
                            f"After generating the Action Input, directly move on to the next choice."
                            f"DO NOT generate 'Observation:' ."
-                           f"always move on to the next choice starting with the exact letters `<SEP>` "
-                           f"ALWAYS include the exact letters `<SEP>` between each choice."
-                           f"Remember, <SEP> is case sensitive."
+                           f"always move on to the next choice starting with the exact letters `<Sep>` "
+                           f"ALWAYS include the exact letters `<Sep>` between each choice."
+                           f"Remember, <Sep> is case sensitive."
                            f"Now, generate your choices: "))
     res = lm(messages=proc_messages(msg_mod), stop=["<END>"])
     if not res.choices:
@@ -77,7 +77,7 @@ def _generate_batch(lm, messages: List[Message], n: int) -> List[ChatCompletionM
         raise Exception("No response from GPT-4 Vision")
     return list(map(
         lambda x: ChatCompletionMessage(content=x, role="assistant"),
-        res.choices[0].message.content.split("<SEP>")
+        res.choices[0].message.content.split("<Sep>")
     ))[:n]
 
 
@@ -157,6 +157,7 @@ class Gpt4Vision(LMM):
             print(msg)
         messages = proc_messages(msg)
         if self.debug:
+            print(messages)
             print(
                 f"HASH of messages: {hashlib.md5(str(messages).encode()).hexdigest()}"
             )
@@ -185,7 +186,12 @@ if __name__ == "__main__":
     import logging
 
     logging.basicConfig(level=logging.INFO)
-    ctx = Context.load(Path("debug/8c046045d9533fc2b6c858c57e71b91c.json"))
+    utils.toggle_blackbar()
+    ctx = Context(cur_messages=[Message(f"{utils.image_to_prompt('./images/gusmeme.png')}"
+                                        f"Repeat what I have just said about the metadata of the image, word by word."
+                                        f"Is the location of the image `./images/gusmeme.png`?"
+                                        f"If not, what is in that location?"
+                                        )])
     print(str(ctx))
     gptv = Gpt4Vision(debug=True, multi_gen_strategy=MultiGenStrategy.BATCH)
-    print(gptv.prompt(ctx, n=3))
+    print(gptv.prompt(ctx, n=1))
