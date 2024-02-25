@@ -1,6 +1,15 @@
 import { useCallback, useState, useEffect } from "react";
-import { Handle, NodeProps, Position, getIncomers } from "reactflow";
+import {
+  Handle,
+  NodeProps,
+  Position,
+  getIncomers,
+  getRectOfNodes,
+  getTransformForBounds,
+} from "reactflow";
 import useStore, { EditorState } from "./store";
+import { toPng } from "html-to-image";
+import { imageHeight, imageWidth } from "./utils";
 
 type Message = {
   message: string;
@@ -23,7 +32,13 @@ export type ContextData = {
   observation: string | any;
   transition: AgentAction | AgentFinish | null;
   auxiliary: any;
-  state: "normal" | "running" | "expanding" | "evaluating" | "rollout";
+  state:
+    | "normal"
+    | "running"
+    | "expanding"
+    | "evaluating"
+    | "rollout"
+    | "success";
 };
 
 export const proc_incoming = (incoming: any): ContextData => {
@@ -60,6 +75,22 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
 
   // Determine the background color and state text based on the state
   const [bgColor, setBgColor] = useState("bg-white");
+  useEffect(() => {
+    switch (data.state) {
+      case "running":
+        setBgColor("bg-blue-100 animate-pulse");
+        break;
+      case "evaluating":
+        setBgColor("bg-yellow-100 animate-pulse");
+        break;
+      case "success":
+        setBgColor("bg-green-100");
+        break;
+      default:
+        setBgColor("bg-white");
+    }
+  }, [data.state]);
+
   const stext = (st) => {
     switch (st) {
       case "running":
@@ -70,6 +101,8 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
         return "🟡 Evaluating";
       case "rollout":
         return "🟣 Rollout";
+      case "success":
+        return "🟢 Success";
       default:
         return `⚪ ${st}`;
     }
@@ -77,7 +110,7 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
 
   return (
     <div
-      className={`react-flow__node-default w-56 rounded shadow nowheel overflow-auto ${bgColor}`}
+      className={`react-flow__node-default w-64 rounded shadow nowheel overflow-auto ${bgColor}`}
     >
       <div className="p-2 space-y-1">
         <div className="text-lg font-bold text-left">Context</div>
@@ -98,10 +131,16 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
           </div>
         </div>
         <div className="text-sm text-left">
-          <span className="font-bold">Transition:</span>
+          <span className="font-bold">Transition: </span>
           {data.transition && "tool" in data.transition ? (
-            <span className="text-gray-500 font-mono">
-              {data.transition.tool} ({data.transition.tool_input})
+            <span>
+              <span className="text-blue-500 font-mono">
+                {data.transition.tool}
+              </span>
+              <span className="text-gray-500 font-mono">
+                {" "}
+                ({data.transition.tool_input})
+              </span>
             </span>
           ) : (
             <span className="text-gray-500 font-mono">

@@ -19,6 +19,7 @@ class CtxState(Enum):
     Expanding = 'expanding'
     Evaluating = 'evaluating'
     Rollout = 'rollout'
+    Success = 'success'
 
 
 class Message:

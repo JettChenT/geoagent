@@ -115,7 +115,8 @@ def query(q: str) -> Any:
 @tool("Return Coordinates", return_direct=True)
 def show_coords(coords: str):
     """
-    Shows the coordinates on a map. Use this when you are certain of the final coordinates and want to display that to user.
+    Use this when you are certain about the coordinates you want to show on the map.
+    This returns the results to the end user as the conclusion to your investigation.
     Eg. [(-122.123, 45.123), (-122.123, 45.123)]
     If there are multiple coordinates but they are all pretty close to each other, that's fine.
     But try not to use this tool if the coordinates are too spread out.

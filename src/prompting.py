@@ -133,10 +133,19 @@ Remember to output the number and the number only in the final line.
 
 REWARD_PROMPT = """
 The current trajectory has reached a terminal state, returning a coordinate.
+Make sure that a coordinate is returned, and that it is based on solid evidence.
+An address would not suffice.
 Reflect on the current trajectory, and output a number in the range [0,10] that represents 
 whether a successful geolocation has been performed. 
 0 could represent an unsuccessful geolocation in which the coordinates are not returned or are based on pure speculation;
-10 could represent a successful geolocation in which the coordinates are returned and are based on solid evidence.
-If you are not entirely sure, you can output a number in between, but don't do that too often.
+10 could represent a successful geolocation in which the coordinates are returned and are based on solid evidence,
+namely the coordinate is based on an external source.
+Remember to output a 10 if and only if a specific coordinate is returned, and the coordinate is based on solid evidence
+from an external observation.
+A 10 should have imagery match, satellite imagery match, or some text in the original image that matches with 
+observation.
+If you are not sure, output a number in the middle of the range.
+An approximate coordinate would not suffice, and would be considered a number in the middle of the range.
+Think step by step.
 Remember to output the number and the number only in the final line.
 """

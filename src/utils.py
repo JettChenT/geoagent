@@ -128,7 +128,7 @@ def image_to_prompt(loc: str | Path):
     """
     if isinstance(loc, Path):
         loc = str(loc)
-    return f"<img {loc}> The location to this image is {loc}."
+    return f"[Image location : {loc}] <img {loc}>"
 
 
 im_cache = {}

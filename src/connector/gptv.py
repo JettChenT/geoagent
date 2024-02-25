@@ -75,10 +75,18 @@ def _generate_batch(lm, messages: List[Message], n: int) -> List[ChatCompletionM
     if not res.choices:
         print(res)
         raise Exception("No response from GPT-4 Vision")
-    return list(map(
+    choices = list(map(
         lambda x: ChatCompletionMessage(content=x, role="assistant"),
         res.choices[0].message.content.split("<Sep>")
-    ))[:n]
+    ))
+    res = []
+    for choice in choices:
+        if choice.content.strip() == "":
+            continue
+        res.append(choice)
+    if len(res) < n:
+        logging.warning(f"Expected {n} choices, but only got {len(res)}")
+    return res[:n]
 
 
 def _generate_sample(lm, messages: List[Message], n: int) -> List[ChatCompletionMessage]:
@@ -126,7 +134,7 @@ class Gpt4Vision(LMM):
     def _create_completions(self, model: str, messages: List[Dict], max_tokens: int | NotGiven = NOT_GIVEN,
                             stop: List[str] | NotGiven = NOT_GIVEN, temperature: float | NotGiven = NOT_GIVEN,
                             timeout: float | NotGiven = NOT_GIVEN, n: int | NotGiven = NOT_GIVEN) -> ChatCompletion:
-        return self.client.chat.completions.create(
+        res = self.client.chat.completions.create(
             model=model,
             messages=messages,
             max_tokens=max_tokens,
@@ -135,6 +143,9 @@ class Gpt4Vision(LMM):
             timeout=timeout,
             n=n
         )
+        if not res.choices:
+            raise Exception("No response from GPT-4 Vision")
+        return res
 
     def prompt(self, context: Context | List[Message], stop: List[str] | NotGiven = NOT_GIVEN, n: int = 1,
                temperature: float | NotGiven = NOT_GIVEN,

@@ -4,6 +4,10 @@ import ReactFlow, {
   Controls,
   Panel,
   ReactFlowProvider,
+  getNodesBounds,
+  getRectOfNodes,
+  getTransformForBounds,
+  getViewportForBounds,
   useReactFlow,
 } from "reactflow";
 import Dagre from "@dagrejs/dagre";
@@ -16,6 +20,8 @@ import ContextNode, { proc_incoming } from "./ContextNode";
 import { socket } from "./socket";
 import { useDebouncedCallback } from "use-debounce";
 import { getOutgoers } from "reactflow";
+import { downloadImage, imageHeight, imageWidth } from "./utils";
+import { toPng } from "html-to-image";
 
 const nodeTypes = {
   contextNode: ContextNode,
@@ -112,6 +118,28 @@ function App() {
     });
   }, []);
 
+  const down_image = () => {
+    const nodesBounds = getNodesBounds(useStore.getState().nodes);
+    const transform = getTransformForBounds(
+      nodesBounds,
+      imageWidth,
+      imageHeight,
+      0.5,
+      2
+    );
+
+    toPng(document.querySelector(".react-flow__viewport") as HTMLElement, {
+      backgroundColor: "#1a365d",
+      width: imageWidth,
+      height: imageHeight,
+      style: {
+        width: `${imageWidth}px`,
+        height: `${imageHeight}px`,
+        transform: `translate(${transform[0]}px, ${transform[1]}px) scale(${transform[2]})`,
+      },
+    }).then(downloadImage);
+  };
+
   return (
     <div
       style={{ width: "100%", height: "100vh" }}
@@ -136,6 +164,12 @@ function App() {
               <div className="text-red-500">🔴 Not Connected</div>
             )}
           </div>
+          <button
+            onClick={down_image}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 my-2 px-2 rounded"
+          >
+            Download
+          </button>
         </Panel>
         <Background />
         <Controls />
@@ -143,5 +177,4 @@ function App() {
     </div>
   );
 }
-
 export default App;

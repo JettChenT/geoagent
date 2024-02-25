@@ -18,6 +18,7 @@ def wrap_auth(head):
 def text_search(query: str):
     """
     Returns information about a location based on a text query. Uses Google Places API.
+    This is equivalent to a Google Maps search.
     The CSV file returned would contain the coordinates of the location, as well as auxiliary information about the location, including
     the name, address, and photo ids.
     :param query: the text query
@@ -91,4 +92,4 @@ def plot_satellite(coords_loc: str):
 if __name__ == "__main__":
     from rich import print
 
-    print(text_search("Starbucks"))
+    print(text_search("Monroe St"))

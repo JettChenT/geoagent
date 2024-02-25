@@ -1,9 +1,10 @@
 import os
-from typing import Tuple, Optional
+import sys
+from typing import Tuple, Optional, List
 from enum import Enum
 import logging
-import asyncio
 import threading
+from concurrent.futures import ThreadPoolExecutor, wait
 
 from langchain.agents.output_parsers import ReActSingleInputOutputParser
 from langchain.tools.render import render_text_description
@@ -156,7 +157,7 @@ class Agent:
             self.expand_node(node)
             for c in node.children:
                 if c.is_terminal: return c.reward, c
-            values = [self.get_value(c) for c in node.children]
+            values = self.get_values(node.children)
             mx_ind = values.index(max(values))
             rewards.append(max(values))
             node = node.children[mx_ind]
@@ -168,7 +169,7 @@ class Agent:
     @Context.wrap_state(CtxState.Evaluating)
     def evaluate_node(self, node: Context):
         node.set_state(CtxState.Evaluating)
-        votes = [self.get_value(c) for c in node.children]
+        votes = self.get_values(node.children)
         print("setting votes...", votes)
         for i, c in enumerate(node.children):
             c.value = votes[i]
@@ -256,6 +257,12 @@ class Agent:
                 return i / 10
         return -1
 
+    def get_values(self, nodes: List[Context]):
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            futures = [executor.submit(self.get_value, node) for node in nodes]
+            wait(futures)
+            return [f.result() for f in futures]
+
     @Context.wrap_state(CtxState.Evaluating)
     def get_reward(self, node: Context):
         # TODO: augment the reward prompt with coordinate data etc.
@@ -291,11 +298,14 @@ class Agent:
             self.expand_node(node)
             print("-----After expansion-----")
             print_tree(root)
-            reward, terminal = self.rollout(max(node.children, key=lambda child: self.get_value(child)))
+            values = self.get_values(node.children)
+            reward, terminal = self.rollout(max(enumerate(node.children), key=lambda v: values[v[0]])[1])
+            terminal: Context
             terminals.append(terminal)
             if terminal.reward == 1:
-                print("successful solution has been found!")
                 print_tree(root)
+                print(f"successful solution has been found: {terminal.transition.tool_input}")
+                terminal.set_state(CtxState.Success)
                 return terminal
             backprop(terminal, reward)
             terminal_nodes_with_reward_1 = [node for node in collect_all_nodes(root) if
@@ -312,6 +322,7 @@ class Agent:
             logging.info("Unsuccessful trajectory found")
         if best_child is None:
             best_child = root
+        best_child.set_state(CtxState.Success)
         return best_child
 
     def run(self, image_loc: str, additional: str = ""):
@@ -397,5 +408,7 @@ if __name__ == "__main__":
         "Enter any additional information regarding this image or guidance on the geolocation process. \nPress enter to begin.\n"
     )
     logging.basicConfig(level=logging.INFO)
-    res = agent.lats("./images/anon/2.png", additional_info)
+    img_loc = sys.argv[1] if len(sys.argv) else "./images/anon/12.png"
+    res = agent.lats(img_loc, additional_info)
     print(res)
+    input("success! Press enter to exit.")
