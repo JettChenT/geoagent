@@ -97,7 +97,7 @@ class RunType(Enum):
 
 class Agent:
     DEPTH_THRESHOLD = 10
-    ROLLOUT_THRESHOLD = 4
+    ROLLOUT_THRESHOLD = 6
     BRANCH_CNT = 3
 
     def __init__(self, vllm: LMM, run_type: RunType = RunType.PARALLEL, subscriber: Optional[Subscriber] = None):
