@@ -4,6 +4,7 @@ from pathlib import Path
 import requests
 import dotenv
 from serpapi import GoogleSearch
+from functools import cache
 from PIL import Image
 from .. import utils
 from langchain.tools import tool
@@ -13,6 +14,7 @@ TOP_N = 15
 
 
 @tool("Google Lens Search")
+@cache
 def search_img(img_path: str):
     """
     Searches Google Lens for an image

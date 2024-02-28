@@ -2,6 +2,7 @@ from .auth import GOOGLE_MAPS_API_KEY
 from ...coords import Coords
 from PIL import Image
 import io
+from functools import cache
 from ... import utils
 from langchain.tools import tool
 
@@ -15,6 +16,7 @@ def wrap_auth(head):
 
 
 @tool
+@cache
 def text_search(query: str):
     """
     Returns information about a location based on a text query. Uses Google Places API.

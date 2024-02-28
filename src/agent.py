@@ -155,6 +155,8 @@ class Agent:
             print("Rollout depth", dep)
             print("current node", str(node))
             self.expand_node(node)
+            if len(node.children) == 0:
+                break
             for c in node.children:
                 if c.is_terminal: return c.reward, c
             values = self.get_values(node.children)

@@ -4,6 +4,7 @@ from PIL import Image
 from pathlib import Path
 import torch
 from langchain.tools import tool
+from functools import cache
 
 from .model.GeoCLIP import GeoCLIP
 from ... import utils
@@ -35,6 +36,7 @@ def _predict(image: Image.Image, top_n=5) -> List[Tuple[Tuple[float, float], flo
 
 
 @tool("Geoclip")
+@cache
 def geoclip_predict(img_file) -> str:
     """
     The Geoclip model is an image model that predicts the likely GPS location of an image based on its visual features.

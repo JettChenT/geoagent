@@ -2,6 +2,7 @@ from .auth import GOOGLE_MAPS_API_KEY
 from ...tools.output import debug
 
 from streetview import search_panoramas, get_streetview
+from functools import cache
 from PIL import Image
 from langchain.tools import tool
 from tqdm import tqdm
@@ -29,6 +30,7 @@ def get_pano(lat: float, lon: float) -> str | Image.Image:
 
 
 @tool("Get StreetViews")
+@cache
 def get_panos(coords_path: str) -> str:
     """
     Gets Google Streetview images of coordinates

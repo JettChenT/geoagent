@@ -1,5 +1,6 @@
 from overpy import Overpass
 from typing import List, Tuple, Any
+from functools import cache
 import folium
 from ... import prompting
 import io
@@ -90,6 +91,7 @@ def _query(q: str, nl: bool = True) -> Tuple[str | Coords, Image.Image | None]:
 
 
 @tool("Overpass Turbo")
+@cache
 def query(q: str) -> Any:
     """
     Queries the Open Streetmap database based on natural language, and return the resulting lat long pairs

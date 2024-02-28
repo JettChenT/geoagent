@@ -6,3 +6,6 @@ agent-speedscope:
 
 test-gpt:
     python -m src.connector.gptv
+
+eval folder_path:
+    python -m src.evaluation {{folder_path}}
