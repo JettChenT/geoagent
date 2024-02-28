@@ -29,6 +29,4 @@ class SIOSubscriber(Subscriber):
         self.sio = sio
 
     def push(self, msg_type, msg):
-        print(f"pushing message {msg_type}, {hash(str(msg))} to sio")
         asyncio.run(self.sio.emit(msg_type, msg))
-        print(f"pushed message {msg_type}, {hash(str(msg))} to sio")

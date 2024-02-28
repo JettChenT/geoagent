@@ -226,6 +226,9 @@ class Context:
 
         return wrapper
 
+    def id(self):
+        return hex(id(self))
+
     def __str__(self):
         transition_render = 'NO_ACTION'
         if isinstance(self.transition, AgentAction):

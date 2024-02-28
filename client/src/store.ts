@@ -25,6 +25,7 @@ export type EditorState = {
   createChildNode: (node: Node<ContextData>, parentId: string) => void;
   setNodes: (nodes: Node<ContextData>[]) => void;
   setEdges: (edges: Edge[]) => void;
+  clearAll: () => void; // Added function type for clearing all nodes and edges
 };
 
 const useStore = create<EditorState>((set, get) => ({
@@ -86,6 +87,9 @@ const useStore = create<EditorState>((set, get) => ({
   },
   setEdges: (edges) => {
     set({ edges });
+  },
+  clearAll: () => {
+    set({ nodes: [], edges: [] }); // Implementation for clearing all nodes and edges
   },
 }));
 

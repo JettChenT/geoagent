@@ -52,7 +52,7 @@ def text_search(query: str):
     return f"Results for query: {res_data_disp}\n Coordinates: {res_coords.to_prompt('textsearch_')}"
 
 
-SATELLITE_CAP = 80
+SATELLITE_CAP = 125
 
 
 @tool

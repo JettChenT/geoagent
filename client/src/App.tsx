@@ -60,6 +60,7 @@ function App() {
     getNodeById,
     setEdges,
     setNodes,
+    clearAll,
   } = useStore();
   const reactFlowWrapper = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
@@ -72,10 +73,6 @@ function App() {
 
     setNodes([...layouted.nodes]);
     setEdges([...layouted.edges]);
-
-    window.requestAnimationFrame(() => {
-      fitView();
-    });
   }, 100);
 
   useEffect(() => {
@@ -87,6 +84,7 @@ function App() {
     });
     socket.on("root_node", (node_id, dat) => {
       console.log("root_node", node_id, dat);
+      clearAll();
       createNode({
         id: node_id,
         type: "contextNode",

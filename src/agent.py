@@ -6,7 +6,6 @@ import logging
 import threading
 from concurrent.futures import ThreadPoolExecutor, wait
 
-from langchain.agents.output_parsers import ReActSingleInputOutputParser
 from langchain.tools.render import render_text_description
 from langchain_core.agents import AgentAction, AgentFinish
 from langchain_core.tools import BaseTool
@@ -18,6 +17,7 @@ from .connector.gptv import Gpt4Vision
 from .connector import LMM, Message
 from .tools import TOOLS, find_tool
 from .context import Context, CtxState
+from .react_parser import ReActSingleInputOutputParser
 from .coords import Coords
 from .sock import start_srv
 from .subscriber import Subscriber, SIOSubscriber
@@ -276,7 +276,7 @@ class Agent:
                 return i / 10
         return 0
 
-    def lats(self, image_loc: str, additional: str = ""):
+    def lats(self, image_loc: str, additional: str = "") -> Context:
         utils.flush_run_dir()
         root = Context(tools=TOOLS, subscriber=self.subscriber)
         root.add_message(
@@ -299,6 +299,9 @@ class Agent:
             print("-----After expansion-----")
             print_tree(root)
             values = self.get_values(node.children)
+            if len(values) == 0 or len(node.children) == 0:
+                logging.info(f"No values found for node {node}")
+                continue
             reward, terminal = self.rollout(max(enumerate(node.children), key=lambda v: values[v[0]])[1])
             terminal: Context
             terminals.append(terminal)
@@ -319,7 +322,7 @@ class Agent:
         if best_child.reward == 1:
             logging.info("Successful trajectory found")
         else:
-            logging.info("Unsuccessful trajectory found")
+            logging.info("No successful trajectory found")
         if best_child is None:
             best_child = root
         best_child.set_state(CtxState.Success)

@@ -161,7 +161,7 @@ class Gpt4Vision(LMM):
         multi_gen_strategy = multi_gen_strategy or self.multi_gen_strategy
         msg: List[Message] = context.messages if isinstance(context, Context) else context
         if self.debug and isinstance(context, Context):
-            tar_path = DEBUG_DIR / f"{context.digest()}.json"
+            tar_path = DEBUG_DIR / f"{context.id()}.json"
             context.dump(tar_path)
             print(f"Dumped context to {tar_path}")
         if self.debug:
@@ -198,10 +198,11 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO)
     utils.toggle_blackbar()
-    ctx = Context(cur_messages=[Message(f"{utils.image_to_prompt('./images/gusmeme.png')}"
-                                        f"Repeat what I have just said about the metadata of the image, word by word."
-                                        f"Is the location of the image `./images/gusmeme.png`?"
-                                        f"If not, what is in that location?"
+    ctx = Context(cur_messages=[Message(f"Summarize the following images in order:"
+                                        f"{utils.image_to_prompt('images/hw_prob.png')} ,"
+                                        f"{utils.image_to_prompt('images/anon/4.jpg')} ,"
+                                        f"{utils.image_to_prompt('images/anon/1.png')} ,"
+                                        f"{utils.image_to_prompt('images/anon/12.png')} ,"
                                         )])
     print(str(ctx))
     gptv = Gpt4Vision(debug=True, multi_gen_strategy=MultiGenStrategy.BATCH)

@@ -29,7 +29,7 @@ def run_srv():
     asyncio.set_event_loop(loop)
     runner = web.AppRunner(app)
     loop.run_until_complete(runner.setup())
-    site = web.TCPSite(runner, 'localhost', 4000)
+    site = web.TCPSite(runner, 'localhost', 3141)
     loop.run_until_complete(site.start())
     loop.run_forever()
 

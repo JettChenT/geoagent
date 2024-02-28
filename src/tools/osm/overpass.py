@@ -113,17 +113,17 @@ def query(q: str) -> Any:
 
 
 @tool("Return Coordinates", return_direct=True)
-def show_coords(coords: str):
+def show_coords(lat: float, lon: float):
     """
     Use this when you are certain about the coordinates you want to show on the map.
     This returns the results to the end user as the conclusion to your investigation.
-    Eg. [(-122.123, 45.123), (-122.123, 45.123)]
-    If there are multiple coordinates but they are all pretty close to each other, that's fine.
-    But try not to use this tool if the coordinates are too spread out.
-    :param coords: (lat, lon) or [(lat, lon)...]
+    Format for tool input: lat, lon
+    E.G: 47.6097, -122.3331
+    :param lat: the latitude of the location
+    :param lon: the longitude of the location
     :return:
     """
-    print("RESULT COORDS:", coords)
+    print(f"RESULT COORDS: {lat=}, {lon=}")
 
 
 if __name__ == "__main__":

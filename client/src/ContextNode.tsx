@@ -31,6 +31,7 @@ export type ContextData = {
   cur_messages: Message[];
   observation: string | any;
   transition: AgentAction | AgentFinish | null;
+  lats_data: any;
   auxiliary: any;
   state:
     | "normal"
@@ -64,6 +65,7 @@ export const proc_incoming = (incoming: any): ContextData => {
     transition: incoming.transition,
     auxiliary: incoming.auxiliary,
     state: incoming.state,
+    lats_data: incoming.lats_data,
   };
 };
 

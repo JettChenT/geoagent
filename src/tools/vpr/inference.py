@@ -81,7 +81,7 @@ def locate_image(im_loc: str, db_loc: str):
     """
     Locates an image using the streetview database. Must use the streetview tool to download the database first.
     :param im_loc: the location of the image to be located
-    :param db_loc: the location of a coordinate csv file whose auxiliary information contains the location to the downloaded streetview images
+    :param db_loc: the location of a coordinate csv/geojson file whose auxiliary information contains the location to the downloaded streetview images
     :return:
     """
     db_coords = Coords.load(db_loc)
