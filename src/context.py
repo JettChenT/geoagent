@@ -61,6 +61,7 @@ class Context:
         self.observation = observation  # The last observation made by the agent
         self.subscriber = subscriber
         self.run_state = state
+        self.auxiliary = {}
 
         # LATS stuff
         self.parent = parent
@@ -151,11 +152,12 @@ class Context:
             "transition": transition,
             "observation": self.observation,
             "state": self.run_state.value,
-            "auxiliary": {
+            "lats_data": {
                 "visits": self.visits,
                 "value": self.value,
                 "depth": self.depth,
-            }
+            },
+            "auxiliary": self.auxiliary
         }
 
     def _push(self, msg_type, msg):
@@ -197,6 +199,10 @@ class Context:
     @notify_update
     def set_observation(self, obs):
         self.observation = obs
+
+    @notify_update
+    def set_auxiliary(self, key, value):
+        self.auxiliary[key] = value
 
     @notify_update
     def set_state(self, state: CtxState):

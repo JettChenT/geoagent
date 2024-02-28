@@ -256,6 +256,7 @@ class Agent:
         for i in range(10, 0, -1):
             if str(i) in targ_line:
                 logging.info(f"Found value {i} in {targ_line}")
+                node.set_auxiliary("value", i / 10)
                 return i / 10
         return -1
 
@@ -275,6 +276,7 @@ class Agent:
         for i in range(10, 0, -1):
             if str(i) in targ_line:
                 logging.info(f"Found value {i} in {targ_line}")
+                node.set_auxiliary("reward", i / 10)
                 return i / 10
         return 0
 

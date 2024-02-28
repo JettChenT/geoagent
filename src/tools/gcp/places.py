@@ -55,6 +55,7 @@ def text_search(query: str):
 
 
 SATELLITE_CAP = 125
+TOP_N = 15
 
 
 @tool
@@ -83,15 +84,21 @@ def plot_satellite(coords_loc: str):
         loc = utils.save_img(im, "satellite_res")
         retrieved.append((coord, loc))
     sim = "".join(
-        [f"{coord}: {utils.image_to_prompt(loc)}\n" for (coord, loc) in retrieved]
+        [f"{coord}: {utils.image_to_prompt(loc)}\n" for (coord, loc) in retrieved[:TOP_N]]
+    )
+    full_res = Coords(
+        coords=[x[0] for x in retrieved],
+        auxiliary=[{"satellite_imagery": str(x[1])} for x in retrieved],
     )
     return f"""
-    Satellite Images:
+    Satellite Images({len(retrieved)} available, showing top {len(sim)}):
     {sim}
+    Full Results:
+    {full_res.to_prompt('satellite_', render=False)}
     """
 
 
 if __name__ == "__main__":
     from rich import print
 
-    print(text_search("Monroe St"))
+    print(plot_satellite("./run/textsearch_coordse8dd97.geojson"))

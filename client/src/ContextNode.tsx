@@ -154,7 +154,17 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
         <div className="text-sm text-left">
           <span className="font-bold">Auxiliary:</span>
           <div className="text-gray-500 font-mono overflow-auto max-h-16">
-            {JSON.stringify(data.auxiliary)}
+            {typeof data.auxiliary === "object"
+              ? JSON.stringify(data.auxiliary, null, 2)
+              : data.auxiliary}
+          </div>
+        </div>
+        <div className="text-sm text-left">
+          <span className="font-bold">Lats Data:</span>
+          <div className="text-gray-500 font-mono overflow-auto max-h-16">
+            {typeof data.lats_data === "object"
+              ? JSON.stringify(data.lats_data, null, 2)
+              : data.lats_data}
           </div>
         </div>
         <div className="text-sm text-left">

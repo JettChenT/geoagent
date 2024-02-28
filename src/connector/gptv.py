@@ -198,11 +198,9 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO)
     utils.toggle_blackbar()
-    ctx = Context(cur_messages=[Message(f"Summarize the following images in order:"
+    ctx = Context(cur_messages=[Message(f"Note the following image:"
                                         f"{utils.image_to_prompt('images/hw_prob.png')} ,"
-                                        f"{utils.image_to_prompt('images/anon/4.jpg')} ,"
-                                        f"{utils.image_to_prompt('images/anon/1.png')} ,"
-                                        f"{utils.image_to_prompt('images/anon/12.png')} ,"
+                                        f"What is the location to the image above?"
                                         )])
     print(str(ctx))
     gptv = Gpt4Vision(debug=True, multi_gen_strategy=MultiGenStrategy.BATCH)

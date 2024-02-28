@@ -7,8 +7,8 @@ import torchvision.transforms as transforms
 from pathlib import Path
 from langchain.tools import tool
 
-from coords import Coords
-import utils
+from ...coords import Coords
+from ... import utils
 
 model = None
 TOP_N = 15
@@ -107,10 +107,4 @@ def locate_image(im_loc: str, db_loc: str):
 
 
 if __name__ == "__main__":
-    # res = loc_sim(
-    #     load_image('./tools/vpr/ds/query.png'),
-    #     [load_image(f'./bak/run_svst/streetview_res{i}.png') for i in range(70)]
-    # )
-    # print(list(enumerate(res)))
-    # print(torch.argsort(res))
     print(locate_image._run("./images/anon/5.png", "./run/streetview_coords0.csv"))

@@ -9,6 +9,7 @@ from langchain.tools import tool
 
 from ...coords import Coords
 from ... import utils
+from ..ml import using_mps, load_image, cosine_similarity
 
 model = None
 TOP_N = 15
@@ -18,18 +19,6 @@ base_transform = transforms.Compose(
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ]
 )
-
-
-def using_mps():
-    return (
-        torch.backends.mps.is_available()
-        and torch.backends.mps.is_built()
-        and os.environ.get("USE_MPS", "0") == "1"
-    )
-
-
-def load_image(loc: str | Path):
-    return Image.open(loc).convert("RGB")
 
 
 def get_model():
@@ -60,14 +49,6 @@ def weight_im(im: Image.Image | List[Image.Image]):
     return output
 
 
-def cosine_similarity(vec1: torch.Tensor, vec2: torch.Tensor) -> torch.Tensor:
-    dot_product = vec1 @ vec2.T
-    norm_vec1 = torch.norm(vec1)
-    norm_vec2 = torch.norm(vec2, dim=1)
-    similarity = dot_product / (norm_vec1 * norm_vec2)
-    return similarity
-
-
 def loc_sim(target: Image.Image, db: List[Image.Image]):
     w_target = weight_im(target)
     w_db = weight_im(db)
@@ -75,13 +56,13 @@ def loc_sim(target: Image.Image, db: List[Image.Image]):
     s = cosine_similarity(w_target, w_db)
     return s
 
-
 @tool("Streetview Locate")
 def locate_image(im_loc: str, db_loc: str):
     """
     Locates an image using the streetview database. Must use the streetview tool to download the database first.
     :param im_loc: the location of the image to be located
     :param db_loc: the location of a coordinate csv/geojson file whose auxiliary information contains the location to the downloaded streetview images
+    Note that db_loc must come from the result of the streetview tool.
     :return:
     """
     db_coords = Coords.load(db_loc)
