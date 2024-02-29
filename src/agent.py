@@ -261,10 +261,31 @@ class Agent:
         return -1
 
     def get_values(self, nodes: List[Context]):
-        with ThreadPoolExecutor(max_workers=4) as executor:
-            futures = [executor.submit(self.get_value, node) for node in nodes]
-            wait(futures)
-            return [f.result() for f in futures]
+        messages = nodes[0].parent.messages
+        for i, node in enumerate(nodes):
+            messages.append(Message(f"Begin Branch {i}: "))
+            messages += node.cur_messages
+            messages.append(Message(f"End Branch {i}"))
+
+        messages.append(Message(MULTI_EVALUATION_PROMPT.format(n=len(nodes))))
+        messages.append(Message(f"Now, begin your evaluation for each of the {len(nodes)} branches."))
+        for n in nodes:
+            n.set_state(CtxState.Evaluating)
+        res = self.vllm.prompt(messages, temperature=0.1)[0]
+        targ_lines = res.message.splitlines()[-len(nodes):]
+        print('targ lines: ', targ_lines)
+        values = []
+        for i in range(len(nodes)):
+            for j in range(10, 0, -1):
+                if str(j) in targ_lines[i].split(":")[-1]:
+                    logging.info(f"Found value {j} in {targ_lines[i]}")
+                    nodes[i].set_auxiliary("value", j / 10)
+                    values.append(j / 10)
+                    break
+            else:
+                nodes[i].set_auxiliary("value", 0)
+                values.append(0)
+        return values
 
     @Context.wrap_state(CtxState.Evaluating)
     def get_reward(self, node: Context):

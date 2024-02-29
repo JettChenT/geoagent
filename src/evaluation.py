@@ -1,7 +1,9 @@
 import logging
+import os
 import sys
 import pandas as pd
 import numpy as np
+import time
 from pathlib import Path
 from sklearn.utils import shuffle
 
@@ -17,6 +19,7 @@ def find_coordinate(content, marker):
     end_ind = content.find(b'\x00', start_index)
     return float(content[start_index + len(marker):end_ind].decode('utf-8'))
 
+
 def extract_coordinates(file_path):
     # Markers to search for
     longitude_marker = b'longitude:'
@@ -26,14 +29,32 @@ def extract_coordinates(file_path):
     del contents
     return coords
 
+
 def evaluate(target_folder: Path):
+    if not (target_folder / 'coords.csv').exists():
+        image_files = [f for f in os.listdir(target_folder) if f.endswith('.jpg')]
+        image_files = [os.path.join(target_folder, f) for f in image_files]
+        coordinates = [extract_coordinates(f) for f in image_files]
+        filenames = [os.path.basename(f) for f in image_files]
+        df = pd.DataFrame(
+            {'image': filenames,
+             'latitude': [c[0] for c in coordinates],
+             'longitude': [c[1] for c in coordinates],
+             'pred': ""}
+        )
+        df.to_csv(target_folder / 'coords.csv', index=False)
     cords = pd.read_csv(target_folder / 'coords.csv')
+    if 'pred' not in cords.columns:
+        cords['pred'] = ""
     srv, sub_thread = start_srv()
     sio_sub = SIOSubscriber(srv)
     cords = shuffle(cords)
     cords.reset_index(drop=True, inplace=True)
     input(f"this will evaluate {len(cords)} images. Press enter to start.")
     for i, row in cords.iterrows():
+        if row['pred'] != "":
+            continue
+        t_begin = time.time()
         agent = Agent(Gpt4Vision(), subscriber=sio_sub)
         img_path = target_folder / row['image']
         res = agent.lats(img_path)
@@ -43,7 +64,8 @@ def evaluate(target_folder: Path):
             print(f"Predicted: {pred}")
             print(f"Actual: {row['latitude']}, {row['longitude']}")
             print(f"Progress: {i}/{len(cords)}")
-            cords.to_csv(target_folder/"eval.csv")
+            print(f"Time: {time.time() - t_begin} seconds")
+            cords.to_csv(target_folder / "coords.csv")
         except Exception as e:
             logging.error(f"Error in {img_path}: {e}")
 

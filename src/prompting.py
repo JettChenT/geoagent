@@ -149,3 +149,10 @@ An approximate coordinate would not suffice, and would be considered a number in
 Think step by step.
 Remember to output the number and the number only in the final line.
 """
+
+MULTI_EVALUATION_PROMPT = """
+You were given {n} choices over what is the next step to take for our investigation.
+For each choice, evaluate the validity of the choice, think about whether the choice is promising on its path toward a successful geolocation.
+Finally, in {n} separate lines, output a number in the range [1, 10] that represents how promising each choice is.
+The outputs should be in the same order as the choices, and in the format of `branch <choice_number>: <output>`.
+"""
