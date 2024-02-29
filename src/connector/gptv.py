@@ -6,6 +6,7 @@ from functools import partial
 
 from langchain_core.messages import HumanMessage
 from openai.types.chat import ChatCompletion, ChatCompletionMessage
+from concurrent.futures import ThreadPoolExecutor, wait
 
 from .. import utils
 from . import LMM, Message, Context
@@ -38,6 +39,12 @@ def proc_messages(messages: List[Message]) -> List[Dict]:
     for message in messages:
         m = message.message
         img_tags = img_tag_pattern.findall(m)
+        im_urls = {}
+        executor = ThreadPoolExecutor()
+        for tag in img_tags:
+            im_urls[tag] = executor.submit(utils.proc_image_url, tag)
+        for tag, future in im_urls.items():
+            im_urls[tag] = future.result()
         blocks = img_tag_pattern.split(m)
         output = []
         for block in blocks:
@@ -46,7 +53,7 @@ def proc_messages(messages: List[Message]) -> List[Dict]:
             if block in img_tags:
                 image_object = {
                     "type": "image_url",
-                    "image_url": {"url": utils.proc_image_url(block)},
+                    "image_url": {"url": im_urls[block]},
                 }
                 output.append(image_object)
             else:

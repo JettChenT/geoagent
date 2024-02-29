@@ -276,6 +276,7 @@ class Agent:
         print('targ lines: ', targ_lines)
         values = []
         for i in range(len(nodes)):
+            nodes[i].set_state(CtxState.Normal)
             for j in range(10, 0, -1):
                 if str(j) in targ_lines[i].split(":")[-1]:
                     logging.info(f"Found value {j} in {targ_lines[i]}")
