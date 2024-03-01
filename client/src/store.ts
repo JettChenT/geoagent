@@ -16,6 +16,7 @@ import { ContextData } from "./ContextNode";
 export type EditorState = {
   nodes: Node<ContextData>[];
   edges: Edge[];
+  globalInfo: any;
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
@@ -25,12 +26,15 @@ export type EditorState = {
   createChildNode: (node: Node<ContextData>, parentId: string) => void;
   setNodes: (nodes: Node<ContextData>[]) => void;
   setEdges: (edges: Edge[]) => void;
-  clearAll: () => void; // Added function type for clearing all nodes and edges
+  clearAll: () => void;
+  setGlobalInfo: (info: any) => void;
+  setGlobalInfoKey: (key: string, value: any) => void; // Added function type for setting a specific key in globalInfo
 };
 
 const useStore = create<EditorState>((set, get) => ({
   nodes: [],
   edges: [],
+  globalInfo: {}, // Initialize globalInfo as an empty object
   onNodesChange: (changes: NodeChange[]) => {
     set({
       nodes: applyNodeChanges(changes, get().nodes),
@@ -89,7 +93,16 @@ const useStore = create<EditorState>((set, get) => ({
     set({ edges });
   },
   clearAll: () => {
-    set({ nodes: [], edges: [] }); // Implementation for clearing all nodes and edges
+    set({ nodes: [], edges: [] });
+  },
+  setGlobalInfo: (info) => {
+    set({ globalInfo: info });
+  },
+  setGlobalInfoKey: (key, value) => {
+    // Implementation of the added function
+    set((state) => ({
+      globalInfo: { ...state.globalInfo, [key]: value },
+    }));
   },
 }));
 

@@ -51,19 +51,22 @@ def evaluate(target_folder: Path):
     cords = shuffle(cords)
     cords.reset_index(drop=True, inplace=True)
     input(f"this will evaluate {len(cords)} images. Press enter to start.")
-    for i, row in cords.iterrows():
-        if row['pred'] != "":
-            continue
+    sio_sub.push("global_info_set", ("task", "Evaluating Dataset"))
+    print("starting...")
+    to_evaluate = cords[cords['pred'].isna()]
+    for i, row in to_evaluate.iterrows():
         t_begin = time.time()
         agent = Agent(Gpt4Vision(), subscriber=sio_sub)
         img_path = target_folder / row['image']
+        sio_sub.push("global_info_set", ("progress", f"{i}/{len(to_evaluate)}"))
+        sio_sub.push("global_info_set", ("image", str(img_path)))
         res = agent.lats(img_path)
         try:
             pred = utils.sanitize(res.transition.tool_input)
             cords.loc[i, 'pred'] = pred
             print(f"Predicted: {pred}")
             print(f"Actual: {row['latitude']}, {row['longitude']}")
-            print(f"Progress: {i}/{len(cords)}")
+            print(f"Progress: {i}/{len(to_evaluate)}")
             print(f"Time: {time.time() - t_begin} seconds")
             cords.to_csv(target_folder / "coords.csv")
         except Exception as e:

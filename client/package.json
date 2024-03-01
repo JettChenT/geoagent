@@ -14,6 +14,7 @@
     "html-to-image": "^1.11.11",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react18-json-view": "^0.2.7",
     "reactflow": "^11.10.4",
     "socket.io-client": "^4.7.4",
     "use-debounce": "^10.0.0",

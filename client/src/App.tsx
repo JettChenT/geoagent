@@ -14,6 +14,7 @@ import Dagre from "@dagrejs/dagre";
 import { shallow } from "zustand/shallow";
 
 import "reactflow/dist/style.css";
+import "react18-json-view/src/style.css";
 
 import useStore, { EditorState } from "./store";
 import ContextNode, { proc_incoming } from "./ContextNode";
@@ -22,6 +23,7 @@ import { useDebouncedCallback } from "use-debounce";
 import { getOutgoers } from "reactflow";
 import { downloadImage, imageHeight, imageWidth } from "./utils";
 import { toPng } from "html-to-image";
+import JsonView from "react18-json-view";
 
 const nodeTypes = {
   contextNode: ContextNode,
@@ -46,11 +48,11 @@ const getLayoutedElements = (nodes, edges, options) => {
     edges,
   };
 };
-
 function App() {
   const {
     nodes,
     edges,
+    globalInfo,
     onNodesChange,
     onEdgesChange,
     onConnect,
@@ -61,6 +63,8 @@ function App() {
     setEdges,
     setNodes,
     clearAll,
+    setGlobalInfo,
+    setGlobalInfoKey,
   } = useStore();
   const reactFlowWrapper = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
@@ -109,10 +113,19 @@ function App() {
       );
       onLayout("LR");
     });
+
     socket.on("update_node", (node_id, dat) => {
       console.log("update_node", node_id, dat);
       updateContextData(node_id, proc_incoming(dat));
       onLayout("LR");
+    });
+
+    socket.on("global_info", (info) => {
+      setGlobalInfo(info);
+    });
+
+    socket.on("global_info_set", (key, value) => {
+      setGlobalInfoKey(key, value);
     });
   }, []);
 
@@ -161,6 +174,9 @@ function App() {
             ) : (
               <div className="text-red-500">🔴 Not Connected</div>
             )}
+          </div>
+          <div className="w-64 m-3 overflow-scroll bg-slate-300 bg-opacity-20 rounded-xl">
+            <JsonView src={globalInfo} collapsed={true} />
           </div>
           <button
             onClick={down_image}

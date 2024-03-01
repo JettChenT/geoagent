@@ -109,7 +109,7 @@ class Coords:
             path = Path(path)
         match path.suffix:
             case ".csv":
-                return Coords.load(path)
+                return Coords.from_csv(path)
             case ".geojson":
                 return Coords.from_geojson(path)
             case _:

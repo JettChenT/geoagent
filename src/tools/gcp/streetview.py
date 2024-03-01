@@ -41,11 +41,15 @@ def get_panos(coords_path: str) -> str:
     # Note: the sampling of streetview images could perhaps be improved in the future. Now it's just a SRS
     # e.g. ensure that each coordinate is represented, and that the coordinates are not too close to each other.
     coords = Coords.load(coords_path)
-    # print(coords)
+    print(coords)
     pid_set = set()
     for coord in coords:
         pids = search_panoramas(lat=coord[0], lon=coord[1])
         pid_set = pid_set.union({(x.pano_id, (x.lat, x.lon)) for x in pids})
+
+    if len(pid_set) == 0:
+        return "No panoramas found for this location."
+
     # print(pid_set)
     res = "Google Streetview Results \n ------------ \n"
     debug("Getting streetviews...")
@@ -85,5 +89,6 @@ def get_panos(coords_path: str) -> str:
 
 
 if __name__ == "__main__":
+    import sys
     utils.toggle_blackbar()
-    print(get_panos("./bak/run_svst/textsearch_coords2.csv"))
+    print(get_panos(sys.argv[1] if len(sys.argv)>1 else "./bak/run_svst/textsearch_coords2.csv"))

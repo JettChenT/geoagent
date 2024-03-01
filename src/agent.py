@@ -106,6 +106,12 @@ class Agent:
         self.output_parser = ReActSingleInputOutputParser()
         self.run_type = run_type
         self.subscriber = subscriber
+        self.failed_trajectories = []
+        self.reflections = []
+
+    def _push(self, *args, **kwargs):
+        if self.subscriber:
+            self.subscriber.push(*args, **kwargs)
 
     @Context.wrap_state(CtxState.Expanding)
     def expand_node(self, node: Context):
@@ -131,7 +137,7 @@ class Agent:
                 )
                 continue
             if (k := str(parsed.to_json()) if isinstance(parsed, AgentFinish) else (
-            parsed.tool, utils.sanitize(parsed.tool_input))) in existing:
+                    parsed.tool, utils.sanitize(parsed.tool_input))) in existing:
                 continue
             existing.add(k)
             new_st.transition = parsed
@@ -324,8 +330,11 @@ class Agent:
             self.expand_node(node)
             print("-----After expansion-----")
             print_tree(root)
+            if len(node.children) == 0:
+                logging.info(f"No children found for node {node}")
+                continue
             values = self.get_values(node.children)
-            if len(values) == 0 or len(node.children) == 0:
+            if len(values) == 0:
                 logging.info(f"No values found for node {node}")
                 continue
             reward, terminal = self.rollout(max(enumerate(node.children), key=lambda v: values[v[0]])[1])

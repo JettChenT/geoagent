@@ -10,6 +10,7 @@ import {
 import useStore, { EditorState } from "./store";
 import { toPng } from "html-to-image";
 import { imageHeight, imageWidth } from "./utils";
+import JsonView from "react18-json-view";
 
 type Message = {
   message: string;
@@ -112,27 +113,27 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
 
   return (
     <div
-      className={`react-flow__node-default w-64 rounded shadow nowheel overflow-auto ${bgColor}`}
+      className={`react-flow__node-default w-64 rounded shadow nowheel overflow-auto ${bgColor} select-text nodrag`}
     >
       <div className="p-2 space-y-1">
         <div className="text-lg font-bold text-left">Context</div>
-        <div className="text-sm text-left">
+        <div className="text-sm text-left" style={{ userSelect: "text" }}>
           <span className="font-bold">ID:</span>
           <span className="text-gray-500 font-mono"> {id}</span>
         </div>
-        <div className="text-sm text-left">
+        <div className="text-sm text-left" style={{ userSelect: "text" }}>
           <span className="font-bold">Last Message:</span>
           <div className="text-gray-500 font-mono overflow-auto max-h-16">
             {lastMessage}
           </div>
         </div>
-        <div className="text-sm text-left">
+        <div className="text-sm text-left" style={{ userSelect: "text" }}>
           <span className="font-bold">Observation:</span>
           <div className="text-gray-500 font-mono overflow-auto max-h-16">
             {data.observation}
           </div>
         </div>
-        <div className="text-sm text-left">
+        <div className="text-sm text-left" style={{ userSelect: "text" }}>
           <span className="font-bold">Transition: </span>
           {data.transition && "tool" in data.transition ? (
             <span>
@@ -151,23 +152,27 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
             </span>
           )}
         </div>
-        <div className="text-sm text-left">
+        <div className="text-sm text-left" style={{ userSelect: "text" }}>
           <span className="font-bold">Auxiliary:</span>
           <div className="text-gray-500 font-mono overflow-auto max-h-16">
-            {typeof data.auxiliary === "object"
-              ? JSON.stringify(data.auxiliary, null, 2)
-              : data.auxiliary}
+            {typeof data.auxiliary === "object" ? (
+              <JsonView src={data.auxiliary} collapsed={true} />
+            ) : (
+              data.auxiliary
+            )}
           </div>
         </div>
-        <div className="text-sm text-left">
+        <div className="text-sm text-left" style={{ userSelect: "text" }}>
           <span className="font-bold">Lats Data:</span>
           <div className="text-gray-500 font-mono overflow-auto max-h-16">
-            {typeof data.lats_data === "object"
-              ? JSON.stringify(data.lats_data, null, 2)
-              : data.lats_data}
+            {typeof data.lats_data === "object" ? (
+              <JsonView src={data.lats_data} collapsed={true} />
+            ) : (
+              data.lats_data
+            )}
           </div>
         </div>
-        <div className="text-sm text-left">
+        <div className="text-sm text-left" style={{ userSelect: "text" }}>
           <span className="font-bold">State:</span>
           <span className="font-mono"> {stext(data.state)}</span>
         </div>
