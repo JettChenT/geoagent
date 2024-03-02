@@ -68,7 +68,7 @@ def evaluate(target_folder: Path):
             print(f"Actual: {row['latitude']}, {row['longitude']}")
             print(f"Progress: {i}/{len(to_evaluate)}")
             print(f"Time: {time.time() - t_begin} seconds")
-            cords.to_csv(target_folder / "coords.csv")
+            cords.to_csv(target_folder / "coords.csv", index=False)
         except Exception as e:
             logging.error(f"Error in {img_path}: {e}")
 

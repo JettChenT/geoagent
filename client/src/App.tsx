@@ -9,6 +9,7 @@ import ReactFlow, {
   getTransformForBounds,
   getViewportForBounds,
   useReactFlow,
+  MiniMap,
 } from "reactflow";
 import Dagre from "@dagrejs/dagre";
 import { shallow } from "zustand/shallow";
@@ -165,6 +166,7 @@ function App() {
         onConnect={onConnect}
         onInit={setReactFlowInstance}
         nodeTypes={nodeTypes}
+        minZoom={0.01}
         fitView
       >
         <Panel position="top-right" className="space-x-4">
@@ -186,6 +188,7 @@ function App() {
           </button>
         </Panel>
         <Background />
+        <MiniMap />
         <Controls />
       </ReactFlow>
     </div>

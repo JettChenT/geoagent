@@ -113,6 +113,14 @@ class Agent:
         if self.subscriber:
             self.subscriber.push(*args, **kwargs)
 
+    @staticmethod
+    def backup(root: Context):
+        # NOTE: security
+        os.mkdir(f'bak/{root.id()}')
+        with open(f'bak/{root.id()}/root.json', 'w') as f:
+            f.write(str(root.serialize_recursive()))
+        os.system(f'cp -r run/* bak/{root.id()}')
+
     @Context.wrap_state(CtxState.Expanding)
     def expand_node(self, node: Context):
         logging.info(f"expanding node {hex(id(node))}.....")
@@ -344,12 +352,15 @@ class Agent:
                 print_tree(root)
                 print(f"successful solution has been found: {terminal.transition.tool_input}")
                 terminal.set_state(CtxState.Success)
+                self.backup(root)
                 return terminal
             backprop(terminal, reward)
             terminal_nodes_with_reward_1 = [node for node in collect_all_nodes(root) if
                                             node.is_terminal and node.reward == 1]
             if terminal_nodes_with_reward_1:
+                self.backup(root)
                 return max(terminal_nodes_with_reward_1, key=lambda node: node.value)
+        self.backup(root)
         all_nodes_list = collect_all_nodes(root)
         all_nodes_list.extend(terminals)
         best_child = max(all_nodes_list, key=lambda x: x.reward)

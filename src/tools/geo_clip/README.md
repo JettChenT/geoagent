@@ -42,7 +42,7 @@ image_file = "images/Kauai.png"
 image = Image.open(file_name)
 
 with torch.no_grad():
-    top_pred_gps, top_pred_prob = model._predict(image)
+    top_pred_gps, top_pred_prob = model.predict(image)
 
 # Print top 5 predictions
 print("Top 5 Predictions")

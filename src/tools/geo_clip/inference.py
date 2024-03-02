@@ -22,7 +22,7 @@ def initialize_model():
     model.eval()
 
 
-def _predict(image: Image.Image, top_n=5) -> List[Tuple[Tuple[float, float], float]]:
+def predict(image: Image.Image, top_n=5) -> List[Tuple[Tuple[float, float], float]]:
     if model is None:
         initialize_model()
     with torch.no_grad():
@@ -48,7 +48,7 @@ def geoclip_predict(img_file) -> str:
     :param img_file: the url or location of the image file
     """
     image = utils.load_image(img_file)
-    tops = _predict(image)
+    tops = predict(image)
 
     viz = Coords([it[0] for it in tops]).render()
     saved = utils.save_img(viz, "geoclip")

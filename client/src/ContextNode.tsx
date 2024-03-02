@@ -110,30 +110,41 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
         return `⚪ ${st}`;
     }
   };
-
   return (
     <div
-      className={`react-flow__node-default w-64 rounded shadow nowheel overflow-auto ${bgColor} select-text nodrag`}
+      className={`react-flow__node-default w-64 rounded shadow nowheel overflow-auto ${bgColor} select-text`}
     >
       <div className="p-2 space-y-1">
         <div className="text-lg font-bold text-left">Context</div>
-        <div className="text-sm text-left" style={{ userSelect: "text" }}>
+        <div
+          className="text-sm text-left nodrag"
+          style={{ userSelect: "text", cursor: "text" }}
+        >
           <span className="font-bold">ID:</span>
           <span className="text-gray-500 font-mono"> {id}</span>
         </div>
-        <div className="text-sm text-left" style={{ userSelect: "text" }}>
+        <div
+          className="text-sm text-left nodrag"
+          style={{ userSelect: "text", cursor: "text" }}
+        >
           <span className="font-bold">Last Message:</span>
           <div className="text-gray-500 font-mono overflow-auto max-h-16">
             {lastMessage}
           </div>
         </div>
-        <div className="text-sm text-left" style={{ userSelect: "text" }}>
+        <div
+          className="text-sm text-left nodrag"
+          style={{ userSelect: "text", cursor: "text" }}
+        >
           <span className="font-bold">Observation:</span>
           <div className="text-gray-500 font-mono overflow-auto max-h-16">
             {data.observation}
           </div>
         </div>
-        <div className="text-sm text-left" style={{ userSelect: "text" }}>
+        <div
+          className="text-sm text-left nodrag"
+          style={{ userSelect: "text", cursor: "text" }}
+        >
           <span className="font-bold">Transition: </span>
           {data.transition && "tool" in data.transition ? (
             <span>
@@ -152,7 +163,10 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
             </span>
           )}
         </div>
-        <div className="text-sm text-left" style={{ userSelect: "text" }}>
+        <div
+          className="text-sm text-left nodrag"
+          style={{ userSelect: "text", cursor: "text" }}
+        >
           <span className="font-bold">Auxiliary:</span>
           <div className="text-gray-500 font-mono overflow-auto max-h-16">
             {typeof data.auxiliary === "object" ? (
@@ -162,7 +176,10 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
             )}
           </div>
         </div>
-        <div className="text-sm text-left" style={{ userSelect: "text" }}>
+        <div
+          className="text-sm text-left nodrag"
+          style={{ userSelect: "text", cursor: "text" }}
+        >
           <span className="font-bold">Lats Data:</span>
           <div className="text-gray-500 font-mono overflow-auto max-h-16">
             {typeof data.lats_data === "object" ? (
@@ -172,7 +189,10 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
             )}
           </div>
         </div>
-        <div className="text-sm text-left" style={{ userSelect: "text" }}>
+        <div
+          className="text-sm text-left nodrag"
+          style={{ userSelect: "text", cursor: "text" }}
+        >
           <span className="font-bold">State:</span>
           <span className="font-mono"> {stext(data.state)}</span>
         </div>

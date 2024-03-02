@@ -160,6 +160,14 @@ class Context:
             "auxiliary": self.auxiliary
         }
 
+    def serialize_recursive(self):
+        res = {
+            "context": self.to_json(),
+        }
+        if self.children:
+            res["children"] = [c.serialize_recursive() for c in self.children]
+        return res
+
     def _push(self, msg_type, msg):
         if self.subscriber:
             self.subscriber.push(msg_type, msg)
