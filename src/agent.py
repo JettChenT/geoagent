@@ -318,6 +318,7 @@ class Agent:
 
     def lats(self, image_loc: str, additional: str = "") -> Context:
         utils.flush_run_dir()
+        self._push("global_info_set", ("image", img_loc))
         root = Context(tools=TOOLS, subscriber=self.subscriber)
         root.add_message(
             Message(
@@ -456,6 +457,7 @@ if __name__ == "__main__":
     additional_info = input(
         "Enter any additional information regarding this image or guidance on the geolocation process. \nPress enter to begin.\n"
     )
+    sio_sub.push("global_info_set", ("task", "Geolocating Image"))
     logging.basicConfig(level=logging.INFO)
     img_loc = sys.argv[1] if len(sys.argv) else "./images/anon/12.png"
     res = agent.lats(img_loc, additional_info)
