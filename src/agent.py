@@ -314,25 +314,10 @@ class Agent:
         return 0
 
 
-    def tst_tools(self, image_loc: str, additional: str = "") -> Context:
-        utils.flush_run_dir(self.session)
-        self._push("global_info_set", ("image", str(image_loc)))
-        self.session.tools = proc_tools(TOOLS, self.session)
-        root = Context(subscriber=self.subscriber)
-        root.add_message(
-            Message(
-                INITIAL_REACT_PROMPT.format(
-                    tool_names=", ".join([t.name for t in self.session.tools]),
-                    tools=render_text_description(self.session.tools),
-                    input=f"{utils.image_to_prompt(image_loc)} Where is this image located? {additional}",
-                )
-            )
-        )
-        print(str(root.messages))
-
     def lats(self, image_loc: str, additional: str = "") -> Context:
         utils.flush_run_dir(self.session)
         self._push("global_info_set", ("image", str(image_loc)))
+        self._push("global_info_set", ("session_id", self.session.id))
         self.session.tools = proc_tools(TOOLS, self.session)
         root = Context(subscriber=self.subscriber)
         root.add_message(
