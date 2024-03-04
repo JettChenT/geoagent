@@ -2,6 +2,7 @@ import re
 from typing import List
 
 from . import LMM, Context, Message
+from ..session import Session
 from .. import utils
 
 from langchain_core.messages import HumanMessage
@@ -9,7 +10,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 import dotenv
 
 
-def proc_messages(messages: List[Message]) -> HumanMessage:
+def proc_messages(messages: List[Message], session: Session) -> HumanMessage:
     """
     Process messages from the chat history to a HumanMessage object. Cuz Gemini does not support chat mode yet.
     :param messages:
@@ -27,7 +28,7 @@ def proc_messages(messages: List[Message]) -> HumanMessage:
             image_object = {
                 "type": "image_url",
                 "image_url": {
-                    "url": utils.proc_image_url(block),
+                    "url": utils.proc_image_url(block, session),
                 },
             }
             output.append(image_object)

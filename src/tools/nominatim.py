@@ -4,12 +4,13 @@ from langchain_core.tools import ToolException
 
 from .. import utils
 from ..coords import Coords
+from .wrapper import gtool, Session
 
 geolocator = Nominatim(user_agent="OSM Querying Geocoder", timeout=10)
 
 
-@tool("Nominatim Geocoder")
-def search_raw(query: str) -> str:
+@gtool("Nominatim Geocoder")
+def search_raw(query: str, session: Session) -> str:
     """
     Searches the OSM Wiki for a query. Use this if you are not sure about
     what are the Open Streetmap names for a general location.
@@ -27,8 +28,8 @@ def search_raw(query: str) -> str:
         raw_res = str([r.raw for r in res])
         coords = Coords([(d.latitude, d.longitude) for d in res])
         coords_render = coords.render()
-        loc = utils.save_img(coords_render, "nominatim_query_res")
-        dump_loc = utils.find_valid_loc("nominatim_query_res", ".geojson")
+        loc = utils.save_img(coords_render, "nominatim_query_res", session)
+        dump_loc = utils.find_valid_loc(session, "nominatim_query_res", ".geojson")
         coords.to_geojson(dump_loc)
         return f"""Nominatim Query Results: {raw_res} \n The coordinates are stored at {dump_loc} \n A rendering of the coordinates: {utils.image_to_prompt(loc)}"""
     except Exception as e:

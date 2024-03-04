@@ -18,6 +18,7 @@ from openai import OpenAI
 from openai._types import NOT_GIVEN, NotGiven
 from rich import print
 from ..utils import encode_image, DEBUG_DIR
+from ..session import Session
 import hashlib
 import backoff
 
@@ -28,7 +29,7 @@ class MultiGenStrategy(Enum):
     BATCH = 3
 
 
-def proc_messages(messages: List[Message]) -> List[Dict]:
+def proc_messages(messages: List[Message], session: Session) -> List[Dict]:
     """
     Process messages from the chat history to a HumanMessage object. Cuz Gemini does not support chat mode yet.
     :param messages:
@@ -42,7 +43,7 @@ def proc_messages(messages: List[Message]) -> List[Dict]:
         im_urls = {}
         executor = ThreadPoolExecutor()
         for tag in img_tags:
-            im_urls[tag] = executor.submit(utils.proc_image_url, tag)
+            im_urls[tag] = executor.submit(utils.proc_image_url, tag, session)
         for tag, future in im_urls.items():
             im_urls[tag] = future.result()
         blocks = img_tag_pattern.split(m)
@@ -62,10 +63,10 @@ def proc_messages(messages: List[Message]) -> List[Dict]:
     return res
 
 
-def _generate_batch(lm, messages: List[Message], n: int) -> List[ChatCompletionMessage]:
+def _generate_batch(lm, messages: List[Message], session: Session, n: int) -> List[ChatCompletionMessage]:
     # this should only be used with the ReACT flow
     if n == 1:
-        return _generate_sequential(lm, messages, n)
+        return _generate_sequential(lm, messages, session, n)
     msg_mod = messages.copy()
     msg_mod.append(Message(f"Please generate {n} different choices."
                            f"For each choice, follow the same format, "
@@ -78,7 +79,7 @@ def _generate_batch(lm, messages: List[Message], n: int) -> List[ChatCompletionM
                            f"ALWAYS include the exact letters `<Sep>` between each choice."
                            f"Remember, <Sep> is case sensitive."
                            f"Now, generate your choices: "))
-    res = lm(messages=proc_messages(msg_mod), stop=["<END>"])
+    res = lm(messages=proc_messages(msg_mod, session), stop=["<END>"])
     if not res.choices:
         print(res)
         raise Exception("No response from GPT-4 Vision")
@@ -96,22 +97,22 @@ def _generate_batch(lm, messages: List[Message], n: int) -> List[ChatCompletionM
     return res[:n]
 
 
-def _generate_sample(lm, messages: List[Message], n: int) -> List[ChatCompletionMessage]:
-    res = lm(messages=messages, n=n)
+def _generate_sample(lm, messages: List[Message], session: Session, n: int) -> List[ChatCompletionMessage]:
+    res = lm(messages=proc_messages(messages, session), n=n)
     if not res.choices:
         print(res)
         raise Exception("No response from GPT-4 Vision")
     return [r.message for r in res.choices]
 
 
-def _generate_sequential(lm, messages: List[Message], n: int) -> List[ChatCompletionMessage]:
+def _generate_sequential(lm, messages: List[Message], session: Session, n: int) -> List[ChatCompletionMessage]:
     choices = []
     for i in range(n):
         cur_msg = messages.copy()
         if i > 0:
             cur_msg.append(Message(f"Previously Generated messages: {list(map(lambda x: x.content, choices))}. "
                                    f"Now, generate a different choice:"))
-        response = lm(messages=proc_messages(cur_msg))
+        response = lm(messages=proc_messages(cur_msg, session))
         if not response.choices:
             print(response)
             raise Exception("No response from GPT-4 Vision")
@@ -154,9 +155,13 @@ class Gpt4Vision(LMM):
             raise Exception("No response from GPT-4 Vision")
         return res
 
-    def prompt(self, context: Context | List[Message], stop: List[str] | NotGiven = NOT_GIVEN, n: int = 1,
+    def prompt(self, context: Context | List[Message],
+               session: Session,
+               stop: List[str] | NotGiven = NOT_GIVEN,
+               n: int = 1,
                temperature: float | NotGiven = NOT_GIVEN,
-               multi_gen_strategy: MultiGenStrategy | None = None) -> List[Message]:
+               multi_gen_strategy: MultiGenStrategy | None = None
+               ) -> List[Message]:
         """
         Prompt GPT-4 Vision
         :param temperature: temperature of generation
@@ -173,7 +178,7 @@ class Gpt4Vision(LMM):
             print(f"Dumped context to {tar_path}")
         if self.debug:
             print(msg)
-        messages = proc_messages(msg)
+        messages = proc_messages(msg, session)
         if self.debug:
             print(messages)
             print(
@@ -189,11 +194,11 @@ class Gpt4Vision(LMM):
                        )
         match multi_gen_strategy:
             case MultiGenStrategy.SAMPLE:
-                choices = _generate_sample(pmpt, msg, n)
+                choices = _generate_sample(pmpt, msg, session, n)
             case MultiGenStrategy.SEQUENTIAL:
-                choices = _generate_sequential(pmpt, msg, n)
+                choices = _generate_sequential(pmpt, msg, session,  n)
             case MultiGenStrategy.BATCH:
-                choices = _generate_batch(pmpt, msg, n)
+                choices = _generate_batch(pmpt, msg, session,  n)
 
         if self.debug:
             print(choices)
@@ -211,4 +216,4 @@ if __name__ == "__main__":
                                         )])
     print(str(ctx))
     gptv = Gpt4Vision(debug=True, multi_gen_strategy=MultiGenStrategy.BATCH)
-    print(gptv.prompt(ctx, n=1))
+    print(gptv.prompt(ctx, Session(), n=1))

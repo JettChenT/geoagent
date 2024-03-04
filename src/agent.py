@@ -106,18 +106,17 @@ class Agent:
         self.output_parser = ReActSingleInputOutputParser()
         self.run_type = run_type
         self.subscriber = subscriber
+        self.session = Session() # Each agent can only be associated with one session
 
     def _push(self, *args, **kwargs):
         if self.subscriber:
             self.subscriber.push(*args, **kwargs)
 
-    @staticmethod
-    def backup(root: Context):
-        # NOTE: security
-        os.mkdir(f'bak/{root.id()}')
-        with open(f'bak/{root.id()}/root.json', 'w') as f:
-            f.write(str(root.serialize_recursive()))
-        os.system(f'cp -r run/* bak/{root.id()}')
+    def backup(self):
+        os.mkdir(f'bak/{self.session.id}')
+        with open(f'bak/{self.session.id}/root.json', 'w') as f:
+            f.write(str(self.session.root.serialize_recursive()))
+        os.system(f'cp -r run/* bak/{self.session.id}')
 
     @Context.wrap_state(CtxState.Expanding)
     def expand_node(self, node: Context):
@@ -125,7 +124,7 @@ class Agent:
         if node.depth >= self.DEPTH_THRESHOLD:
             node.is_terminal = True
             return
-        sampled = self.vllm.prompt(node, stop=["Observation"], n=self.BRANCH_CNT)
+        sampled = self.vllm.prompt(node, self.session, stop=["Observation"], n=self.BRANCH_CNT)
         logging.info(f"Sampled {len(sampled)} messages")
         tasks = []
         existing = set()
@@ -211,7 +210,7 @@ class Agent:
                 feedback = input("Enter feedback:")
                 state.add_message(Message(f"Feedback: {feedback}\nAnalyze{state.depth}: "))
             return
-        tool: BaseTool | None = state.session.find_tool(state.transition.tool)
+        tool: BaseTool | None = self.session.find_tool(state.transition.tool)
         if tool is None:
             state.add_message(
                 Message(
@@ -263,7 +262,7 @@ class Agent:
     def get_value(self, node: Context):
         messages = node.messages
         messages.append(Message(VALUE_PROMPT))
-        res = self.vllm.prompt(messages, temperature=0.1)[0]
+        res = self.vllm.prompt(messages, self.session, temperature=0.1)[0]
         targ_line = res.message.splitlines()[-1]
         for i in range(10, 0, -1):
             if str(i) in targ_line:
@@ -283,7 +282,7 @@ class Agent:
         messages.append(Message(f"Now, begin your evaluation for each of the {len(nodes)} branches."))
         for n in nodes:
             n.set_state(CtxState.Evaluating)
-        res = self.vllm.prompt(messages, temperature=0.1)[0]
+        res = self.vllm.prompt(messages, self.session, temperature=0.1)[0]
         targ_lines = res.message.splitlines()[-len(nodes):]
         print('targ lines: ', targ_lines)
         values = []
@@ -305,7 +304,7 @@ class Agent:
         # TODO: augment the reward prompt with coordinate data etc.
         messages = node.messages
         messages.append(Message(REWARD_PROMPT))
-        res = self.vllm.prompt(messages, temperature=0.1)[0]
+        res = self.vllm.prompt(messages, self.session, temperature=0.1)[0]
         targ_line = res.message.splitlines()[-1]
         for i in range(10, 0, -1):
             if str(i) in targ_line:
@@ -314,21 +313,38 @@ class Agent:
                 return i / 10
         return 0
 
-    def lats(self, image_loc: str, additional: str = "") -> Context:
-        session = Session()
-        utils.flush_run_dir(session)
+
+    def tst_tools(self, image_loc: str, additional: str = "") -> Context:
+        utils.flush_run_dir(self.session)
         self._push("global_info_set", ("image", str(image_loc)))
-        session.tools = proc_tools(TOOLS, session)
-        root = Context(session=session, subscriber=self.subscriber)
+        self.session.tools = proc_tools(TOOLS, self.session)
+        root = Context(subscriber=self.subscriber)
         root.add_message(
             Message(
                 INITIAL_REACT_PROMPT.format(
-                    tool_names=", ".join([t.name for t in session.tools]),
-                    tools=render_text_description(TOOLS),
+                    tool_names=", ".join([t.name for t in self.session.tools]),
+                    tools=render_text_description(self.session.tools),
                     input=f"{utils.image_to_prompt(image_loc)} Where is this image located? {additional}",
                 )
             )
         )
+        print(str(root.messages))
+
+    def lats(self, image_loc: str, additional: str = "") -> Context:
+        utils.flush_run_dir(self.session)
+        self._push("global_info_set", ("image", str(image_loc)))
+        self.session.tools = proc_tools(TOOLS, self.session)
+        root = Context(subscriber=self.subscriber)
+        root.add_message(
+            Message(
+                INITIAL_REACT_PROMPT.format(
+                    tool_names=", ".join([t.name for t in self.session.tools]),
+                    tools=render_text_description(self.session.tools),
+                    input=f"{utils.image_to_prompt(image_loc)} Where is this image located? {additional}",
+                )
+            )
+        )
+        self.session.root = root
         terminals = []
 
         for i in range(1, self.DEPTH_THRESHOLD + 1):
@@ -353,15 +369,15 @@ class Agent:
                 print_tree(root)
                 print(f"successful solution has been found: {terminal.transition.tool_input}")
                 terminal.set_state(CtxState.Success)
-                self.backup(root)
+                self.backup()
                 return terminal
             backprop(terminal, reward)
             terminal_nodes_with_reward_1 = [node for node in collect_all_nodes(root) if
                                             node.is_terminal and node.reward == 1]
             if terminal_nodes_with_reward_1:
-                self.backup(root)
+                self.backup()
                 return max(terminal_nodes_with_reward_1, key=lambda node: node.value)
-        self.backup(root)
+        self.backup()
         all_nodes_list = collect_all_nodes(root)
         all_nodes_list.extend(terminals)
         best_child = max(all_nodes_list, key=lambda x: x.reward)
@@ -386,7 +402,7 @@ class Agent:
         utils.flush_run_dir(session)
         self._push("global_info_set", ("image", str(image_loc)))
         session.tools = proc_tools(TOOLS, session)
-        ctx = Context(session=session, subscriber=self.subscriber)
+        ctx = Context(subscriber=self.subscriber)
         ctx.add_message(
             Message(
                 INITIAL_REACT_PROMPT.format(
@@ -398,7 +414,7 @@ class Agent:
         )
         for i in range(1, self.DEPTH_THRESHOLD + 1):
             print("last message", ctx.messages[-1].message)
-            choices = self.vllm.prompt(ctx, stop=["Observation"], n=self.BRANCH_CNT, temperature=1)
+            choices = self.vllm.prompt(ctx, self.session, stop=["Observation"], n=self.BRANCH_CNT, temperature=1)
             for (i, r) in enumerate(choices):
                 print(f"Branch {i}: {r}")
             chosen = int(input("Choose a branch: "))

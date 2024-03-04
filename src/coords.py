@@ -8,6 +8,7 @@ import folium
 import json
 
 from . import utils
+from .session import Session
 
 PADDING = 0.001
 
@@ -44,16 +45,16 @@ class Coords:
         im = Image.open(io.BytesIO(imdat))
         return im
 
-    def to_prompt(self, prefix="", plain=False, render=True, store=True):
+    def to_prompt(self, session: Session, prefix="", plain=False, render=True, store=True):
         res = ""
         if plain:
             res += f"Lat Long Coordinates: {self.coords}\n"
         if render:
             im = self.render()
-            loc = utils.save_img(im, f"{prefix}coords")
+            loc = utils.save_img(im, f"{prefix}coords", session)
             res += f"A rendering of the coordinates: {utils.image_to_prompt(loc)}"
         if store:
-            loc = utils.find_valid_loc(f"{prefix}coords", ".geojson")
+            loc = utils.find_valid_loc(session, f"{prefix}coords", ".geojson")
             self.to_geojson(loc)
             res += f"The coordinates are stored at {loc}"
         return res

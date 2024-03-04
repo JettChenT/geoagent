@@ -11,6 +11,7 @@ from ... import utils
 from ...utils import encode_image
 import requests
 from ...coords import Coords
+from ..wrapper import gtool, Session
 
 overpass = Overpass()
 STDEV_THRESHOLD = 0.001
@@ -90,9 +91,8 @@ def _query(q: str, nl: bool = True) -> Tuple[str | Coords, Image.Image | None]:
         return str(e) + "\n Please Adjust the OSM query to fix this issue.", None
 
 
-@tool("Overpass Turbo")
-@cache
-def query(q: str) -> Any:
+@gtool("Overpass Turbo", cached=True)
+def query(q: str, session: Session) -> Any:
     """
     Queries the Open Streetmap database based on natural language, and return the resulting lat long pairs
     Use this tool to pinpoint locations on the map. Be specific about your conditions.
@@ -102,11 +102,11 @@ def query(q: str) -> Any:
     res, img = _query(q)
     rsp = f"OSM Query result: {res}"
     if isinstance(res, Coords):
-        dump_loc = utils.find_valid_loc("osm_query_coords", ".geojson")
+        dump_loc = utils.find_valid_loc(session, "osm_query_coords", ".geojson")
         res.to_geojson(dump_loc)
         rsp += f"\n The coordinates are stored at {dump_loc}"
     if isinstance(img, Image.Image):
-        loc = utils.save_img(img, "osm_query_res")
+        loc = utils.save_img(img, "osm_query_res", session)
         rsp += (
             "\n Here's a A visualization of the OSM results:"
             + utils.image_to_prompt(str(loc))

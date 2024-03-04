@@ -73,6 +73,6 @@ if __name__ == "__main__":
 
     model.eval()
     with torch.no_grad():
-        top_pred_gps, top_pred_prob = model.predict(image)
+        top_pred_gps, top_pred_prob = model.predict(image, 5)
         print(f"Predicted GPS: {top_pred_gps}")
         print(f"Prediction Probability: {top_pred_prob}")

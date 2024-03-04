@@ -4,6 +4,8 @@ from PIL import Image
 import io
 from functools import cache
 from ... import utils
+from ...session import Session
+from ..wrapper import gtool
 from langchain.tools import tool
 
 import requests
@@ -15,9 +17,8 @@ def wrap_auth(head):
     return dict(head, **AUTH_HEAD)
 
 
-@tool
-@cache
-def text_search(query: str):
+@gtool(cached=True)
+def text_search(query: str, session: Session):
     """
     Returns information about a location based on a text query. Uses Google Places API.
     This is equivalent to a Google Maps search.
@@ -51,15 +52,15 @@ def text_search(query: str):
         ],
         res_data["places"],
     )
-    return f"Results for query: {res_data_disp}\n Coordinates: {res_coords.to_prompt('textsearch_')}"
+    return f"Results for query: {res_data_disp}\n Coordinates: {res_coords.to_prompt(session, 'textsearch_')}"
 
 
 SATELLITE_CAP = 125
 TOP_N = 15
 
 
-@tool
-def plot_satellite(coords_loc: str):
+@gtool(cached=True)
+def plot_satellite(coords_loc: str, session: Session):
     """
     Plots the satellite image of a given set of coordinates. Uses Google Maps Static API.
     :param coords_loc: the location of the coordinate csv or geojson file
@@ -81,7 +82,7 @@ def plot_satellite(coords_loc: str):
             },
         )
         im = Image.open(io.BytesIO(r.content))
-        loc = utils.save_img(im, "satellite_res")
+        loc = utils.save_img(im, "satellite_res", session)
         retrieved.append((coord, loc))
     sim = "".join(
         [f"{coord}: {utils.image_to_prompt(loc)}\n" for (coord, loc) in retrieved[:TOP_N]]
@@ -94,11 +95,14 @@ def plot_satellite(coords_loc: str):
     Satellite Images({len(retrieved)} available, showing top {len(sim)}):
     {sim}
     Full Results:
-    {full_res.to_prompt('satellite_', render=False)}
+    {full_res.to_prompt(session, 'satellite_', render=False)}
     """
 
 
 if __name__ == "__main__":
     from rich import print
-
-    print(plot_satellite("./run/textsearch_coordse8dd97.geojson"))
+    ses = Session()
+    kwargs = {"query": "New York", "session": ses}
+    nfn = text_search.to_tool(ses)
+    res = nfn("New York")
+    print(res)

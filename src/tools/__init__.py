@@ -24,5 +24,3 @@ TOOLS: List[BaseTool | GToolWrap] = [
     Sample4Geo.satellite_locate,
     misc.decide
 ]
-
-tools_map = {tool.name: tool for tool in TOOLS}

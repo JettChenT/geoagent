@@ -8,6 +8,8 @@ from langchain.tools import tool
 from tqdm import tqdm
 from ... import utils
 from ...coords import Coords
+from ..wrapper import gtool
+from ...session import Session
 import random
 import textwrap
 
@@ -29,9 +31,8 @@ def get_pano(lat: float, lon: float) -> str | Image.Image:
     return get_streetview(pid, api_key=GOOGLE_MAPS_API_KEY)
 
 
-@tool("Get StreetViews")
-@cache
-def get_panos(coords_path: str) -> str:
+@gtool("Get StreetViews", cached=True)
+def get_panos(coords_path: str, session: Session) -> str:
     """
     Gets Google Streetview images of coordinates
     :param coords_path: Path to the csv or geojson file containing coordinates information
@@ -60,7 +61,7 @@ def get_panos(coords_path: str) -> str:
         random.sample(sorted(pid_set), min(len(pid_set), PANO_LIMIT))
     ):
         im = get_streetview(pid, api_key=GOOGLE_MAPS_API_KEY)
-        loc = utils.save_img(im, "streetview_res")
+        loc = utils.save_img(im, "streetview_res", session)
         sample_previews.append(
             textwrap.dedent(
                 f"""\
@@ -84,7 +85,7 @@ def get_panos(coords_path: str) -> str:
         )
 
     coords = Coords(coord_l, auxiliary_l)
-    res += coords.to_prompt("streetview_")
+    res += coords.to_prompt(session, "streetview_")
     return res
 
 

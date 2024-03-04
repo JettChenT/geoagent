@@ -15,7 +15,7 @@ class Session:
 
     @property
     def id(self):
-        return self.root.id()
+        return str(hex(id(self)))
 
     def find_tool(self, name: str) -> BaseTool | None:
         for tool in self.tools:

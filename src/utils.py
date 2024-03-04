@@ -1,12 +1,10 @@
 import io
-import re
 import shutil
 from pathlib import Path
 import os
 from io import BytesIO
 from typing import List
 
-from markdownify import MarkdownConverter, abstract_inline_conversion
 import base64
 from PIL import Image, ImageDraw, ImageFont
 from langchain.tools import BaseTool
@@ -21,29 +19,6 @@ from .session import Session
 GLOB_RENDER_BLACKBAR = False
 RUN_DIR = "run/"
 DEBUG_DIR = Path("./debug")
-
-
-class OAIConverter(MarkdownConverter):
-    def convert_code(self, el, text, convert_as_inline):
-        classes = el.get("class")
-        if classes and "hljs" in classes:
-            converter = abstract_inline_conversion(lambda self: "```")
-            return converter(self, el, text, convert_as_inline)
-        return super().convert_code(el, text, convert_as_inline)
-
-
-def md(text: str) -> str:
-    return OAIConverter(strip=["pre"]).convert(text)
-
-
-def find_last_code_block(text: str) -> str | None:
-    # Regular expression to match code blocks enclosed within triple backticks
-    # The regular expression skips the optional language specifier
-    code_blocks = re.findall(r"```(?:[a-zA-Z0-9_+-]*)\n?([\s\S]*?)```", text)
-
-    if code_blocks:
-        return code_blocks[-1]
-    return None
 
 
 def image_to_base64(im: Image) -> str:
@@ -80,8 +55,8 @@ def encode_image(image: Image.Image | Path, max_size_mb=20):
 
         # Check if the encoded data size is within the specified limit
         if (
-            max_encoded_size_bytes is None
-            or len(encoded_data) <= max_encoded_size_bytes
+                max_encoded_size_bytes is None
+                or len(encoded_data) <= max_encoded_size_bytes
         ):
             break
         # If not, decrease quality
@@ -135,6 +110,8 @@ def image_to_prompt(loc: str | Path):
 
 
 im_cache = {}
+
+
 def proc_image_url(url: str, session: Session) -> str:
     if url.startswith("http"):
         return url
@@ -160,22 +137,22 @@ def find_valid_loc(session: Session, prefix: str, postfix: str) -> Path:
     """
     Find the first valid location that exists
     """
-    pre_dir = Path(RUN_DIR)/session.id
+    pre_dir = Path(RUN_DIR) / session.id
     for i in range(100_000_000):
         k = random.randbytes(4).hex()[2:]
-        path = pre_dir/(prefix + k + postfix)
+        path = pre_dir / (prefix + k + postfix)
         if not Path(path).exists():
             return Path(path)
     raise FileNotFoundError("Could not find any valid location")
 
 
 def make_run_dir(session: Session):
-    (Path(RUN_DIR)/session.id).mkdir(parents=True, exist_ok=True)
+    (Path(RUN_DIR) / session.id).mkdir(parents=True, exist_ok=True)
 
 
 def flush_run_dir(session: Session):
     # remove everything in RUN_DIR
-    shutil.rmtree(Path(RUN_DIR)/session.id, ignore_errors=True)
+    shutil.rmtree(Path(RUN_DIR) / session.id, ignore_errors=True)
     make_run_dir(session)
 
 
@@ -190,7 +167,7 @@ def save_img(im: Image.Image, ident: str, session: Session) -> Path:
 
 
 def render_text_description(
-    image: Image.Image, text: str, line_height=16
+        image: Image.Image, text: str, line_height=16
 ) -> Image.Image:
     """
     Render a text description at the bottom of an image. Assumes that text is single line.
