@@ -1,5 +1,6 @@
 import io
 import re
+import shutil
 from pathlib import Path
 import os
 from io import BytesIO
@@ -13,6 +14,8 @@ import requests
 import sys
 from uuid import uuid4
 import random
+
+from .session import Session
 
 # Mutable Global Variable: Whether to render a black bar at the bottom with the location of image
 GLOB_RENDER_BLACKBAR = False
@@ -132,7 +135,7 @@ def image_to_prompt(loc: str | Path):
 
 
 im_cache = {}
-def proc_image_url(url: str) -> str:
+def proc_image_url(url: str, session: Session) -> str:
     if url.startswith("http"):
         return url
     global im_cache
@@ -140,7 +143,7 @@ def proc_image_url(url: str) -> str:
         return im_cache[url]
     match os.getenv("UPLOAD_IMAGE_USE"):
         case 'gcp' | 'upload':
-            res = upload_image(Path(url))
+            res = upload_image(session, Path(url))
         case _:
             res = encode_image(Path(url))
     im_cache[url] = res
@@ -153,34 +156,35 @@ def load_image(url: str) -> Image.Image:
     return Image.open(url)
 
 
-def find_valid_loc(prefix: str, postfix: str, pre_dir: str = RUN_DIR) -> Path:
+def find_valid_loc(session: Session, prefix: str, postfix: str) -> Path:
     """
     Find the first valid location that exists
     """
+    pre_dir = Path(RUN_DIR)/session.id
     for i in range(100_000_000):
         k = random.randbytes(4).hex()[2:]
-        path = pre_dir + prefix + k + postfix
+        path = pre_dir/(prefix + k + postfix)
         if not Path(path).exists():
             return Path(path)
     raise FileNotFoundError("Could not find any valid location")
 
 
-def make_run_dir():
-    Path(RUN_DIR).mkdir(parents=True, exist_ok=True)
+def make_run_dir(session: Session):
+    (Path(RUN_DIR)/session.id).mkdir(parents=True, exist_ok=True)
 
 
-def flush_run_dir():
+def flush_run_dir(session: Session):
     # remove everything in RUN_DIR
-    os.system(f"rm -rf {RUN_DIR}")
-    make_run_dir()
+    shutil.rmtree(Path(RUN_DIR)/session.id, ignore_errors=True)
+    make_run_dir(session)
 
 
-def save_img(im: Image.Image, ident: str) -> Path:
+def save_img(im: Image.Image, ident: str, session: Session) -> Path:
     """
     Save an image to a file
     """
-    make_run_dir()
-    p = find_valid_loc(ident, ".png")
+    make_run_dir(session)
+    p = find_valid_loc(session, ident, ".png")
     im.save(p)
     return p
 
@@ -231,7 +235,7 @@ def get_args(tool: BaseTool, tool_input: str) -> List[str]:
     return tool_input.split(", ")
 
 
-def upload_image(image: Path) -> str:
+def upload_image(session: Session, image: Path) -> str:
     """
     Upload an image to cloud(sxcu.net) and return the url.
     If the image is not a PNG, it is converted to PNG before upload.
@@ -241,7 +245,7 @@ def upload_image(image: Path) -> str:
         img = render_text_description(img, str(image))
     if os.getenv("UPLOAD_IMAGE_USE") == 'gcp':
         from .tools.gcp import storage as gcp_storage
-        tmp_path = find_valid_loc("tmp", ".png")
+        tmp_path = find_valid_loc(session, "tmp", ".png")
         img.save(tmp_path)
         return gcp_storage.upload_file(tmp_path, destination_blob_name=f"{str(image)}{uuid4()}.png")
     if image.suffix != ".png":
@@ -260,4 +264,5 @@ def upload_image(image: Path) -> str:
 
 
 if __name__ == "__main__":
-    print(upload_image(Path("./images/anon/ukr_citycenter.jpg")))
+    ses = Session()
+    print(upload_image(ses, Path("./images/anon/ukr_citycenter.jpg")))

@@ -10,6 +10,7 @@ from langchain_core.agents import AgentAction, AgentFinish
 from langchain_core.tools import BaseTool
 from typing_extensions import Self
 from .subscriber import Subscriber
+from .session import Session
 import numpy as np
 
 
@@ -47,7 +48,7 @@ class Context:
     """
 
     def __init__(self,
-                 tools: List[BaseTool] | None = None,
+                 session: Session | None = None,
                  parent: Self | None = None,
                  cur_messages: List[Message] | None = None,
                  transition: Optional[AgentAction] = None,
@@ -55,7 +56,7 @@ class Context:
                  subscriber: Optional[Subscriber] = None,
                  state: CtxState = CtxState.Normal
                  ):
-        self.tools = tools
+        self.session = session
         self.cur_messages = cur_messages or []
         self.transition = transition  # The last action or action-equivalent taken by the agent
         self.observation = observation  # The last observation made by the agent
@@ -119,7 +120,7 @@ class Context:
         elif isinstance(message, Message):
             message = [message]
         res = Context(
-            tools=self.tools,
+            session=self.session,
             parent=self,
             cur_messages=message,
             transition=transition,

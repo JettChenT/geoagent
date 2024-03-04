@@ -34,7 +34,7 @@ def get_pano(lat: float, lon: float) -> str | Image.Image:
 def get_panos(coords_path: str) -> str:
     """
     Gets Google Streetview images of coordinates
-    :param coords_path: Path to the csv file containing coordinates information
+    :param coords_path: Path to the csv or geojson file containing coordinates information
     :return:
     """
     # TODO: pano tiles

@@ -15,8 +15,9 @@ from . import config, utils
 from .prompting import *
 from .connector.gptv import Gpt4Vision
 from .connector import LMM, Message
-from .tools import TOOLS, find_tool
+from .tools import TOOLS, proc_tools
 from .context import Context, CtxState
+from .session import Session
 from .react_parser import ReActSingleInputOutputParser
 from .coords import Coords
 from .sock import start_srv
@@ -102,12 +103,9 @@ class Agent:
 
     def __init__(self, vllm: LMM, run_type: RunType = RunType.PARALLEL, subscriber: Optional[Subscriber] = None):
         self.vllm = vllm
-        self.depth = 0
         self.output_parser = ReActSingleInputOutputParser()
         self.run_type = run_type
         self.subscriber = subscriber
-        self.failed_trajectories = []
-        self.reflections = []
 
     def _push(self, *args, **kwargs):
         if self.subscriber:
@@ -213,7 +211,7 @@ class Agent:
                 feedback = input("Enter feedback:")
                 state.add_message(Message(f"Feedback: {feedback}\nAnalyze{state.depth}: "))
             return
-        tool: BaseTool | None = find_tool(state.transition.tool)
+        tool: BaseTool | None = state.session.find_tool(state.transition.tool)
         if tool is None:
             state.add_message(
                 Message(
@@ -317,13 +315,15 @@ class Agent:
         return 0
 
     def lats(self, image_loc: str, additional: str = "") -> Context:
-        utils.flush_run_dir()
-        self._push("global_info_set", ("image", img_loc))
-        root = Context(tools=TOOLS, subscriber=self.subscriber)
+        session = Session()
+        utils.flush_run_dir(session)
+        self._push("global_info_set", ("image", str(image_loc)))
+        session.tools = proc_tools(TOOLS, session)
+        root = Context(session=session, subscriber=self.subscriber)
         root.add_message(
             Message(
                 INITIAL_REACT_PROMPT.format(
-                    tool_names=", ".join([t.name for t in TOOLS]),
+                    tool_names=", ".join([t.name for t in session.tools]),
                     tools=render_text_description(TOOLS),
                     input=f"{utils.image_to_prompt(image_loc)} Where is this image located? {additional}",
                 )
@@ -382,13 +382,16 @@ class Agent:
         :param additional: additional context to the agent
         :return:
         """
-        utils.flush_run_dir()
-        ctx = Context(tools=TOOLS)
+        session = Session()
+        utils.flush_run_dir(session)
+        self._push("global_info_set", ("image", str(image_loc)))
+        session.tools = proc_tools(TOOLS, session)
+        ctx = Context(session=session, subscriber=self.subscriber)
         ctx.add_message(
             Message(
                 INITIAL_REACT_PROMPT.format(
-                    tool_names=", ".join([t.name for t in TOOLS]),
-                    tools=render_text_description(TOOLS),
+                    tool_names=", ".join([t.name for t in session.tools]),
+                    tools=render_text_description(session.tools),
                     input=f"{utils.image_to_prompt(image_loc)} Where is this image located? {additional}",
                 )
             )
@@ -412,7 +415,7 @@ class Agent:
             elif isinstance(parsed, AgentAction):
                 print("[blue]Action[/blue]: ", parsed.tool)
                 print("[blue]Action Input[/blue]: ", parsed.tool_input)
-                tool: BaseTool | None = find_tool(parsed.tool)
+                tool: BaseTool | None = session.find_tool(parsed.tool)
                 if tool is None:
                     ctx.add_message(
                         Message(

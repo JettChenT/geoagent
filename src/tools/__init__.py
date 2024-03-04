@@ -4,9 +4,10 @@ from langchain_core.tools import BaseTool
 
 from . import osm, nominatim, geo_clip, vpr, azure, serp, pplx, Sample4Geo, misc
 from .gcp import streetview, places
+from .wrapper import GToolWrap, proc_tools, gtool
 
 # noinspection PyTypeChecker
-TOOLS: List[BaseTool] = [
+TOOLS: List[BaseTool | GToolWrap] = [
     # osm.query,
     # osm.wiki_search,
     osm.show_coords,
@@ -25,9 +26,3 @@ TOOLS: List[BaseTool] = [
 ]
 
 tools_map = {tool.name: tool for tool in TOOLS}
-
-
-def find_tool(name: str) -> BaseTool | None:
-    for tool in TOOLS:
-        if tool.name in name:
-            return tool

@@ -21,7 +21,7 @@ def text_search(query: str):
     """
     Returns information about a location based on a text query. Uses Google Places API.
     This is equivalent to a Google Maps search.
-    The CSV file returned would contain the coordinates of the location, as well as auxiliary information about the location, including
+    The geojson file returned would contain the coordinates of the location, as well as auxiliary information about the location, including
     the name, address, and photo ids.
     :param query: the text query
     :return:
@@ -62,7 +62,7 @@ TOP_N = 15
 def plot_satellite(coords_loc: str):
     """
     Plots the satellite image of a given set of coordinates. Uses Google Maps Static API.
-    :param coords_loc: the location of the coordinate csv file
+    :param coords_loc: the location of the coordinate csv or geojson file
     :return:
     """
     coords = Coords.load(coords_loc)
