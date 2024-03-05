@@ -101,8 +101,10 @@ def plot_satellite(coords_loc: str, session: Session):
 
 if __name__ == "__main__":
     from rich import print
+    import inspect
     ses = Session()
     kwargs = {"query": "New York", "session": ses}
     nfn = text_search.to_tool(ses)
-    res = nfn("New York")
-    print(res)
+    # res = nfn("New York")
+    print(inspect.signature(nfn.func))
+    # print(res)

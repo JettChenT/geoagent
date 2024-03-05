@@ -34,7 +34,6 @@ class GToolWrap:
                 all_kwargs = new_args.arguments
                 all_kwargs.update(all_kwargs.pop("kwargs", {}))
                 all_kwargs["session"] = session
-                print("KWARGS", all_kwargs)
                 return f_bak(**all_kwargs)
             if self.cached:
                 g = functools.cache(g)

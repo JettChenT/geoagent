@@ -12,6 +12,7 @@ import requests
 import sys
 from uuid import uuid4
 import random
+import inspect
 
 from .session import Session
 
@@ -207,7 +208,7 @@ def sanitize(s: str) -> str:
 
 
 def get_args(tool: BaseTool, tool_input: str) -> List[str]:
-    if len(tool.args.keys()) <= 1:
+    if len(inspect.signature(tool.fun).parameters.keys()) <= 1:
         return [tool_input]
     return tool_input.split(", ")
 
