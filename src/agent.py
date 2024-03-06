@@ -15,6 +15,7 @@ from . import config, utils
 from .prompting import *
 from .connector.gptv import Gpt4Vision
 from .connector import LMM, Message
+from .messages import ProxiedMessage
 from .tools import TOOLS, proc_tools
 from .context import Context, CtxState
 from .session import Session
@@ -99,14 +100,14 @@ class RunType(Enum):
 class Agent:
     DEPTH_THRESHOLD = 10
     ROLLOUT_THRESHOLD = 6
-    BRANCH_CNT = 3
+    BRANCH_CNT = 4
 
     def __init__(self, vllm: LMM, run_type: RunType = RunType.PARALLEL, subscriber: Optional[Subscriber] = None):
         self.vllm = vllm
         self.output_parser = ReActSingleInputOutputParser()
         self.run_type = run_type
         self.subscriber = subscriber
-        self.session = Session() # Each agent can only be associated with one session
+        self.session = Session(subscriber=subscriber)
 
     def _push(self, *args, **kwargs):
         if self.subscriber:
@@ -313,11 +314,20 @@ class Agent:
                 return i / 10
         return 0
 
+    @Context.wrap_state(CtxState.Reflecting)
+    def get_reflection(self, node: Context):
+        messages = node.messages
+        messages.append(Message(REFLECTION_PROMPT))
+        res = self.vllm.prompt(messages, self.session)[0]
+        node.set_auxiliary("reflection", res.message)
+        self.session.add_reflection(res.message)
+
 
     def lats(self, image_loc: str, additional: str = "") -> Context:
         utils.flush_run_dir(self.session)
-        self._push("global_info_set", ("image", str(image_loc)))
-        self._push("global_info_set", ("session_id", self.session.id))
+        self._push("set_session_info", (self.session.id, {
+            "image": image_loc,
+        }))
         self.session.tools = proc_tools(TOOLS, self.session)
         root = Context(subscriber=self.subscriber)
         root.add_message(
@@ -329,7 +339,15 @@ class Agent:
                 )
             )
         )
+        root.add_message(
+            ProxiedMessage(
+                lambda ses: f"Conclusions Reached: {';'.join(ses.conclusions)}\n"
+                            f"Reflections: {';'.join(ses.reflections)}\n",
+                self.session
+            )
+        )
         self.session.root = root
+        self._push("set_session_id", (root.id(), self.session.id))
         terminals = []
 
         for i in range(1, self.DEPTH_THRESHOLD + 1):
@@ -356,6 +374,7 @@ class Agent:
                 terminal.set_state(CtxState.Success)
                 self.backup()
                 return terminal
+            self.get_reflection(terminal)
             backprop(terminal, reward)
             terminal_nodes_with_reward_1 = [node for node in collect_all_nodes(root) if
                                             node.is_terminal and node.reward == 1]
@@ -385,7 +404,6 @@ class Agent:
         """
         session = Session()
         utils.flush_run_dir(session)
-        self._push("global_info_set", ("image", str(image_loc)))
         session.tools = proc_tools(TOOLS, session)
         ctx = Context(subscriber=self.subscriber)
         ctx.add_message(

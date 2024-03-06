@@ -208,7 +208,8 @@ def sanitize(s: str) -> str:
 
 
 def get_args(tool: BaseTool, tool_input: str) -> List[str]:
-    if len(inspect.signature(tool.fun).parameters.keys()) <= 1:
+    keys = inspect.signature(tool.func).parameters.keys()
+    if len(keys) - list(keys).count("session") <= 1:
         return [tool_input]
     return tool_input.split(", ")
 

@@ -17,6 +17,8 @@ export type EditorState = {
   nodes: Node<ContextData>[];
   edges: Edge[];
   globalInfo: any;
+  currentSession: string | null; // Added current session identifier
+  sessionsInfo: { [sessionId: string]: any }; // Added session-specific information dictionary
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
@@ -28,13 +30,18 @@ export type EditorState = {
   setEdges: (edges: Edge[]) => void;
   clearAll: () => void;
   setGlobalInfo: (info: any) => void;
-  setGlobalInfoKey: (key: string, value: any) => void; // Added function type for setting a specific key in globalInfo
+  setGlobalInfoKey: (key: string, value: any) => void;
+  setSessionId: (nodeId: string, sessionId: string | null) => void;
+  setCurrentSession: (sessionId: string | null) => void; // Function to set the current session
+  setSessionInfo: (sessionId: string, info: any) => void; // Function to set session-specific information
 };
 
 const useStore = create<EditorState>((set, get) => ({
   nodes: [],
   edges: [],
-  globalInfo: {}, // Initialize globalInfo as an empty object
+  globalInfo: {},
+  currentSession: null, // Initialize currentSession as null
+  sessionsInfo: {}, // Initialize sessionsInfo as an empty object
   onNodesChange: (changes: NodeChange[]) => {
     set({
       nodes: applyNodeChanges(changes, get().nodes),
@@ -70,9 +77,14 @@ const useStore = create<EditorState>((set, get) => ({
   },
   createChildNode: (node, parentId) => {
     set((state) => {
-      if (!state.nodes.some((n) => n.id === node.id)) {
+      const parentNode = state.nodes.find((n) => n.id === parentId);
+      if (!state.nodes.some((n) => n.id === node.id) && parentNode) {
+        const updatedNode = {
+          ...node,
+          data: { ...node.data, session_id: parentNode.data.session_id },
+        };
         return {
-          nodes: [...state.nodes, node],
+          nodes: [...state.nodes, updatedNode],
           edges: [
             ...state.edges,
             {
@@ -93,15 +105,35 @@ const useStore = create<EditorState>((set, get) => ({
     set({ edges });
   },
   clearAll: () => {
-    set({ nodes: [], edges: [] });
+    set({ nodes: [], edges: [], currentSession: null, sessionsInfo: {} });
   },
   setGlobalInfo: (info) => {
     set({ globalInfo: info });
   },
   setGlobalInfoKey: (key, value) => {
-    // Implementation of the added function
     set((state) => ({
       globalInfo: { ...state.globalInfo, [key]: value },
+    }));
+  },
+  setSessionId: (nodeId, sessionId) => {
+    set((state) => {
+      const nodes = state.nodes.map((node) =>
+        node.id === nodeId
+          ? { ...node, data: { ...node.data, session_id: sessionId } }
+          : node
+      );
+      return { nodes };
+    });
+  },
+  setCurrentSession: (sessionId) => {
+    set({ currentSession: sessionId });
+  },
+  setSessionInfo: (sessionId, info) => {
+    set((state) => ({
+      sessionsInfo: {
+        ...state.sessionsInfo,
+        [sessionId]: { ...state.sessionsInfo[sessionId], ...info },
+      },
     }));
   },
 }));

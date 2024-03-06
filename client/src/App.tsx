@@ -66,6 +66,11 @@ function App() {
     clearAll,
     setGlobalInfo,
     setGlobalInfoKey,
+    setSessionId,
+    currentSession,
+    sessionsInfo,
+    setCurrentSession,
+    setSessionInfo,
   } = useStore();
   const reactFlowWrapper = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
@@ -128,6 +133,14 @@ function App() {
     socket.on("global_info_set", (key, value) => {
       setGlobalInfoKey(key, value);
     });
+
+    socket.on("set_session_id", (node_id, session_id) => {
+      setSessionId(node_id, session_id);
+    });
+
+    socket.on("set_session_info", (session_id, info) => {
+      setSessionInfo(session_id, info);
+    });
   }, []);
 
   const down_image = () => {
@@ -152,6 +165,10 @@ function App() {
     }).then(downloadImage);
   };
 
+  const handleSessionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setCurrentSession(e.target.value);
+  };
+
   return (
     <div
       style={{ width: "100%", height: "100vh" }}
@@ -159,7 +176,10 @@ function App() {
       ref={reactFlowWrapper}
     >
       <ReactFlow
-        nodes={nodes}
+        nodes={nodes.filter(
+          (node) =>
+            currentSession === null || node.data.session_id === currentSession
+        )}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
@@ -177,8 +197,23 @@ function App() {
               <div className="text-red-500">🔴 Not Connected</div>
             )}
           </div>
-          <div className="w-64 m-3 overflow-scroll bg-slate-300 bg-opacity-20 rounded-xl">
-            <JsonView src={globalInfo} collapsed={true} />
+          <select onChange={handleSessionChange} value={currentSession || ""}>
+            <option value="">All Sessions</option>
+            {Object.keys(sessionsInfo).map((sessionId) => (
+              <option key={sessionId} value={sessionId}>
+                {sessionId}
+              </option>
+            ))}
+          </select>
+          <div className="indicator">
+            <div className="w-64 m-3 overflow-scroll bg-slate-300 bg-opacity-20 rounded-xl">
+              <JsonView src={globalInfo} collapsed={true} />
+            </div>
+            {currentSession && (
+              <div className="w-64 m-3 overflow-scroll bg-slate-300 bg-opacity-20 rounded-xl">
+                <JsonView src={sessionsInfo[currentSession]} collapsed={true} />
+              </div>
+            )}
           </div>
           <button
             onClick={down_image}

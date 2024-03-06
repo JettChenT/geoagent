@@ -72,6 +72,8 @@ def evaluate(target_folder: Path):
         except Exception as e:
             logging.error(f"Error in {img_path}: {e}")
 
+def evaluate_batch(target_folder : Path, batch_num = 10):
+    pass
 
 if __name__ == '__main__':
     evaluate(Path(sys.argv[1]))

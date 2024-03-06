@@ -156,3 +156,9 @@ For each choice, evaluate the validity of the choice, think about whether the ch
 Finally, in {n} separate lines, output a number in the range [1, 10] that represents how promising each choice is.
 The outputs should be in the same order as the choices, and in the format of `branch <choice_number>: <output>`.
 """
+
+REFLECTION_PROMPT = """
+First summarize what you did in the current trajectory.
+Then, in a few sentences reflect on the current trajectory. 
+Provide advice to other agents doing this investigation regarding what to avoid, what to do better, and what has been tried etc.
+"""

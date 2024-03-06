@@ -3,9 +3,11 @@ from pathlib import Path
 import os
 import uuid
 from functools import cache
+import backoff
 
 
 @cache
+@backoff.on_exception(backoff.expo, Exception, max_tries=5)
 def upload_file(
     file_path: Path, bucket_name: str = None, destination_blob_name: str = None
 ):

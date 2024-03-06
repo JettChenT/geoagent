@@ -34,13 +34,15 @@ export type ContextData = {
   transition: AgentAction | AgentFinish | null;
   lats_data: any;
   auxiliary: any;
+  session_id: string | null;
   state:
     | "normal"
     | "running"
     | "expanding"
     | "evaluating"
     | "rollout"
-    | "success";
+    | "success"
+    | "reflecting";
 };
 
 export const proc_incoming = (incoming: any): ContextData => {
@@ -67,6 +69,7 @@ export const proc_incoming = (incoming: any): ContextData => {
     auxiliary: incoming.auxiliary,
     state: incoming.state,
     lats_data: incoming.lats_data,
+    session_id: null,
   };
 };
 
@@ -89,6 +92,9 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
       case "success":
         setBgColor("bg-green-100");
         break;
+      case "reflecting":
+        setBgColor("bg-purple-100");
+        break;
       default:
         setBgColor("bg-white");
     }
@@ -97,15 +103,17 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
   const stext = (st) => {
     switch (st) {
       case "running":
-        return "🔵 Running";
+        return "🏃 Running";
       case "expanding":
-        return "🟢 Expanding";
+        return "📈 Expanding";
       case "evaluating":
-        return "🟡 Evaluating";
+        return "🔍 Evaluating";
       case "rollout":
-        return "🟣 Rollout";
+        return "🚀 Rollout";
       case "success":
-        return "🟢 Success";
+        return "✅ Success";
+      case "reflecting":
+        return "🤔 Reflecting";
       default:
         return `⚪ ${st}`;
     }
@@ -122,6 +130,16 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
         >
           <span className="font-bold">ID:</span>
           <span className="text-gray-500 font-mono"> {id}</span>
+        </div>
+        <div
+          className="text-sm text-left nodrag"
+          style={{ userSelect: "text", cursor: "text" }}
+        >
+          <span className="font-bold">Session ID:</span>
+          <span className="text-gray-500 font-mono">
+            {" "}
+            {data.session_id || "None"}
+          </span>
         </div>
         <div
           className="text-sm text-left nodrag"
@@ -159,7 +177,7 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
           ) : (
             <span className="text-gray-500 font-mono">
               {" "}
-              {data.transition["type"]}{" "}
+              {data.transition ? data.transition["type"] : "None"}{" "}
             </span>
           )}
         </div>

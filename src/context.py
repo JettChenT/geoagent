@@ -12,21 +12,8 @@ from typing_extensions import Self
 from .subscriber import Subscriber
 import numpy as np
 
-
-class CtxState(Enum):
-    Normal = 'normal'
-    Running = 'running'
-    Expanding = 'expanding'
-    Evaluating = 'evaluating'
-    Rollout = 'rollout'
-    Success = 'success'
-
-
 class Message:
-    message: str
-    role: str | None
-
-    def __init__(self, msg, role: str | None = None):
+    def __init__(self, msg: str, role: str | None = None):
         self.message = msg
         self.role = role
 
@@ -39,6 +26,14 @@ class Message:
             "role": self.role
         }
 
+class CtxState(Enum):
+    Normal = 'normal'
+    Running = 'running'
+    Expanding = 'expanding'
+    Evaluating = 'evaluating'
+    Rollout = 'rollout'
+    Success = 'success'
+    Reflecting = 'reflecting'
 
 class Context:
     """

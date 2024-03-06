@@ -22,5 +22,7 @@ TOOLS: List[BaseTool | GToolWrap] = [
     serp.search_img,
     pplx.ask,
     Sample4Geo.satellite_locate,
-    misc.decide
+    misc.decide,
+    misc.add_clue,
+    misc.save_coords
 ]
