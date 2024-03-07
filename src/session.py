@@ -37,10 +37,10 @@ class Session:
     def notify_update(func):
         def wrapper(self, *args, **kwargs):
             res = func(self, *args, **kwargs)
-            self._push("set_session_info", (
-                self.id,
-                self.to_json()
-            ))
+            # self._push("set_session_info", (
+            #     self.id,
+            #     self.to_json()
+            # ))
             return res
         return wrapper
 

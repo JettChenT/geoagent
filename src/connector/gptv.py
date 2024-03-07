@@ -17,6 +17,7 @@ from pathlib import Path
 from openai import OpenAI
 from openai._types import NOT_GIVEN, NotGiven
 from rich import print
+import logging
 from ..utils import encode_image, DEBUG_DIR
 from ..session import Session
 import hashlib
@@ -206,14 +207,13 @@ class Gpt4Vision(LMM):
 
 
 if __name__ == "__main__":
-    import logging
-
     logging.basicConfig(level=logging.INFO)
     utils.toggle_blackbar()
-    ctx = Context(cur_messages=[Message(f"Note the following image:"
-                                        f"{utils.image_to_prompt('images/hw_prob.png')} ,"
-                                        f"What is the location to the image above?"
+    ctx = Context(cur_messages=[Message(f"{utils.image_to_prompt('images/hw_prob.png')}"
+                                        f"What is the path to the image?"
                                         )])
     print(str(ctx))
     gptv = Gpt4Vision(debug=True, multi_gen_strategy=MultiGenStrategy.BATCH)
-    print(gptv.prompt(ctx, Session(), n=1))
+    sess = Session()
+    utils.setup_session(sess)
+    print(gptv.prompt(ctx, sess, n=1))

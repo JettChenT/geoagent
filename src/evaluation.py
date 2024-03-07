@@ -6,7 +6,9 @@ import numpy as np
 import time
 from pathlib import Path
 from sklearn.utils import shuffle
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
+# Assuming these modules exist and are correctly implemented
 from src import utils
 from .connector.gptv import Gpt4Vision
 from .subscriber import SIOSubscriber
@@ -21,7 +23,6 @@ def find_coordinate(content, marker):
 
 
 def extract_coordinates(file_path):
-    # Markers to search for
     longitude_marker = b'longitude:'
     latitude_marker = b'latitude:'
     contents = open(file_path, 'rb').read()
@@ -30,6 +31,7 @@ def extract_coordinates(file_path):
     return coords
 
 
+# Original sequential evaluation function
 def evaluate(target_folder: Path):
     if not (target_folder / 'coords.csv').exists():
         image_files = [f for f in os.listdir(target_folder) if f.endswith('.jpg')]
@@ -37,12 +39,10 @@ def evaluate(target_folder: Path):
         coordinates = [extract_coordinates(f) for f in image_files]
         filenames = [os.path.basename(f) for f in image_files]
         df = pd.DataFrame(
-            {'image': filenames,
-             'latitude': [c[0] for c in coordinates],
-             'longitude': [c[1] for c in coordinates],
-             'pred': ""}
-        )
+            {'image': filenames, 'latitude': [c[0] for c in coordinates], 'longitude': [c[1] for c in coordinates],
+             'pred': ""})
         df.to_csv(target_folder / 'coords.csv', index=False)
+
     cords = pd.read_csv(target_folder / 'coords.csv')
     if 'pred' not in cords.columns:
         cords['pred'] = ""
@@ -50,30 +50,74 @@ def evaluate(target_folder: Path):
     sio_sub = SIOSubscriber(srv)
     cords = shuffle(cords)
     cords.reset_index(drop=True, inplace=True)
-    input(f"this will evaluate {len(cords)} images. Press enter to start.")
-    sio_sub.push("global_info_set", ("task", "Evaluating Dataset"))
-    print("starting...")
-    to_evaluate = cords[cords['pred'].isna()]
-    for i, row in to_evaluate.iterrows():
+    input("This will evaluate images sequentially. Press enter to start.")
+    sio_sub.push("global_info_set", ("task", "Evaluating Dataset Sequentially"))
+    print("Starting...")
+
+    for i, row in cords.iterrows():
         t_begin = time.time()
-        agent = Agent(Gpt4Vision(), subscriber=sio_sub)
+        agent = Agent(Gpt4Vision(), subscriber=sio_sub)  # Create a new Agent instance for each image
         img_path = target_folder / row['image']
-        sio_sub.push("global_info_set", ("progress", f"{i}/{len(to_evaluate)}"))
         sio_sub.push("global_info_set", ("image", str(img_path)))
-        res = agent.lats(img_path)
         try:
+            res = agent.lats(img_path)
             pred = utils.sanitize(res.transition.tool_input)
             cords.loc[i, 'pred'] = pred
-            print(f"Predicted: {pred}")
+            print(f"Predicted: {pred} for image {row['image']}")
             print(f"Actual: {row['latitude']}, {row['longitude']}")
-            print(f"Progress: {i}/{len(to_evaluate)}")
             print(f"Time: {time.time() - t_begin} seconds")
-            cords.to_csv(target_folder / "coords.csv", index=False)
+            cords.to_csv(target_folder / "coords.csv", index=False)  # Save after each prediction
         except Exception as e:
             logging.error(f"Error in {img_path}: {e}")
 
-def evaluate_batch(target_folder : Path, batch_num = 10):
-    pass
+
+# New batched evaluation function
+def evaluate_image(row, target_folder, sio_sub):
+    agent = Agent(Gpt4Vision(), subscriber=sio_sub)  # Create a new Agent instance for each task
+    t_begin = time.time()
+    img_path = target_folder / row['image']
+    sio_sub.push("global_info_set", ("image", str(img_path)))
+    pred = ""
+    try:
+        res = agent.lats(str(img_path))
+        sio_sub.push("set_session_info_key", (agent.session.id, "completed", True))
+        pred = utils.sanitize(res.transition.tool_input)
+        print(f"Predicted: {pred} for image {row['image']}")
+        print(f"Actual: {row['latitude']}, {row['longitude']}")
+        print(f"Time: {time.time() - t_begin} seconds")
+    except Exception as e:
+        logging.error(f"Error in {img_path}: {e}")
+    return row.name, pred
+
+
+def evaluate_batched(target_folder: Path, batch_size=10):
+    cords = pd.read_csv(target_folder / 'coords.csv')
+    if 'pred' not in cords.columns:
+        cords['pred'] = ""
+    srv, sub_thread = start_srv()
+    sio_sub = SIOSubscriber(srv)
+    cords = shuffle(cords)
+    cords.reset_index(drop=True, inplace=True)
+    input("This will evaluate images in batches. Press enter to start.")
+    sio_sub.push("global_info_set", ("task", "Evaluating Dataset Batched"))
+    print("Starting...")
+
+    with ThreadPoolExecutor(max_workers=batch_size) as executor:
+        future_to_row = {executor.submit(evaluate_image, row, target_folder, sio_sub): row for _, row in
+                         cords.iterrows()}
+        for future in as_completed(future_to_row):
+            row = future_to_row[future]
+            try:
+                index, pred = future.result()
+                cords.loc[index, 'pred'] = pred
+            except Exception as exc:
+                print(f'Generated exception: {exc}')
+        cords.to_csv(target_folder / "coords.csv", index=False)  # Save the results after processing all batches
+
 
 if __name__ == '__main__':
-    evaluate(Path(sys.argv[1]))
+    path = Path(sys.argv[1])
+    if len(sys.argv) > 2 and sys.argv[2] == 'batched':
+        evaluate_batched(path)
+    else:
+        evaluate(path)

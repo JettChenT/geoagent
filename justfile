@@ -9,3 +9,6 @@ test-gpt:
 
 eval folder_path:
     python -m src.evaluation {{folder_path}}
+
+eval-batched folder_path:
+    python -m src.evaluation {{folder_path}} batched

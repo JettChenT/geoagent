@@ -136,10 +136,7 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
           style={{ userSelect: "text", cursor: "text" }}
         >
           <span className="font-bold">Session ID:</span>
-          <span className="text-gray-500 font-mono">
-            {" "}
-            {data.session_id || "None"}
-          </span>
+          <span className="text-gray-500 font-mono"> {data.session_id}</span>
         </div>
         <div
           className="text-sm text-left nodrag"

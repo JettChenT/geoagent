@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useMemo,
+} from "react";
 import ReactFlow, {
   Background,
   Controls,
@@ -54,6 +60,7 @@ function App() {
     nodes,
     edges,
     globalInfo,
+    sessionsInfo,
     onNodesChange,
     onEdgesChange,
     onConnect,
@@ -68,9 +75,8 @@ function App() {
     setGlobalInfoKey,
     setSessionId,
     currentSession,
-    sessionsInfo,
     setCurrentSession,
-    setSessionInfo,
+    setSessionsInfoKey,
   } = useStore();
   const reactFlowWrapper = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
@@ -94,13 +100,13 @@ function App() {
     });
     socket.on("root_node", (node_id, dat) => {
       console.log("root_node", node_id, dat);
-      clearAll();
       createNode({
         id: node_id,
         type: "contextNode",
         position: { x: 100, y: 100 },
         data: proc_incoming(dat),
       });
+      onLayout("LR");
     });
 
     socket.on("add_node", (par_id, node_id, dat) => {
@@ -135,11 +141,13 @@ function App() {
     });
 
     socket.on("set_session_id", (node_id, session_id) => {
+      console.log("set_session_id", node_id, session_id);
       setSessionId(node_id, session_id);
     });
 
-    socket.on("set_session_info", (session_id, info) => {
-      setSessionInfo(session_id, info);
+    socket.on("set_session_info_key", (session_id, key, value) => {
+      console.log("set_session_info_key", session_id, key, value);
+      setSessionsInfoKey(session_id, key, value);
     });
   }, []);
 
@@ -178,7 +186,12 @@ function App() {
       <ReactFlow
         nodes={nodes.filter(
           (node) =>
-            currentSession === null || node.data.session_id === currentSession
+            (currentSession === null ||
+              currentSession === "all_sessions" ||
+              node.data.session_id === currentSession) &&
+            (sessionsInfo[node.data.session_id]
+              ? sessionsInfo[node.data.session_id]["completed"] !== true
+              : true)
         )}
         edges={edges}
         onNodesChange={onNodesChange}
@@ -189,38 +202,52 @@ function App() {
         minZoom={0.01}
         fitView
       >
-        <Panel position="top-right" className="space-x-4">
-          <div>
+        <Panel position="top-right" className="flex flex-col space-y-4 w-64">
+          <div className="mb-4">
             {isConnected ? (
-              <div className="text-green-500">🟢 Connected</div>
+              <div className="text-green-500 flex items-center">
+                🟢 Connected
+              </div>
             ) : (
-              <div className="text-red-500">🔴 Not Connected</div>
-            )}
-          </div>
-          <select onChange={handleSessionChange} value={currentSession || ""}>
-            <option value="">All Sessions</option>
-            {Object.keys(sessionsInfo).map((sessionId) => (
-              <option key={sessionId} value={sessionId}>
-                {sessionId}
-              </option>
-            ))}
-          </select>
-          <div className="indicator">
-            <div className="w-64 m-3 overflow-scroll bg-slate-300 bg-opacity-20 rounded-xl">
-              <JsonView src={globalInfo} collapsed={true} />
-            </div>
-            {currentSession && (
-              <div className="w-64 m-3 overflow-scroll bg-slate-300 bg-opacity-20 rounded-xl">
-                <JsonView src={sessionsInfo[currentSession]} collapsed={true} />
+              <div className="text-red-500 flex items-center">
+                🔴 Not Connected
               </div>
             )}
           </div>
-          <button
-            onClick={down_image}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 my-2 px-2 rounded"
-          >
-            Download
-          </button>
+          <div className="mb-4">
+            <button
+              onClick={down_image}
+              className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-2 rounded w-full"
+            >
+              Download
+            </button>
+          </div>
+          <div className="indicator">
+            <select
+              value={currentSession}
+              onChange={handleSessionChange}
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-4"
+            >
+              <option value="all_sessions">All Sessions</option>
+              {Object.keys(sessionsInfo).map((sessionId) => (
+                <option key={sessionId} value={sessionId}>
+                  {sessionId}
+                </option>
+              ))}
+            </select>
+            <div className="w-full mb-4 overflow-scroll bg-slate-300 bg-opacity-20 rounded-xl">
+              <div className="text-lg font-bold my-2">Session Info:</div>
+              {currentSession === null || currentSession === "all_sessions" ? (
+                <JsonView src={sessionsInfo} collapsed={true} />
+              ) : (
+                <JsonView src={sessionsInfo[currentSession]} collapsed={true} />
+              )}
+            </div>
+            <div className="w-full mb-4 overflow-scroll bg-slate-300 bg-opacity-20 rounded-xl">
+              <div className="text-lg font-bold my-2">Global Info:</div>
+              <JsonView src={globalInfo} collapsed={true} />
+            </div>
+          </div>
         </Panel>
         <Background />
         <MiniMap />

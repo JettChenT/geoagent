@@ -214,6 +214,11 @@ def get_args(tool: BaseTool, tool_input: str) -> List[str]:
     return tool_input.split(", ")
 
 
+def setup_session(session: Session):
+    p = Path(RUN_DIR) / session.id
+    p.mkdir(parents=True, exist_ok=True)
+
+
 def upload_image(session: Session, image: Path) -> str:
     """
     Upload an image to cloud(sxcu.net) and return the url.

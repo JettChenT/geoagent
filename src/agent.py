@@ -322,12 +322,16 @@ class Agent:
         node.set_auxiliary("reflection", res.message)
         self.session.add_reflection(res.message)
 
+    def tst_sock(self, a, b):
+        self._push("global_info_set", ("latest_session", self.session.id))
+        self._push("set_session_info_key", (self.session.id, "b", b))
+        self._push("set_session_info_key", (self.session.id, "a", a))
+        return "DONE"
 
     def lats(self, image_loc: str, additional: str = "") -> Context:
         utils.flush_run_dir(self.session)
-        self._push("set_session_info", (self.session.id, {
-            "image": image_loc,
-        }))
+        self._push("global_info_set", ("latest_session", self.session.id))
+        self._push("set_session_info_key", (self.session.id, "image_loc", image_loc))
         self.session.tools = proc_tools(TOOLS, self.session)
         root = Context(subscriber=self.subscriber)
         root.add_message(
@@ -472,7 +476,7 @@ class Agent:
                 ctx.commit(transition=parsed)
 
 
-if __name__ == "__main__":
+def main():
     srv, sub_thread = start_srv()
     sio_sub = SIOSubscriber(srv)
     agent = Agent(Gpt4Vision(debug=True), subscriber=sio_sub)
@@ -485,3 +489,7 @@ if __name__ == "__main__":
     res = agent.lats(img_loc, additional_info)
     print(res)
     input("success! Press enter to exit.")
+
+
+if __name__ == '__main__':
+    main()

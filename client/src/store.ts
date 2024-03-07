@@ -17,8 +17,8 @@ export type EditorState = {
   nodes: Node<ContextData>[];
   edges: Edge[];
   globalInfo: any;
-  currentSession: string | null; // Added current session identifier
-  sessionsInfo: { [sessionId: string]: any }; // Added session-specific information dictionary
+  sessionsInfo: any;
+  currentSession: string | null;
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
@@ -32,16 +32,16 @@ export type EditorState = {
   setGlobalInfo: (info: any) => void;
   setGlobalInfoKey: (key: string, value: any) => void;
   setSessionId: (nodeId: string, sessionId: string | null) => void;
-  setCurrentSession: (sessionId: string | null) => void; // Function to set the current session
-  setSessionInfo: (sessionId: string, info: any) => void; // Function to set session-specific information
+  setCurrentSession: (sessionId: string | null) => void;
+  setSessionsInfoKey: (sessionId: string, key: string, value: any) => void;
 };
 
 const useStore = create<EditorState>((set, get) => ({
   nodes: [],
   edges: [],
   globalInfo: {},
-  currentSession: null, // Initialize currentSession as null
-  sessionsInfo: {}, // Initialize sessionsInfo as an empty object
+  sessionsInfo: {},
+  currentSession: "all_sessions",
   onNodesChange: (changes: NodeChange[]) => {
     set({
       nodes: applyNodeChanges(changes, get().nodes),
@@ -60,9 +60,18 @@ const useStore = create<EditorState>((set, get) => ({
   updateContextData: (nodeId, data) => {
     set((state) => {
       console.log("updateContextData", nodeId, data);
-      const nodes = state.nodes.map((node) =>
-        node.id === nodeId ? { ...node, data: { ...node.data, ...data } } : node
-      );
+      const nodes = state.nodes.map((node) => {
+        if (node.id === nodeId) {
+          const updatedData = { ...node.data };
+          Object.keys(data).forEach((key) => {
+            if (data[key] !== null) {
+              updatedData[key] = data[key];
+            }
+          });
+          return { ...node, data: updatedData };
+        }
+        return node;
+      });
       console.log("new nodes", nodes);
       return { nodes };
     });
@@ -105,7 +114,7 @@ const useStore = create<EditorState>((set, get) => ({
     set({ edges });
   },
   clearAll: () => {
-    set({ nodes: [], edges: [], currentSession: null, sessionsInfo: {} });
+    set({ nodes: [], edges: [] });
   },
   setGlobalInfo: (info) => {
     set({ globalInfo: info });
@@ -122,17 +131,18 @@ const useStore = create<EditorState>((set, get) => ({
           ? { ...node, data: { ...node.data, session_id: sessionId } }
           : node
       );
+      console.log("setSessionId", nodeId, sessionId, nodes);
       return { nodes };
     });
   },
   setCurrentSession: (sessionId) => {
     set({ currentSession: sessionId });
   },
-  setSessionInfo: (sessionId, info) => {
+  setSessionsInfoKey: (sessionId, key, value) => {
     set((state) => ({
       sessionsInfo: {
         ...state.sessionsInfo,
-        [sessionId]: { ...state.sessionsInfo[sessionId], ...info },
+        [sessionId]: { ...state.sessionsInfo[sessionId], [key]: value },
       },
     }));
   },
