@@ -109,7 +109,7 @@ def query(q: str, session: Session) -> Any:
         loc = utils.save_img(img, "osm_query_res", session)
         rsp += (
             "\n Here's a A visualization of the OSM results:"
-            + utils.image_to_prompt(str(loc))
+            + utils.image_to_prompt(str(loc), session)
         )
     return rsp
 

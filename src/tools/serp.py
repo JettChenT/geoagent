@@ -14,16 +14,16 @@ TOP_N = 15
 
 
 @gtool("Google Lens Search", cached=True)
-def search_img(img_path: str, session: Session):
+def search_img(img_id: str, session: Session):
     """
     Searches Google Lens for an image
-    :param img_path:
+    :param img_id: The image id
     :return:
     """
     params = {
         "api_key": SERP_API_KEY,
         "engine": "google_lens",
-        "url": utils.upload_image(session, Path(img_path)),
+        "url": utils.upload_image(session, Path(session.get_loc(img_id))),
     }
     print(params)
     search = GoogleSearch(params)
@@ -39,7 +39,7 @@ def search_img(img_path: str, session: Session):
         im = Image.open(io.BytesIO(img_data))
         saved_loc = utils.save_img(im, "serp", session)
         res += (
-            f"Result {i}: \n Title:{v['title']} \n {utils.image_to_prompt(saved_loc)}\n"
+            f"Result {i}: \n Title:{v['title']} \n {utils.image_to_prompt(saved_loc, session)}\n"
         )
     return res
 

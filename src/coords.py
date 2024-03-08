@@ -52,7 +52,7 @@ class Coords:
         if render:
             im = self.render()
             loc = utils.save_img(im, f"{prefix}coords", session)
-            res += f"A rendering of the coordinates: {utils.image_to_prompt(loc)}"
+            res += f"A rendering of the coordinates: {utils.image_to_prompt(loc, session)}"
         if store:
             loc = utils.find_valid_loc(session, f"{prefix}coords", ".geojson")
             self.to_geojson(loc)

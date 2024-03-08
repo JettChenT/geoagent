@@ -66,7 +66,7 @@ def get_panos(coords_path: str, session: Session) -> str:
             textwrap.dedent(
                 f"""\
         Location: {coord}
-        Streetview: {utils.image_to_prompt(loc)}
+        Streetview: {utils.image_to_prompt(loc, session)}
         """
             )
         )

@@ -99,7 +99,8 @@ Also consider changing or narrowing the search area if present.
 Finally, output the entire modified OSM query.
 """
 
-INITIAL_REACT_PROMPT = """Answer the following questions as best you can. You have access to the following tools:
+INITIAL_REACT_PROMPT = """
+Answer the following questions as best you can. You have access to the following tools:
 
 {tools}
 
@@ -108,7 +109,7 @@ Use the following format:
 Question1: The overall guideline to what you are going to do
 Thought1: Think about what you should do
 Action1: the action to take, should be one of [{tool_names}]
-Action Input1: the input to the action1
+Action Input1: the input to the action1 as arguments. If there are multiple arguments, separate them with commas. Note that the arguments should be in the same order as the function signature, and that the arguments are not named.
 Observation1 : the result of the action1
 Analyze1: Analyze the results of action1
 Thought2: Think about what you should do based on analyze1

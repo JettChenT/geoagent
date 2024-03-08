@@ -101,7 +101,7 @@ def locate_image(im_loc: str, db_loc: str, session: Session):
     for t in range(TOP_N):
         res += (
             f"Location {t+1}:\n"
-            f"Image: {utils.image_to_prompt(db_coords.auxiliary[top_n[t]]['image_path'])}\n"
+            f"Image: {utils.image_to_prompt(db_coords.auxiliary[top_n[t]]['image_path'], session)}\n"
             f"Coordinate: {new_coords.coords[top_n[t]]}\n"
         )
     res += f"Full results: \n {new_coords.to_prompt(session, 'vpr_', render=False)}"

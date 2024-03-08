@@ -202,7 +202,10 @@ function App() {
         minZoom={0.01}
         fitView
       >
-        <Panel position="top-right" className="flex flex-col space-y-4 w-64">
+        <Panel
+          position="top-right"
+          className="flex flex-col space-y-4 w-64 h-5/6 overflow-auto"
+        >
           <div className="mb-4">
             {isConnected ? (
               <div className="text-green-500 flex items-center">
@@ -235,7 +238,7 @@ function App() {
                 </option>
               ))}
             </select>
-            <div className="w-full mb-4 overflow-scroll bg-slate-300 bg-opacity-20 rounded-xl">
+            <div className="w-full mb-4 overflow-auto bg-slate-300 bg-opacity-20 rounded-xl p-2">
               <div className="text-lg font-bold my-2">Session Info:</div>
               {currentSession === null || currentSession === "all_sessions" ? (
                 <JsonView src={sessionsInfo} collapsed={true} />
@@ -243,7 +246,7 @@ function App() {
                 <JsonView src={sessionsInfo[currentSession]} collapsed={true} />
               )}
             </div>
-            <div className="w-full mb-4 overflow-scroll bg-slate-300 bg-opacity-20 rounded-xl">
+            <div className="w-full mb-4 overflow-auto bg-slate-300 bg-opacity-20 rounded-xl p-2">
               <div className="text-lg font-bold my-2">Global Info:</div>
               <JsonView src={globalInfo} collapsed={true} />
             </div>

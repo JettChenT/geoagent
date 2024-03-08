@@ -85,7 +85,7 @@ def plot_satellite(coords_loc: str, session: Session):
         loc = utils.save_img(im, "satellite_res", session)
         retrieved.append((coord, loc))
     sim = "".join(
-        [f"{coord}: {utils.image_to_prompt(loc)}\n" for (coord, loc) in retrieved[:TOP_N]]
+        [f"{coord}: {utils.image_to_prompt(loc, session)}\n" for (coord, loc) in retrieved[:TOP_N]]
     )
     full_res = Coords(
         coords=[x[0] for x in retrieved],

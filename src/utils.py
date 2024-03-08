@@ -99,21 +99,23 @@ def read_image(image: Image.Image | Path, size_mb=0.9):
     return img_data
 
 
-def image_to_prompt(loc: str | Path):
+def image_to_prompt(loc: str | Path, session: Session):
     """
     Convert an image to its corresponding prompt representation
     :param loc: URL or path to the image
     :return:
     """
+    img_id = find_loc_id(session, loc)
     if isinstance(loc, Path):
         loc = str(loc)
-    return f"[Image location : {loc}] <img {loc}>"
+    return f"[Image id : {img_id}] <img {loc}>"
 
 
 im_cache = {}
 
 
-def proc_image_url(url: str, session: Session) -> str:
+def proc_image_url(url: str | Path, session: Session) -> str:
+    if isinstance(url, Path): url = str(url)
     if url.startswith("http"):
         return url
     global im_cache
@@ -128,7 +130,8 @@ def proc_image_url(url: str, session: Session) -> str:
     return res
 
 
-def load_image(url: str) -> Image.Image:
+def load_image(url: str | Path) -> Image.Image:
+    if isinstance(url, Path): url = str(url)
     if url.startswith("http"):
         return Image.open(BytesIO(requests.get(url).content))
     return Image.open(url)
@@ -145,6 +148,14 @@ def find_valid_loc(session: Session, prefix: str, postfix: str) -> Path:
         if not Path(path).exists():
             return Path(path)
     raise FileNotFoundError("Could not find any valid location")
+
+
+def find_loc_id(session: Session, path: str | Path) -> str:
+    if isinstance(path, str):
+        path = Path(path)
+    res = str(path.stem)
+    session.namespace[res] = path
+    return res
 
 
 def make_run_dir(session: Session):
@@ -226,7 +237,7 @@ def upload_image(session: Session, image: Path) -> str:
     """
     img = Image.open(image)
     if GLOB_RENDER_BLACKBAR:
-        img = render_text_description(img, str(image))
+        img = render_text_description(img, f"Image id: {find_loc_id(session, image)}")
     if os.getenv("UPLOAD_IMAGE_USE") == 'gcp':
         from .tools.gcp import storage as gcp_storage
         tmp_path = find_valid_loc(session, "tmp", ".png")

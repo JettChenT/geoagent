@@ -58,16 +58,16 @@ def loc_sim(target: Image.Image, db: List[Image.Image]):
     return s
 
 @gtool("Streetview Locate")
-def locate_image(im_loc: str, db_loc: str, session: Session):
+def locate_image(img_id: str, db_loc: str, session: Session):
     """
     Locates an image using the streetview database. Must use the streetview tool to download the database first.
-    :param im_loc: the location of the image to be located
+    :param img_id: the id of the image to be located
     :param db_loc: the location of a coordinate csv/geojson file whose auxiliary information contains the location to the downloaded streetview images
     Note that db_loc must come from the result of the streetview tool.
     :return:
     """
     db_coords = Coords.load(db_loc)
-    im = load_image(im_loc)
+    im = load_image(session.get_loc(img_id))
     res = loc_sim(im, [load_image(x["image_path"]) for x in db_coords.auxiliary])
     new_coords = Coords(
         coords=db_coords.coords,
@@ -81,7 +81,7 @@ def locate_image(im_loc: str, db_loc: str, session: Session):
     for t in range(TOP_N):
         res += (
             f"Location {t+1}:\n"
-            f"Image: {utils.image_to_prompt(db_coords.auxiliary[top_n[t]]['image_path'])}\n"
+            f"Image: {utils.image_to_prompt(db_coords.auxiliary[top_n[t]]['image_path'], session)}\n"
             f"Coordinate: {new_coords.coords[top_n[t]]}\n"
         )
     res += f"Full results: \n {new_coords.to_prompt(session, 'vpr_', render=False)}"

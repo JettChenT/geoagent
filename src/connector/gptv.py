@@ -209,11 +209,11 @@ class Gpt4Vision(LMM):
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     utils.toggle_blackbar()
-    ctx = Context(cur_messages=[Message(f"{utils.image_to_prompt('images/hw_prob.png')}"
+    sess = Session()
+    utils.setup_session(sess)
+    ctx = Context(cur_messages=[Message(f"{utils.image_to_prompt('images/hw_prob.png', sess)}"
                                         f"What is the path to the image?"
                                         )])
     print(str(ctx))
     gptv = Gpt4Vision(debug=True, multi_gen_strategy=MultiGenStrategy.BATCH)
-    sess = Session()
-    utils.setup_session(sess)
     print(gptv.prompt(ctx, sess, n=1))

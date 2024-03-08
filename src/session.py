@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 from attrs import define, field, Factory
 from langchain_core.tools import BaseTool
@@ -15,6 +15,7 @@ class Session:
     root: Optional[Context] = None
     tools: List[BaseTool] = Factory(list)
     subscriber: Optional[Subscriber] = None
+    namespace: Dict = Factory(dict)
 
     @property
     def id(self):
@@ -42,7 +43,14 @@ class Session:
             #     self.to_json()
             # ))
             return res
+
         return wrapper
+
+    def get_loc(self, identifier: str):
+        try:
+            return self.namespace[identifier]
+        except KeyError:
+            raise Exception(f"Could not find {identifier} in namespace.")
 
     @notify_update
     def add_reflection(self, reflection: str):

@@ -339,7 +339,7 @@ class Agent:
                 INITIAL_REACT_PROMPT.format(
                     tool_names=", ".join([t.name for t in self.session.tools]),
                     tools=render_text_description(self.session.tools),
-                    input=f"{utils.image_to_prompt(image_loc)} Where is this image located? {additional}",
+                    input=f"{utils.image_to_prompt(image_loc, self.session)} Where is this image located? {additional}",
                 )
             )
         )

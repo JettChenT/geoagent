@@ -95,6 +95,9 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
       case "reflecting":
         setBgColor("bg-purple-100");
         break;
+      case "expanding":
+        setBgColor("bg-orange-100 animate-pulse");
+        break;
       default:
         setBgColor("bg-white");
     }

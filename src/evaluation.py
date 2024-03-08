@@ -2,11 +2,12 @@ import logging
 import os
 import sys
 import pandas as pd
-import numpy as np
 import time
 from pathlib import Path
 from sklearn.utils import shuffle
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from threading import Lock
+from multiprocessing import Value
 
 # Assuming these modules exist and are correctly implemented
 from src import utils
@@ -15,6 +16,8 @@ from .subscriber import SIOSubscriber
 from .sock import start_srv
 from .agent import Agent
 
+csv_lock = Lock()
+counter = Value('i', 0)
 
 def find_coordinate(content, marker):
     start_index = content.find(marker)
@@ -71,9 +74,8 @@ def evaluate(target_folder: Path):
             logging.error(f"Error in {img_path}: {e}")
 
 
-# New batched evaluation function
 def evaluate_image(row, target_folder, sio_sub):
-    agent = Agent(Gpt4Vision(), subscriber=sio_sub)  # Create a new Agent instance for each task
+    agent = Agent(Gpt4Vision(), subscriber=sio_sub)
     t_begin = time.time()
     img_path = target_folder / row['image']
     sio_sub.push("global_info_set", ("image", str(img_path)))
@@ -85,13 +87,23 @@ def evaluate_image(row, target_folder, sio_sub):
         print(f"Predicted: {pred} for image {row['image']}")
         print(f"Actual: {row['latitude']}, {row['longitude']}")
         print(f"Time: {time.time() - t_begin} seconds")
+        with csv_lock:
+            csv_path = target_folder / 'coords.csv'
+            cords_df = pd.read_csv(csv_path)
+            cords_df.loc[row.name, 'pred'] = pred
+            cords_df.to_csv(csv_path, index=False)
+        global counter
+        with counter.get_lock():
+            counter.value += 1
+            sio_sub.push("global_info_set", ("progress", counter.value))
     except Exception as e:
         logging.error(f"Error in {img_path}: {e}")
-    return row.name, pred
+        sio_sub.push("set_session_info_key", (agent.session.id, "error", str(e)))
 
 
 def evaluate_batched(target_folder: Path, batch_size=10):
-    cords = pd.read_csv(target_folder / 'coords.csv')
+    csv_path = target_folder / 'coords.csv'
+    cords = pd.read_csv(csv_path)
     if 'pred' not in cords.columns:
         cords['pred'] = ""
     srv, sub_thread = start_srv()
@@ -100,19 +112,17 @@ def evaluate_batched(target_folder: Path, batch_size=10):
     cords.reset_index(drop=True, inplace=True)
     input("This will evaluate images in batches. Press enter to start.")
     sio_sub.push("global_info_set", ("task", "Evaluating Dataset Batched"))
+    sio_sub.push("global_info_set", ("total", len(cords)))
     print("Starting...")
 
     with ThreadPoolExecutor(max_workers=batch_size) as executor:
-        future_to_row = {executor.submit(evaluate_image, row, target_folder, sio_sub): row for _, row in
-                         cords.iterrows()}
+        future_to_row = {executor.submit(evaluate_image, row, target_folder, sio_sub): row for _, row
+                         in cords.iterrows()}
         for future in as_completed(future_to_row):
-            row = future_to_row[future]
             try:
-                index, pred = future.result()
-                cords.loc[index, 'pred'] = pred
+                future.result()
             except Exception as exc:
                 print(f'Generated exception: {exc}')
-        cords.to_csv(target_folder / "coords.csv", index=False)  # Save the results after processing all batches
 
 
 if __name__ == '__main__':

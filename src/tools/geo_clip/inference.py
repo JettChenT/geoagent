@@ -38,7 +38,7 @@ def predict(image: Image.Image, top_n=5) -> List[Tuple[Tuple[float, float], floa
 
 
 @gtool("Geoclip", cached=True)
-def geoclip_predict(img_file, session: Session) -> str:
+def geoclip_predict(img_id: str, session: Session) -> str:
     """
     The Geoclip model is an image model that predicts the likely GPS location of an image based on its visual features.
     Feel free to use this as starting point for your investigation.
@@ -46,9 +46,9 @@ def geoclip_predict(img_file, session: Session) -> str:
     Note that this model is not perfect and might give you wrong results.
     Prefer using it if the image is landscape or has clear geographical/ cultural features.
     Prefer not to use this in cities or urban areas.
-    :param img_file: the url or location of the image file
+    :param img_id: the image id
     """
-    image = utils.load_image(img_file)
+    image = utils.load_image(session.get_loc(img_id))
     tops = predict(image)
 
     viz = Coords([it[0] for it in tops]).render()
@@ -61,7 +61,7 @@ def geoclip_predict(img_file, session: Session) -> str:
     Top 5 likely coordinates:
     {cords_fmt}
     A rendering of those coordinates:
-    {utils.image_to_prompt(str(saved))}
+    {utils.image_to_prompt(str(saved), session)}
     """
 
 
