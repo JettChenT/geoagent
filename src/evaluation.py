@@ -101,7 +101,7 @@ def evaluate_image(row, target_folder, sio_sub):
         sio_sub.push("set_session_info_key", (agent.session.id, "error", str(e)))
 
 
-def evaluate_batched(target_folder: Path, batch_size=10):
+def evaluate_batched(target_folder: Path, batch_size=5):
     csv_path = target_folder / 'coords.csv'
     cords = pd.read_csv(csv_path)
     if 'pred' not in cords.columns:

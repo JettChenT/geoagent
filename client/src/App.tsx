@@ -175,6 +175,9 @@ function App() {
 
   const handleSessionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setCurrentSession(e.target.value);
+    setTimeout(() => {
+      fitView();
+    }, 10);
   };
 
   return (

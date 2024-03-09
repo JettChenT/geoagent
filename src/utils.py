@@ -32,10 +32,11 @@ def image_to_base64(im: Image) -> str:
 
 def encode_image(image: Image.Image | Path, max_size_mb=20):
     # Open the image from a file path if it's not already an Image object
-    if isinstance(image, Path):
-        im = Image.open(image)
+    if not isinstance(image, Image.Image):
+        orig_path = image
+        image = Image.open(image)
         if GLOB_RENDER_BLACKBAR:
-            image = render_text_description(im, str(image))
+            image = render_text_description(image, str(orig_path))
 
     if image.mode != "RGB":
         image = image.convert("RGB")
@@ -70,7 +71,7 @@ def encode_image(image: Image.Image | Path, max_size_mb=20):
 
 
 def read_image(image: Image.Image | Path, size_mb=0.9):
-    if isinstance(image, Path):
+    if not isinstance(image, Image.Image):
         orig_path = image
         image = Image.open(image)
         if GLOB_RENDER_BLACKBAR:
@@ -121,7 +122,7 @@ def proc_image_url(url: str | Path, session: Session) -> str:
     global im_cache
     if url in im_cache:
         return im_cache[url]
-    match os.getenv("UPLOAD_IMAGE_USE"):
+    match os.getenv("PROC_IMAGE_USE"):
         case 'gcp' | 'upload':
             res = upload_image(session, Path(url))
         case _:

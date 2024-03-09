@@ -2,6 +2,7 @@ import os
 import sys
 from typing import Tuple, Optional, List
 from enum import Enum
+import re
 import logging
 import threading
 from concurrent.futures import ThreadPoolExecutor, wait
@@ -99,8 +100,8 @@ class RunType(Enum):
 
 class Agent:
     DEPTH_THRESHOLD = 10
-    ROLLOUT_THRESHOLD = 6
-    BRANCH_CNT = 4
+    ROLLOUT_THRESHOLD = 8
+    BRANCH_CNT = 5
 
     def __init__(self, vllm: LMM, run_type: RunType = RunType.PARALLEL, subscriber: Optional[Subscriber] = None):
         self.vllm = vllm
@@ -284,8 +285,12 @@ class Agent:
         for n in nodes:
             n.set_state(CtxState.Evaluating)
         res = self.vllm.prompt(messages, self.session, temperature=0.1)[0]
-        targ_lines = res.message.splitlines()[-len(nodes):]
+        lines = res.message.splitlines()
+        targ_lines = [line for line in lines if re.match(r"branch\s+(\d+):\s+(\d+)", line)]
         print('targ lines: ', targ_lines)
+        if len(targ_lines) < len(nodes):
+            logging.warning("Could not find all values in prompt")
+            targ_lines += [0] * (len(nodes) - len(targ_lines))
         values = []
         for i in range(len(nodes)):
             nodes[i].set_state(CtxState.Normal)
@@ -334,22 +339,23 @@ class Agent:
         self._push("set_session_info_key", (self.session.id, "image_loc", image_loc))
         self.session.tools = proc_tools(TOOLS, self.session)
         root = Context(subscriber=self.subscriber)
-        root.add_message(
+        initial_msg = [
             Message(
                 INITIAL_REACT_PROMPT.format(
                     tool_names=", ".join([t.name for t in self.session.tools]),
                     tools=render_text_description(self.session.tools),
                     input=f"{utils.image_to_prompt(image_loc, self.session)} Where is this image located? {additional}",
                 )
-            )
-        )
-        root.add_message(
+            ),
             ProxiedMessage(
                 lambda ses: f"Conclusions Reached: {';'.join(ses.conclusions)}\n"
-                            f"Reflections: {';'.join(ses.reflections)}\n",
+                            f"Reflections: {';'.join(ses.reflections)}\n"
+                            f"Available directory of access: run/{ses.id}\n"
+                            f"Available ids in namespace: {list(ses.namespace.keys())}\n",
                 self.session
             )
-        )
+        ]
+        root.add_messages(initial_msg)
         self.session.root = root
         self._push("set_session_id", (root.id(), self.session.id))
         terminals = []

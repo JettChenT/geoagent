@@ -117,7 +117,7 @@ def query(q: str, session: Session) -> Any:
 @tool("Return Coordinates", return_direct=True)
 def show_coords(lat: float, lon: float):
     """
-    Use this when you are certain about the coordinates you want to show on the map.
+    Use this when you have reached a conclusion about the location of the image.
     This returns the results to the end user as the conclusion to your investigation.
     Format for tool input: lat, lon
     E.G: 47.6097, -122.3331

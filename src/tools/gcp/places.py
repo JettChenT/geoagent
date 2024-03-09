@@ -17,7 +17,7 @@ def wrap_auth(head):
     return dict(head, **AUTH_HEAD)
 
 
-@gtool(cached=True)
+@gtool("google_map_search", cached=True)
 def text_search(query: str, session: Session):
     """
     Returns information about a location based on a text query. Uses Google Places API.

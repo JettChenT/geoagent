@@ -100,6 +100,10 @@ class Context:
     def add_message(self, msg: Message):
         self.cur_messages.append(msg)
 
+    @notify_update
+    def add_messages(self, messages: List[Message]):
+        self.cur_messages.extend(messages)
+
     def commit(self, message: List[Message] | Message | None = None, transition=None) -> Self:
         """
         Commit the context to a new one. Used for state transitions

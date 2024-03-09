@@ -154,8 +154,14 @@ Remember to output the number and the number only in the final line.
 MULTI_EVALUATION_PROMPT = """
 You were given {n} choices over what is the next step to take for our investigation.
 For each choice, evaluate the validity of the choice, think about whether the choice is promising on its path toward a successful geolocation.
-Finally, in {n} separate lines, output a number in the range [1, 10] that represents how promising each choice is.
-The outputs should be in the same order as the choices, and in the format of `branch <choice_number>: <output>`.
+Finally, in {n} SEPARATE lines, output a number in the range [1, 10] that represents how promising each choice is.
+DO NOT OUTPUT ANYTHING ELSE AFTER THE {n} LINES.
+The outputs should be in the same order as the choices, and in the format of:
+branch 1: 9
+branch 2: 5
+branch 3: 7
+branch 4: 2
+branch n: score_for_n
 """
 
 REFLECTION_PROMPT = """

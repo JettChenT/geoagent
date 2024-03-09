@@ -27,7 +27,7 @@ def ask(question: str) -> str:
         }
     ]
     response = client.chat.completions.create(
-        model="pplx-7b-online",
+        model="sonar-medium-online",
         messages=messages
     )
     return response.choices[0].message.content
