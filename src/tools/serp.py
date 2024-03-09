@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 SERP_API_KEY = os.environ["SERP_API_KEY"]
 TOP_N = 15
 
-def process_single_result(v, session):
+def process_single_result(v, i, session):
     try:
         im_url = v["original"]
         img_data = requests.get(im_url).content
@@ -23,12 +23,11 @@ def process_single_result(v, session):
         img_data = requests.get(im_url).content
         im = Image.open(io.BytesIO(img_data))
     saved_loc = utils.save_img(im, "serp", session)
-    return f"Result: \n Title:{v['title']} \n {utils.image_to_prompt(saved_loc, session)}\n"
+    return f"Result {i}: \n Title:{v['title']} \n {utils.image_to_prompt(saved_loc, session)}\n"
 
 def proc_image_results(results: dict, session: Session, top_n=TOP_N) -> str:
     with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(process_single_result, v, session) for i, v in enumerate(results[:top_n])]
-        res = [future.result() for future in as_completed(futures)]
+        res = list(executor.map(process_single_result, results[:top_n], range(top_n), [session]*top_n))
     return "".join(res)
 
 @gtool("google_lens", cached=True)
