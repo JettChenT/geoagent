@@ -1,8 +1,5 @@
-from enum import Enum
-from typing import List
 from threading import Thread
-import asyncio
-import socketio
+from typing import List
 
 
 class Subscriber:
@@ -22,11 +19,3 @@ class MultiSubscriber(Subscriber):
             t.start()
         for t in tasks:
             t.join()
-
-
-class SIOSubscriber(Subscriber):
-    def __init__(self, sio: socketio.AsyncServer):
-        self.sio = sio
-
-    def push(self, msg_type, msg):
-        asyncio.run(self.sio.emit(msg_type, msg))

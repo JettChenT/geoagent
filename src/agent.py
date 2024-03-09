@@ -23,7 +23,7 @@ from .session import Session
 from .react_parser import ReActSingleInputOutputParser
 from .coords import Coords
 from .sock import start_srv
-from .subscriber import Subscriber, SIOSubscriber
+from .subscriber import Subscriber, SIOSubscriber, default_subscriber
 
 if os.getenv("FUNTRACE"):
     import functiontrace
@@ -483,13 +483,12 @@ class Agent:
 
 
 def main():
-    srv, sub_thread = start_srv()
-    sio_sub = SIOSubscriber(srv)
-    agent = Agent(Gpt4Vision(debug=True), subscriber=sio_sub)
+    sub = default_subscriber()
+    agent = Agent(Gpt4Vision(debug=True), subscriber=sub)
     additional_info = input(
         "Enter any additional information regarding this image or guidance on the geolocation process. \nPress enter to begin.\n"
     )
-    sio_sub.push("global_info_set", ("task", "Geolocating Image"))
+    sub.push("global_info_set", ("task", "Geolocating Image"))
     logging.basicConfig(level=logging.INFO)
     img_loc = sys.argv[1] if len(sys.argv) else "./images/anon/12.png"
     res = agent.lats(img_loc, additional_info)
