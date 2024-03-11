@@ -112,6 +112,13 @@ def image_to_prompt(loc: str | Path, session: Session):
     return f"[Image id : {img_id}] <img {loc}>"
 
 
+def enforce_image(loc: str | Path, session: Session):
+    im = load_image(loc)
+    loc = find_valid_loc(session, "inp_", ".png")
+    im.save(loc)
+    return loc
+
+
 im_cache = {}
 
 

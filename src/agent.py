@@ -21,8 +21,6 @@ from .tools import TOOLS, proc_tools
 from .context import Context, CtxState
 from .session import Session
 from .react_parser import ReActSingleInputOutputParser
-from .coords import Coords
-from .sock import start_srv
 from .subscriber import Subscriber, SIOSubscriber, default_subscriber
 
 if os.getenv("FUNTRACE"):
@@ -337,6 +335,7 @@ class Agent:
         utils.flush_run_dir(self.session)
         self._push("global_info_set", ("latest_session", self.session.id))
         self._push("set_session_info_key", (self.session.id, "image_loc", image_loc))
+        image_loc = utils.enforce_image(image_loc, self.session)
         self.session.tools = proc_tools(TOOLS, self.session)
         root = Context(subscriber=self.subscriber)
         initial_msg = [

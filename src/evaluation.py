@@ -90,7 +90,7 @@ def evaluate_image(row, target_folder, sio_sub):
         with csv_lock:
             csv_path = target_folder / 'coords.csv'
             cords_df = pd.read_csv(csv_path)
-            cords_df.loc[row.name, 'pred'] = pred
+            cords_df.loc[cords_df['image'] == row['image'], 'pred'] = pred
             cords_df.to_csv(csv_path, index=False)
         global counter
         with counter.get_lock():
@@ -101,7 +101,7 @@ def evaluate_image(row, target_folder, sio_sub):
         sio_sub.push("set_session_info_key", (agent.session.id, "error", str(e)))
 
 
-def evaluate_batched(target_folder: Path, batch_size=5):
+def evaluate_batched(target_folder: Path, batch_size=10):
     csv_path = target_folder / 'coords.csv'
     cords = pd.read_csv(csv_path)
     if 'pred' not in cords.columns:

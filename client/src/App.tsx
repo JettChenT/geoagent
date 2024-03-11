@@ -246,6 +246,17 @@ function App() {
               {currentSession === null || currentSession === "all_sessions" ? (
                 <JsonView src={sessionsInfo} collapsed={true} />
               ) : (
+                sessionsInfo[currentSession].image_loc && (
+                  <>
+                    <img
+                      src={sessionsInfo[currentSession].image_loc}
+                      alt="session_image"
+                      className="w-full mb-2"
+                    />
+                  </>
+                )
+              )}
+              {currentSession !== null && currentSession !== "all_sessions" && (
                 <JsonView src={sessionsInfo[currentSession]} collapsed={true} />
               )}
             </div>

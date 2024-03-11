@@ -3,7 +3,11 @@ import asyncio
 import socketio
 from aiohttp import web
 from threading import Thread
-import os
+
+from .subscriber import SIOSubscriber, default_subscriber
+from .connector.gptv import Gpt4Vision
+from .session import Session
+from .agent import Agent
 from .config import *
 
 sio = socketio.AsyncServer(cors_allowed_origins='*')
@@ -22,7 +26,23 @@ def connect(sid, environ):
 def disconnect(sid):
     print("disconnect ", sid)
 
+@sio.on("start_session")
+def start_session(sid, data):
+    try:
+        image_url = data['image_url']
+        description = data['description'] if 'description' in data else ""
+        agent = Agent(Gpt4Vision(), subscriber=default_subscriber(sio))
+        ses = agent.session
+        th = Thread(target=agent.lats, args=(image_url, description))
+        th.start()
+        return ses.id
+    except Exception as e:
+        sio.emit("error", str(e), room=sid)
+        return
+
+
 app.router.add_static('/run', 'run')
+app.router.add_static('/datasets', 'datasets')
 
 def run_srv():
     loop = asyncio.new_event_loop()
@@ -39,7 +59,6 @@ def start_srv():
     return sio, srv_thread
 
 if __name__ == '__main__':
-    from .subscriber import SIOSubscriber
     sio, srv_thread = start_srv()
     sio_sub = SIOSubscriber(sio)
     input("Press Enter to start...")
