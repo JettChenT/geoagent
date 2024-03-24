@@ -1,16 +1,22 @@
 import asyncio
+import io
 
 import socketio
 from aiohttp import web
 from threading import Thread
+from PIL import Image
 
+from . import utils
+from urllib.request import urlopen
 from .subscriber import SIOSubscriber, default_subscriber
 from .connector.gptv import Gpt4Vision
-from .session import Session
 from .agent import Agent
 from .config import *
 
-sio = socketio.AsyncServer(cors_allowed_origins='*')
+sio = socketio.AsyncServer(
+    cors_allowed_origins='*',
+    max_http_buffer_size=1e9
+)
 sio.instrument(auth={
     'username': 'admin',
     'password': os.environ['ADMIN_PASSWORD'],
@@ -29,19 +35,27 @@ def disconnect(sid):
 @sio.on("start_session")
 def start_session(sid, data):
     try:
-        image_url = data['image_url']
+        img_b64 = data['img_b64']
+        with urlopen(img_b64) as response:
+            img_b64 = response.read()
         description = data['description'] if 'description' in data else ""
         agent = Agent(Gpt4Vision(), subscriber=default_subscriber(sio))
         ses = agent.session
-        th = Thread(target=agent.lats, args=(image_url, description))
+        utils.setup_session(ses)
+        a_path = "run/user_upload.png"
+        im = Image.open(io.BytesIO(img_b64))
+        im.save(a_path)
+        th = Thread(target=agent.lats, args=(str(a_path), description, True))
         th.start()
         return ses.id
     except Exception as e:
-        sio.emit("error", str(e), room=sid)
+        print(e)
+        asyncio.run(sio.emit("error", str(e), room=sid))
         return
 
 
 app.router.add_static('/run', 'run')
+app.router.add_static('/images', 'images')
 app.router.add_static('/datasets', 'datasets')
 
 def run_srv():

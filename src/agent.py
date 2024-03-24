@@ -331,10 +331,12 @@ class Agent:
         self._push("set_session_info_key", (self.session.id, "a", a))
         return "DONE"
 
-    def lats(self, image_loc: str, additional: str = "") -> Context:
+    def lats(self, image_loc: str, additional: str = "", set_cur=False) -> Context:
         utils.flush_run_dir(self.session)
         self._push("global_info_set", ("latest_session", self.session.id))
         self._push("set_session_info_key", (self.session.id, "image_loc", image_loc))
+        if set_cur:
+            self._push("set_current_session", self.session.id)
         image_loc = utils.enforce_image(image_loc, self.session)
         self.session.tools = proc_tools(TOOLS, self.session)
         root = Context(subscriber=self.subscriber)

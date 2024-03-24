@@ -31,6 +31,8 @@ import { getOutgoers } from "reactflow";
 import { downloadImage, imageHeight, imageWidth } from "./utils";
 import { toPng } from "html-to-image";
 import JsonView from "react18-json-view";
+import InfoDisplay from "./infoDisplay";
+import FileUpload from "./fileUpload";
 
 const nodeTypes = {
   contextNode: ContextNode,
@@ -149,6 +151,10 @@ function App() {
       console.log("set_session_info_key", session_id, key, value);
       setSessionsInfoKey(session_id, key, value);
     });
+
+    socket.on("set_current_session", (session_id) => {
+      setCurrentSession(session_id);
+    });
   }, []);
 
   const down_image = () => {
@@ -241,29 +247,8 @@ function App() {
                 </option>
               ))}
             </select>
-            <div className="w-full mb-4 overflow-auto bg-slate-300 bg-opacity-20 rounded-xl p-2">
-              <div className="text-lg font-bold my-2">Session Info:</div>
-              {currentSession === null || currentSession === "all_sessions" ? (
-                <JsonView src={sessionsInfo} collapsed={true} />
-              ) : (
-                sessionsInfo[currentSession].image_loc && (
-                  <>
-                    <img
-                      src={sessionsInfo[currentSession].image_loc}
-                      alt="session_image"
-                      className="w-full mb-2"
-                    />
-                  </>
-                )
-              )}
-              {currentSession !== null && currentSession !== "all_sessions" && (
-                <JsonView src={sessionsInfo[currentSession]} collapsed={true} />
-              )}
-            </div>
-            <div className="w-full mb-4 overflow-auto bg-slate-300 bg-opacity-20 rounded-xl p-2">
-              <div className="text-lg font-bold my-2">Global Info:</div>
-              <JsonView src={globalInfo} collapsed={true} />
-            </div>
+            <InfoDisplay />
+            <FileUpload />
           </div>
         </Panel>
         <Background />
