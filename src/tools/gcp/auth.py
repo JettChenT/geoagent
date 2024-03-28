@@ -1,5 +1,5 @@
 import os
 import dotenv
+from ... import config
 
-dotenv.load_dotenv()
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")

@@ -80,6 +80,7 @@ const useStore = create<EditorState>((set, get) => ({
     return get().nodes.find((n) => n.id === nodeId);
   },
   createNode: (node) => {
+    node.data = { ...node.data, is_root: true };
     set({
       nodes: [...get().nodes, node],
     });

@@ -20,8 +20,10 @@ from rich import print
 import logging
 from ..utils import encode_image, DEBUG_DIR
 from ..session import Session
+from .. import config
 import hashlib
 import backoff
+import httpx
 
 
 class MultiGenStrategy(Enum):
@@ -69,7 +71,7 @@ def _generate_batch(lm, messages: List[Message], session: Session, n: int) -> Li
     if n == 1:
         return _generate_sequential(lm, messages, session, n)
     msg_mod = messages.copy()
-    msg_mod.append(Message(f"Please generate {n} different choices."
+    msg_mod.append(Message(f"Please generate up to {n} different choices."
                            f"For each choice, follow the same format, "
                            f"but with a different potential action that can lead to the result."
                            f"after the `Observation:`."
@@ -93,8 +95,6 @@ def _generate_batch(lm, messages: List[Message], session: Session, n: int) -> Li
         if choice.content.strip() == "":
             continue
         res.append(choice)
-    if len(res) < n:
-        logging.warning(f"Expected {n} choices, but only got {len(res)}")
     return res[:n]
 
 
@@ -126,14 +126,15 @@ class Gpt4Vision(LMM):
     def __init__(self,
                  debug: bool = False,
                  max_tokens: int = 3000,
-                 multi_gen_strategy: MultiGenStrategy = MultiGenStrategy.BATCH
+                 multi_gen_strategy: MultiGenStrategy = MultiGenStrategy.BATCH,
+                 disable_cert_verification: bool = True
                  ):
-        dotenv.load_dotenv()
         # Adds black bar containing the location of the image, since gpt-vision api does not recognize image order.
         # utils.toggle_blackbar()
         self.client = OpenAI(
             api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_API_BASE"),
-            timeout=360
+            timeout=360,
+            http_client=httpx.Client(verify=not disable_cert_verification)
         )
         self.debug = debug
         self.max_tokens = max_tokens

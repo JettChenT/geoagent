@@ -195,12 +195,11 @@ function App() {
       <ReactFlow
         nodes={nodes.filter(
           (node) =>
-            (currentSession === null ||
-              currentSession === "all_sessions" ||
-              node.data.session_id === currentSession) &&
-            (sessionsInfo[node.data.session_id]
-              ? sessionsInfo[node.data.session_id]["completed"] !== true
-              : true)
+            ((currentSession === null || currentSession === "all_sessions") &&
+              (sessionsInfo[node.data.session_id]
+                ? sessionsInfo[node.data.session_id]["completed"] !== true
+                : true)) ||
+            node.data.session_id === currentSession
         )}
         edges={edges}
         onNodesChange={onNodesChange}

@@ -9,7 +9,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
 from multiprocessing import Value
 
-# Assuming these modules exist and are correctly implemented
 from src import utils
 from .connector.gptv import Gpt4Vision
 from .subscriber import SIOSubscriber
@@ -74,7 +73,7 @@ def evaluate(target_folder: Path):
             logging.error(f"Error in {img_path}: {e}")
 
 
-def evaluate_image(row, target_folder, sio_sub):
+def evaluate_image(row, target_folder, sio_sub, session_ids):
     agent = Agent(Gpt4Vision(), subscriber=sio_sub)
     t_begin = time.time()
     img_path = target_folder / row['image']
@@ -82,8 +81,11 @@ def evaluate_image(row, target_folder, sio_sub):
     pred = ""
     try:
         res = agent.lats(str(img_path))
+        agent.backup()
         sio_sub.push("set_session_info_key", (agent.session.id, "completed", True))
+        session_ids.append(agent.session.id)  # Add session ID to the list
         pred = utils.sanitize(res.transition.tool_input)
+        print(f"Session id: {agent.session.id}, backed up.")
         print(f"Predicted: {pred} for image {row['image']}")
         print(f"Actual: {row['latitude']}, {row['longitude']}")
         print(f"Time: {time.time() - t_begin} seconds")
@@ -91,6 +93,7 @@ def evaluate_image(row, target_folder, sio_sub):
             csv_path = target_folder / 'coords.csv'
             cords_df = pd.read_csv(csv_path)
             cords_df.loc[cords_df['image'] == row['image'], 'pred'] = pred
+            cords_df.loc[cords_df['image'] == row['image'], 'session'] = agent.session.id
             cords_df.to_csv(csv_path, index=False)
         global counter
         with counter.get_lock():
@@ -98,10 +101,19 @@ def evaluate_image(row, target_folder, sio_sub):
             sio_sub.push("global_info_set", ("progress", counter.value))
     except Exception as e:
         logging.error(f"Error in {img_path}: {e}")
+        agent.backup()
+        logging.error(f"Session ID: {agent.session.id}, Backed up.")
         sio_sub.push("set_session_info_key", (agent.session.id, "error", str(e)))
 
+def write_session_log(session_ids, target_folder):
+    timestamp = time.strftime("%Y-%m-%d-%H-%M-%S")
+    log_filename = f"logs/batch-{timestamp}-{hash(frozenset(session_ids))}.txt"
+    with open(log_filename, 'w') as log_file:
+        for session_id in session_ids:
+            log_file.write(f"{session_id}\n")
+    print(f"Session log written to {log_filename}")
 
-def evaluate_batched(target_folder: Path, batch_size=10):
+def evaluate_batched(target_folder: Path, batch_size=5):
     csv_path = target_folder / 'coords.csv'
     cords = pd.read_csv(csv_path)
     if 'pred' not in cords.columns:
@@ -114,15 +126,21 @@ def evaluate_batched(target_folder: Path, batch_size=10):
     sio_sub.push("global_info_set", ("task", "Evaluating Dataset Batched"))
     sio_sub.push("global_info_set", ("total", len(cords)))
     print("Starting...")
+    session_ids = []  # Initialize an empty list to store session IDs
 
-    with ThreadPoolExecutor(max_workers=batch_size) as executor:
-        future_to_row = {executor.submit(evaluate_image, row, target_folder, sio_sub): row for _, row
-                         in cords.iterrows()}
-        for future in as_completed(future_to_row):
-            try:
-                future.result()
-            except Exception as exc:
-                print(f'Generated exception: {exc}')
+    try:
+        with ThreadPoolExecutor(max_workers=batch_size) as executor:
+            future_to_row = {executor.submit(evaluate_image, row, target_folder, sio_sub, session_ids): row for _, row
+                             in cords[cords.pred.isna()].iterrows()}
+            for future in as_completed(future_to_row):
+                try:
+                    future.result()
+                except Exception as exc:
+                    print(f'Generated exception: {exc}')
+    except KeyboardInterrupt:
+        print("Batch evaluation interrupted by user.")
+    finally:
+        write_session_log(session_ids, target_folder)  # Write session log upon completion or interrupt
 
 
 if __name__ == '__main__':

@@ -10,6 +10,7 @@ from concurrent.futures import ThreadPoolExecutor, wait
 from langchain.tools.render import render_text_description
 from langchain_core.agents import AgentAction, AgentFinish
 from langchain_core.tools import BaseTool
+import traceback
 from rich import print
 
 from . import config, utils
@@ -116,7 +117,7 @@ class Agent:
         os.mkdir(f'bak/{self.session.id}')
         with open(f'bak/{self.session.id}/root.json', 'w') as f:
             f.write(str(self.session.root.serialize_recursive()))
-        os.system(f'cp -r run/* bak/{self.session.id}')
+        os.system(f'cp -r run/{self.session.id} bak/{self.session.id}')
 
     @Context.wrap_state(CtxState.Expanding)
     def expand_node(self, node: Context):
@@ -223,7 +224,7 @@ class Agent:
                 tool._run(*utils.get_args(tool, utils.sanitize(state.transition.tool_input)))
             )  # TODO: Make multi-argument parsing more robust
         except Exception as e:
-            print('[red]Error[/red]: ', e)
+            print('[red]Error[/red]: ', e, traceback.format_exc())
             # ask if user would like to continue, if so, ask for potential feedback
             if self.run_type != RunType.INTERACTIVE:
                 state.add_message(
@@ -288,7 +289,7 @@ class Agent:
         print('targ lines: ', targ_lines)
         if len(targ_lines) < len(nodes):
             logging.warning("Could not find all values in prompt")
-            targ_lines += [0] * (len(nodes) - len(targ_lines))
+            targ_lines += ['0'] * (len(nodes) - len(targ_lines))
         values = []
         for i in range(len(nodes)):
             nodes[i].set_state(CtxState.Normal)
@@ -383,16 +384,13 @@ class Agent:
                 print_tree(root)
                 print(f"successful solution has been found: {terminal.transition.tool_input}")
                 terminal.set_state(CtxState.Success)
-                self.backup()
                 return terminal
             self.get_reflection(terminal)
             backprop(terminal, reward)
             terminal_nodes_with_reward_1 = [node for node in collect_all_nodes(root) if
                                             node.is_terminal and node.reward == 1]
             if terminal_nodes_with_reward_1:
-                self.backup()
                 return max(terminal_nodes_with_reward_1, key=lambda node: node.value)
-        self.backup()
         all_nodes_list = collect_all_nodes(root)
         all_nodes_list.extend(terminals)
         best_child = max(all_nodes_list, key=lambda x: x.reward)

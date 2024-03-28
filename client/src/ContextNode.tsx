@@ -10,6 +10,7 @@ import {
 import useStore, { EditorState } from "./store";
 import { toPng } from "html-to-image";
 import { imageHeight, imageWidth } from "./utils";
+import { proc_img_url } from "./infoDisplay";
 import JsonView from "react18-json-view";
 
 type Message = {
@@ -35,6 +36,7 @@ export type ContextData = {
   lats_data: any;
   auxiliary: any;
   session_id: string | null;
+  is_root?: boolean;
   state:
     | "normal"
     | "running"
@@ -73,6 +75,25 @@ export const proc_incoming = (incoming: any): ContextData => {
   };
 };
 
+const stext = (st) => {
+  switch (st) {
+    case "running":
+      return "🏃 Running";
+    case "expanding":
+      return "📈 Expanding";
+    case "evaluating":
+      return "🔍 Evaluating";
+    case "rollout":
+      return "🚀 Rollout";
+    case "success":
+      return "✅ Success";
+    case "reflecting":
+      return "🤔 Reflecting";
+    default:
+      return `⚪ ${st}`;
+  }
+};
+
 export default function ContextNode({ id, data }: NodeProps<ContextData>) {
   const lastMessage =
     data.cur_messages.length > 0
@@ -80,6 +101,7 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
       : "No messages";
 
   // Determine the background color and state text based on the state
+  const { sessionsInfo } = useStore();
   const [bgColor, setBgColor] = useState("bg-white");
   useEffect(() => {
     switch (data.state) {
@@ -102,25 +124,6 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
         setBgColor("bg-white");
     }
   }, [data.state]);
-
-  const stext = (st) => {
-    switch (st) {
-      case "running":
-        return "🏃 Running";
-      case "expanding":
-        return "📈 Expanding";
-      case "evaluating":
-        return "🔍 Evaluating";
-      case "rollout":
-        return "🚀 Rollout";
-      case "success":
-        return "✅ Success";
-      case "reflecting":
-        return "🤔 Reflecting";
-      default:
-        return `⚪ ${st}`;
-    }
-  };
   return (
     <div
       className={`react-flow__node-default w-64 rounded shadow nowheel overflow-auto ${bgColor} select-text`}
@@ -141,6 +144,15 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
           <span className="font-bold">Session ID:</span>
           <span className="text-gray-500 font-mono"> {data.session_id}</span>
         </div>
+        {data.is_root &&
+          sessionsInfo[data.session_id] &&
+          sessionsInfo[data.session_id].image_loc && (
+            <img
+              src={proc_img_url(sessionsInfo[data.session_id].image_loc)}
+              alt="session_image"
+              className="w-full mb-2"
+            />
+          )}
         <div
           className="text-sm text-left nodrag"
           style={{ userSelect: "text", cursor: "text" }}

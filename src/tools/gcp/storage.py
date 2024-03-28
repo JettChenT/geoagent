@@ -5,6 +5,16 @@ import uuid
 from functools import cache
 import backoff
 
+@cache
+def get_bucket(bucket_name: str = None):
+    """
+    Get a bucket by name.
+    :param bucket_name: The name of the bucket.
+    :return:
+    """
+    storage_client = storage.Client(os.getenv("GOOGLE_CLOUD_PROJECT"))
+    return storage_client.get_bucket(bucket_name)
+
 
 @cache
 @backoff.on_exception(backoff.expo, Exception, max_tries=5)
@@ -20,8 +30,7 @@ def upload_file(
     """
     bucket_name = bucket_name or os.getenv("GCP_BUCKET_NAME") or f"geolocation_{uuid.uuid4()}"
     destination_blob_name = destination_blob_name or file_path.name
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(bucket_name)
+    bucket = get_bucket(bucket_name)
     blob = bucket.blob(destination_blob_name)
     blob.upload_from_filename(file_path)
     blob.make_public()
