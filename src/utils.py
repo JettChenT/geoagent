@@ -70,7 +70,7 @@ def encode_image(image: Image.Image | Path, max_size_mb=20):
     return f"data:image/jpeg;base64,{encoded_data}"
 
 
-def read_image(image: Image.Image | Path, size_mb=0.9):
+def read_image(image: Image.Image | Path, size_mb=18):
     if not isinstance(image, Image.Image):
         orig_path = image
         image = Image.open(image)
