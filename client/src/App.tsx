@@ -154,10 +154,12 @@ function App() {
 
     socket.on("set_current_session", (session_id) => {
       setCurrentSession(session_id);
+      onLayout("LR");
     });
   }, []);
 
   const down_image = () => {
+    onLayout("LR");
     const nodesBounds = getNodesBounds(useStore.getState().nodes);
     const transform = getTransformForBounds(
       nodesBounds,

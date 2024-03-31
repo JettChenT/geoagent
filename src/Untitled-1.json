@@ -1,0 +1,543 @@
+{
+  "messages": [
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "\nAnswer the following questions as best you can. You have access to the following tools:\n\nReturn Coordinates: Return Coordinates(lat: float, lon: float) - Use this when you have reached a conclusion about the location of the image.\n    This returns the results to the end user as the conclusion to your investigation.\n    Format for tool input: lat, lon\n    E.G: 47.6097, -122.3331\n    :param lat: the latitude of the location\n    :param lon: the longitude of the location\n    :return:\nGeoclip: geoclip_predict(img_id: str) -> str - The Geoclip model is an image model that predicts the likely GPS location of an image based on its visual features.\n    Feel free to use this as starting point for your investigation.\n    You can use this tool to find an estimate of the geographical area if you can not find clear hints from the image.\n    Note that this model is not perfect and might give you wrong results.\n    Prefer using it if the image is landscape or has clear geographical\/ cultural features.\n    Prefer not to use this in cities or urban areas.\n    :param img_id: the image id\nGet StreetViews: get_panos(coords_path: str) -> str - Gets Google Streetview images of coordinates\n    :param coords_path: Path to the csv or geojson file containing coordinates information\n    :return:\nStreetview Locate: locate_image(img_id: str, db_loc: str) - Locates an image using the streetview database. Must use the streetview tool to download the database first.\n    :param img_id: the id of the image to be located\n    :param db_loc: the location of a coordinate csv\/geojson file whose auxiliary information contains the location to the downloaded streetview images\n    Note that db_loc must come from the result of the streetview tool.\n    :return:\ngoogle_map_search: text_search(query: str) - Returns information about a location based on a text query. Uses Google Places API.\n    This is equivalent to a Google Maps search.\n    The geojson file returned would contain the coordinates of the location, as well as auxiliary information about the location, including\n    the name, address, and photo ids.\n    :param query: the text query\n    :return:\nplot_satellite: plot_satellite(coords_loc: str) - Plots the satellite image of a given set of coordinates. Uses Google Maps Static API.\n    :param coords_loc: the location of the coordinate csv or geojson file\n    :return:\ngoogle_lens: search_lens(img_id: str) - Searches Google Lens for an image (img -> content, relevant images)\n    :param img_id: The image id\n    :return:\ngoogle_image_search: image_search(query: str) - Searches Google Images for a query (text query -> images, descriptions)\n    :param query: The query to search for\n    :return:\nperplexity ask: perplexity ask(question: str) -> str - Ask a question to the perplexity online model. Use this as a search engine.\n    Note that it does not have access to image. Only send text queries that do not require visual information.\n    :param question: the question to ask\n    :return:\nSatellite Locate: satellite_locate(img_id: str, db_loc: str) - Locates an image using the satellite database. Must use the satellite tool to download the database first.\n    :param img_id: the id of the image to be located\n    :param db_loc: the location of a coordinate csv\/geojson file whose auxiliary information contains the location to the downloaded satellite images\n    Note that db_loc must come from the result of the satellite tool.\n    :return:\nDecide: Decide(decision: str) -> str - This is a miscellaneous function that does nothing but note that a decision has been made.\n    Use this to note different possibilities for the path of investigation.\n    :param decision: The decision made. E.G. \"The image is in America\", \"The image is in Europe\"\n    :return:\nAdd Clue: add_clue(clue: str) - Add a clue to the global session.\n    This should be a conclusion you have reached about the investigation that you are certain of\n    :param clue: the clue to add\n    :return:\nSave Coordinates: save_coords(coords: str) - Given a set of coordinates, save them to a file so that you can use them in other tools\n    :param coords: the coordinates to save, in the format [(lat, long), (lat, long), ...]\n    :return:\n\nUse the following format:\n\nQuestion1: The overall guideline to what you are going to do\nThought1: Think about what you should do\nAction1: the action to take, should be one of [Return Coordinates, Geoclip, Get StreetViews, Streetview Locate, google_map_search, plot_satellite, google_lens, google_image_search, perplexity ask, Satellite Locate, Decide, Add Clue, Save Coordinates]\nAction Input1: the input to the action1 as arguments. If there are multiple arguments, separate them with commas. Note that the arguments should be in the same order as the function signature, and that the arguments are not named.\nObservation1 : the result of the action1\nAnalyze1: Analyze the results of action1\nThought2: Think about what you should do based on analyze1\nAction2: the action to take, should be one of [Return Coordinates, Geoclip, Get StreetViews, Streetview Locate, google_map_search, plot_satellite, google_lens, google_image_search, perplexity ask, Satellite Locate, Decide, Add Clue, Save Coordinates]\nAction Input2: the input to the action2\nObservation2: the result of the action2\nAnalyze2: Analyze the results of action2\nThought3: So on... In this case you have realized that you have found the location of the image. If you have not found the location of the image, you can continue to use the tools to find the location of the image.\nFinal Answer: The location of the image is ... The coordinates are ... Remember to always output the coordinate. If you do not have the coordinate, do not consider the task finished.\n\nRemember to output either the final answer or an action at each step, never both.\nBegin!\n\nQuestion1: [Image id : inp_779897] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/inp_779897.png1cff6116-5e1d-4073-a374-7e4bc913234f.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": " Where is this image located? \nThought1: "
+        }
+      ],
+      "role": "user"
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "Conclusions Reached: \nReflections: \nAvailable directory of access: run\/0x17cc49cc0\nAvailable ids in namespace: ['inp_779897', 'serp888a83', 'serp493e03', 'serpdc0436', 'serp81e36c', 'serp773b50', 'serp424d72', 'serp314220', 'serpe81d06', 'serp3f447d', 'serpa808b3', 'serpaa7ae4', 'serpf616b4', 'serp56eb26', 'serp6321b8', 'serp321625', 'serpdd807b', 'serp7ea155', 'serp80da39', 'serpa9f9fb', 'serpe088b2', 'serp04ff6e', 'serp477e25', 'serp0a3df8', 'serpf2e1a0', 'serpdf2d55', 'serp079ee1', 'serp0ffab7', 'serp925369', 'serp2d7599', 'serp9dafde', 'geoclipe7a9c2']\n"
+        }
+      ],
+      "role": "user"
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "Begin Branch 0: "
+        }
+      ],
+      "role": "user"
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "Thought1: The image features a horse-drawn carriage on an urban street next to a canal, suggesting it might be in a city with historic areas and canals, such as those found in Europe. The architecture and the canal are distinct features that might help to identify the location.\nAction1: Geoclip\nAction Input1: inp_779897\n\n"
+        }
+      ],
+      "role": "assistant"
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "Observation1: \n    GEOCLIP Prediction Results:\n    Top 5 likely coordinates:\n    lat: 52.372455, lon: 4.895095, prob: 0.0062857395969331264\nlat: 52.372778, lon: 4.893894, prob: 0.0062497202306985855\nlat: 52.372664, lon: 4.89561, prob: 0.006207865197211504\nlat: 52.372455, lon: 4.895782, prob: 0.006197726354002953\nlat: 52.373083, lon: 4.895439, prob: 0.006192455999553204\n    A rendering of those coordinates:\n    [Image id : geoclipe7a9c2] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/geoclipe7a9c2.pngad283b2f-7baa-427a-a8b1-13aa24592b9e.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\n    \nAnalyze1: "
+        }
+      ],
+      "role": "user"
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "End Branch 0"
+        }
+      ],
+      "role": "user"
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "Begin Branch 1: "
+        }
+      ],
+      "role": "user"
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "\n\nThought2: Since the photo features a specific activity—a horse-drawn carriage by a canal—there might be certain cities known for this kind of touristic attraction. I could use a text query in Google Maps to look for popular tourist cities with canal tours.\nAction2: google_map_search\nAction Input2: \"city with horse-drawn carriage tours by canal\"\n\n"
+        }
+      ],
+      "role": "assistant"
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "Observation1: Invalid response: {}\nAnalyze1: "
+        }
+      ],
+      "role": "user"
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "End Branch 1"
+        }
+      ],
+      "role": "user"
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "Begin Branch 2: "
+        }
+      ],
+      "role": "user"
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "\n\nThought3: Observing the architecture and the canal in the image might help to narrow down the location if I can get more detailed images of the area to compare with. Using Google Street View might provide additional context clues such as street signs, building names, or other landmarks.\nAction3: Get StreetViews\nAction Input3: \"[(lat, lon)]\"     (Replace lat, lon with coordinates once they are estimated.)\n\n"
+        }
+      ],
+      "role": "assistant"
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "Could not run tool Get StreetViews: Unsupported file format\n please adjust. \nAnalyze1: "
+        }
+      ],
+      "role": "user"
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "End Branch 2"
+        }
+      ],
+      "role": "user"
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "Begin Branch 3: "
+        }
+      ],
+      "role": "user"
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "\n\nThought4: The carriage has a sign with text that can be a clue to the location. If the text is readable and contains the name of the location, I could use Google Lens to find similar images or related information that includes that text.\nAction4: google_lens\nAction Input4: inp_779897\n\n"
+        }
+      ],
+      "role": "assistant"
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "Observation1: Result 0: \n Title:File:Brugge (Bruges) horses 2.jpg - Wikimedia Commons \n [Image id : serp6321b8] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serp6321b8.png8a9764fa-1f4b-4d2a-b993-1243444d6d8d.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 1: \n Title:45 Minutes NYC Empire State Horses Carriage Ride in Central Park \n [Image id : serp477e25] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serp477e25.png95f79e32-3d46-417e-9d84-cc9d7ec89d62.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 2: \n Title:I think they had mobile phones back in the 1700s as well! | Flickr \n [Image id : serp079ee1] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serp079ee1.png4ab8e7fa-d7fb-426f-9f79-560483073b12.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 3: \n Title:The sad lives of carriage horses | Sunshine and Slaughter \n [Image id : serp321625] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serp321625.png9e0a19f6-0c56-4fbe-a706-a19963df6786.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 4: \n Title:File:FiakerPauseWien.jpg - Wikipedia \n [Image id : serp888a83] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serp888a83.png54869169-ea1f-45b2-96d8-ec7e5dff3b67.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 5: \n Title:Beacon Hill Park: Tranquil Horse-Drawn Carriage Tour: Book Tours & Activities at Peek.com \n [Image id : serpa9f9fb] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serpa9f9fb.png36d53bf3-162d-4bd6-aef1-f236b344ac70.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 6: \n Title:Wroclaw | Adam | Flickr \n [Image id : serp7ea155] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serp7ea155.png3d4f1aeb-ab60-4ee6-8389-779d8183b554.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 7: \n Title:File:AUSTRIA Parlament 3 (horse & buggy crop).JPG - Wikipedia \n [Image id : serp493e03] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serp493e03.pngec40a0ee-ef17-4004-bf07-b438a6359101.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 8: \n Title:Horse and Carriage | St. Stephen's Green | Paul McNamara | Flickr \n [Image id : serp04ff6e] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serp04ff6e.pngb1f209a7-4167-42f3-be55-e1b934be7680.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 9: \n Title:NYC carriage drivers union hires experts in bid to soothe horse health concerns \n [Image id : serpdf2d55] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serpdf2d55.pngcb8d161d-1e39-4547-8de2-064b0a637704.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 10: \n Title:Photo entry: Just horsing around \n [Image id : serp80da39] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serp80da39.png2c4d6106-7d69-468e-a0c2-76a19d5c1b3f.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 11: \n Title:Old Town - Prague - photo, photos, photo gallery \n [Image id : serp0a3df8] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serp0a3df8.png7014ef0c-7330-440a-9db4-0d6e8d8f0c62.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 12: \n Title:Can you imagine Central Park without horse-drawn carriages? | Christina Hansen | The Guardian \n [Image id : serpdd807b] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serpdd807b.png5c757c39-5b54-45f4-9f2d-6fab8332d6ec.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 13: \n Title:Caleches du Vieux Quebec - All You Need to Know BEFORE You Go (2024) \n [Image id : serp773b50] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serp773b50.png7e493445-a87e-4fa3-9f2e-22b79806c039.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 14: \n Title:File:Horse taxi in Tallinn.JPG - Wikimedia Commons \n [Image id : serpe088b2] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serpe088b2.png59963b6e-9987-4ea3-a26b-2ebabc2c70a9.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\n\nAnalyze1: "
+        }
+      ],
+      "role": "user"
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "End Branch 3"
+        }
+      ],
+      "role": "user"
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "Begin Branch 4: "
+        }
+      ],
+      "role": "user"
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "\n\nThought5: The photo may include details that are not immediately recognizable but could be significant landmarks or features unique to a certain location. Running the image through Google Image Search with a description based on what's visible might result in similar images that could help pinpoint the location.\nAction5: google_image_search\nAction Input5: \"horse-drawn carriage city canal\"\n"
+        }
+      ],
+      "role": "assistant"
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "Observation1: Result 0: \n Title:a Horse Drawn Carriage - Amsterdam ... \n [Image id : serp3f447d] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serp3f447d.png5ed90fe9-02b3-49b2-8ecf-56f665681fb2.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 1: \n Title:Horse-drawn wagon historical tours ... \n [Image id : serp2d7599] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serp2d7599.png0bc2a0ff-6b0f-4e94-864f-404e2f37fbb7.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 2: \n Title:Horse-drawn wagon historical tours ... \n [Image id : serp9dafde] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serp9dafde.pngb0cd923c-c4fa-4f55-85af-3ca98f6be802.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 3: \n Title:Horse-drawn wagon historical tours ... \n [Image id : serp424d72] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serp424d72.pnge8ffe99d-12ff-429b-b33b-91b27e12dc83.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 4: \n Title:Wagon Tours | The Canal District \n [Image id : serpdc0436] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serpdc0436.png24062fbb-8601-4f11-be74-30537ee21246.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 5: \n Title:Canal horse hi-res stock photography ... \n [Image id : serpa808b3] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serpa808b3.png400e992a-666f-420f-8dab-805468f37649.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 6: \n Title:Hitching a ride into city's past \n [Image id : serp81e36c] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serp81e36c.png289e5eca-5d99-4210-865e-9191f9dceb7c.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 7: \n Title:New Orleans Horse-Drawn Carriage Tours ... \n [Image id : serpe81d06] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serpe81d06.png54e4ad31-a066-44c7-8627-377222ddc1d4.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 8: \n Title:horses around in Canal Park ... \n [Image id : serpaa7ae4] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serpaa7ae4.png6235f7ae-8bc0-4d36-8461-41f4a402a80f.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 9: \n Title:Omnibuses and Horse Cars or What I Have ... \n [Image id : serp0ffab7] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serp0ffab7.png538babd6-3775-405f-b2af-a298e5112c2c.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 10: \n Title:Horse bridge, bruges hi-res stock ... \n [Image id : serp314220] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serp314220.png9b30c697-80b7-4e8c-9651-5e9d2b2b71fc.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 11: \n Title:Scottsdale Horse and Carriage will ... \n [Image id : serp925369] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serp925369.png49bfd787-43cf-40b3-9c6b-087881977a50.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 12: \n Title:Canal District, with Bob Largess ... \n [Image id : serp56eb26] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serp56eb26.png3099d9a3-26d2-4e6e-b7ea-f322676715ef.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 13: \n Title:Country Carriage Company – The only way ... \n [Image id : serpf2e1a0] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serpf2e1a0.png4ff719eb-3b18-44e9-baf0-957fe7a35b47.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\nResult 14: \n Title:Top Hat Carriages - Duluth, MN \n [Image id : serpf616b4] "
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x17cc49cc0\/serpf616b4.png4880e6ad-1f9a-4b36-a043-e89181a30f5b.png"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\n\nAnalyze1: "
+        }
+      ],
+      "role": "user"
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "End Branch 4"
+        }
+      ],
+      "role": "user"
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "\nYou were given 5 choices over what is the next step to take for our investigation.\nFor each choice, evaluate the validity of the choice, think about whether the choice is promising on its path toward a successful geolocation.\nFinally, in 5 SEPARATE lines, output a number in the range [1, 10] that represents how promising each choice is.\nDO NOT OUTPUT ANYTHING ELSE AFTER THE 5 LINES.\nThe outputs should be in the same order as the choices, and in the format of:\nbranch 1: 9\nbranch 2: 5\nbranch 3: 7\nbranch 4: 2\nbranch n: score_for_n\n"
+        }
+      ],
+      "role": "user"
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "Now, begin your evaluation for each of the 5 branches."
+        }
+      ],
+      "role": "user"
+    }
+  ],
+  "temperature": 0.1,
+  "model": "gpt-4-vision-preview",
+  "max_tokens": 3000
+}

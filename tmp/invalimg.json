@@ -1,0 +1,259 @@
+{
+    "messages": [
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "\nAnswer the following questions as best you can. You have access to the following tools:\n\nReturn Coordinates: Return Coordinates(lat: float, lon: float) - Use this when you have reached a conclusion about the location of the image.\n    This returns the results to the end user as the conclusion to your investigation.\n    Format for tool input: lat, lon\n    E.G: 47.6097, -122.3331\n    :param lat: the latitude of the location\n    :param lon: the longitude of the location\n    :return:\nGeoclip: geoclip_predict(img_id: str) -> str - The Geoclip model is an image model that predicts the likely GPS location of an image based on its visual features.\n    Feel free to use this as starting point for your investigation.\n    You can use this tool to find an estimate of the geographical area if you can not find clear hints from the image.\n    Note that this model is not perfect and might give you wrong results.\n    Prefer using it if the image is landscape or has clear geographical\/ cultural features.\n    Prefer not to use this in cities or urban areas.\n    :param img_id: the image id\nGet StreetViews: get_panos(coords_path: str) -> str - Gets Google Streetview images of coordinates\n    :param coords_path: Path to the csv or geojson file containing coordinates information\n    :return:\nStreetview Locate: locate_image(img_id: str, db_loc: str) - Locates an image using the streetview database. Must use the streetview tool to download the database first.\n    :param img_id: the id of the image to be located\n    :param db_loc: the location of a coordinate csv\/geojson file whose auxiliary information contains the location to the downloaded streetview images\n    Note that db_loc must come from the result of the streetview tool.\n    :return:\ngoogle_map_search: text_search(query: str) - Returns information about a location based on a text query. Uses Google Places API.\n    This is equivalent to a Google Maps search.\n    The geojson file returned would contain the coordinates of the location, as well as auxiliary information about the location, including\n    the name, address, and photo ids.\n    :param query: the text query\n    :return:\nplot_satellite: plot_satellite(coords_loc: str) - Plots the satellite image of a given set of coordinates. Uses Google Maps Static API.\n    :param coords_loc: the location of the coordinate csv or geojson file\n    :return:\ngoogle_lens: search_lens(img_id: str) - Searches Google Lens for an image (img -> content, relevant images)\n    :param img_id: The image id\n    :return:\ngoogle_image_search: image_search(query: str) - Searches Google Images for a query (text query -> images, descriptions)\n    :param query: The query to search for\n    :return:\nperplexity ask: perplexity ask(question: str) -> str - Ask a question to the perplexity online model. Use this as a search engine.\n    Note that it does not have access to image. Only send text queries that do not require visual information.\n    :param question: the question to ask\n    :return:\nSatellite Locate: satellite_locate(img_id: str, db_loc: str) - Locates an image using the satellite database. Must use the satellite tool to download the database first.\n    :param img_id: the id of the image to be located\n    :param db_loc: the location of a coordinate csv\/geojson file whose auxiliary information contains the location to the downloaded satellite images\n    Note that db_loc must come from the result of the satellite tool.\n    :return:\nDecide: Decide(decision: str) -> str - This is a miscellaneous function that does nothing but note that a decision has been made.\n    Use this to note different possibilities for the path of investigation.\n    :param decision: The decision made. E.G. \"The image is in America\", \"The image is in Europe\"\n    :return:\nAdd Clue: add_clue(clue: str) - Add a clue to the global session.\n    This should be a conclusion you have reached about the investigation that you are certain of\n    :param clue: the clue to add\n    :return:\nSave Coordinates: save_coords(coords: str) - Given a set of coordinates, save them to a file so that you can use them in other tools\n    :param coords: the coordinates to save, in the format [(lat, long), (lat, long), ...]\n    :return:\n\nUse the following format:\n\nQuestion1: The overall guideline to what you are going to do\nThought1: Think about what you should do\nAction1: the action to take, should be one of [Return Coordinates, Geoclip, Get StreetViews, Streetview Locate, google_map_search, plot_satellite, google_lens, google_image_search, perplexity ask, Satellite Locate, Decide, Add Clue, Save Coordinates]\nAction Input1: the input to the action1 as arguments. If there are multiple arguments, separate them with commas. Note that the arguments should be in the same order as the function signature, and that the arguments are not named.\nObservation1 : the result of the action1\nAnalyze1: Analyze the results of action1\nThought2: Think about what you should do based on analyze1\nAction2: the action to take, should be one of [Return Coordinates, Geoclip, Get StreetViews, Streetview Locate, google_map_search, plot_satellite, google_lens, google_image_search, perplexity ask, Satellite Locate, Decide, Add Clue, Save Coordinates]\nAction Input2: the input to the action2\nObservation2: the result of the action2\nAnalyze2: Analyze the results of action2\nThought3: So on... In this case you have realized that you have found the location of the image. If you have not found the location of the image, you can continue to use the tools to find the location of the image.\nFinal Answer: The location of the image is ... The coordinates are ... Remember to always output the coordinate. If you do not have the coordinate, do not consider the task finished.\n\nRemember to output either the final answer or an action at each step, never both.\nBegin!\n\nQuestion1: [Image id : inp_a1a592] "
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x2871e17e0\/inp_a1a592.png45c416ff-70d6-407b-8085-b1614491c1bb.png"
+            }
+          },
+          {
+            "type": "text",
+            "text": " Where is this image located? Footage shows the aftermath of Russian missile strike on a shopping center in Kryvyi Rih\nThought1: "
+          }
+        ],
+        "role": "user"
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "Conclusions Reached: \nReflections: \nAvailable directory of access: run\/0x2871e17e0\nAvailable ids in namespace: ['inp_a1a592', 'serpa12b1e', 'serp5dbecb', 'serp91358f', 'serp526f2b', 'serp8a5827', 'serp774601', 'serpbe1974', 'serpe35dbb', 'serp249660', 'serp7aa2f7', 'serp2b43e4', 'serp2a570f', 'serp8d2055', 'serpb4bd95', 'serpf14461', 'textsearch_coords6394e6', 'geoclipeb43c4', 'serp4522ce', 'serpa6e3b0', 'serp23a790', 'serpb12498', 'serp7935f1', 'serp1a76c6', 'serp3122ae', 'serp35b6ce', 'serp6bb467', 'serpb2c9d5', 'serpdedddd', 'serp43ccd5', 'serpe0325b', 'serp79bc03', 'textsearch_coords1cad06', 'serpf040cd']\n"
+          }
+        ],
+        "role": "user"
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "\nThought2: We could also attempt to find news articles or reports about the specific incident of the missile strike on a shopping center in Kryvyi Rih using an online search model to get more context or confirmation of the location.\n\nAction2: perplexity ask\nAction Input2: \"Russian missile strike on shopping center in Kryvyi Rih details\"\n"
+          }
+        ],
+        "role": "assistant"
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "Observation1: On January 8, 2024, Russian forces conducted a series of missile strikes across various regions of Ukraine, resulting in casualties and significant damage to civilian infrastructure. Among the locations targeted was the city of Kryvyi Rih, where a missile hit the Sunny Gallery shopping center, causing severe structural damage. According to reports, a 62-year-old woman was killed during this attack. This incident occurred amidst a broader wave of Russian missile attacks targeting multiple regions across Ukraine, including Kharkiv, Dnipropetrovsk, Kryviy Rih, Khmelnitskiy, and Zaporizhzhya, resulting in numerous fatalities and injuries, as well as widespread destruction of critical infrastructure and economic facilities.\nAnalyze1: "
+          }
+        ],
+        "role": "user"
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "Begin Branch 0: "
+          }
+        ],
+        "role": "user"
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "\nThought2A: Given the specific mention of the Sunny Gallery shopping center in Kryvyi Rih, we could use Google Maps to find the exact location of this place.\nAction2A: google_map_search\nAction Input2A: \"Sunny Gallery shopping center Kryvyi Rih\"\n"
+          }
+        ],
+        "role": "assistant"
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "Observation2: Results for query: [{'name': 'Sun Gallery Mall', 'location': {'latitude': 47.94648, 'longitude': 33.4408325}}]\n Coordinates: A rendering of the coordinates: [Image id : textsearch_coords1cad06] "
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x2871e17e0\/textsearch_coords1cad06.png58defedb-9cba-4363-ab1d-72967c1b986d.png"
+            }
+          },
+          {
+            "type": "text",
+            "text": "The coordinates are stored at run\/0x2871e17e0\/textsearch_coords96cdb4.geojson\nAnalyze2: "
+          }
+        ],
+        "role": "user"
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "End Branch 0"
+          }
+        ],
+        "role": "user"
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "Begin Branch 1: "
+          }
+        ],
+        "role": "user"
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "\nThought2B: The event is quite specific and recent, which could mean that social media or news platforms might have visual information about the location. An image search relating to the incident can provide images that can assist in comparing the image provided.\nAction2B: google_image_search\nAction Input2B: \"Sunny Gallery shopping center Kryvyi Rih missile strike January 2024\"\n"
+          }
+        ],
+        "role": "assistant"
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "Observation2: Result 0: \n Title:At least three killed, dozens wounded ... \n [Image id : serpa6e3b0] "
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x2871e17e0\/serpa6e3b0.png07d05258-15eb-454e-94ae-d12cc9cb6b12.png"
+            }
+          },
+          {
+            "type": "text",
+            "text": "\nResult 1: \n Title:A heavy wave of Russian missile attacks ... \n [Image id : serp7935f1] "
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x2871e17e0\/serp7935f1.png0e909046-4164-4d0a-9e1f-2c0063d4d8d7.png"
+            }
+          },
+          {
+            "type": "text",
+            "text": "\nResult 2: \n Title:July 31, 2023 Russia-Ukraine news \n [Image id : serpe0325b] "
+          },
+          {
+            "type": "text",
+            "text": "\n\nAnalyze2: "
+          }
+        ],
+        "role": "user"
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "End Branch 2"
+          }
+        ],
+        "role": "user"
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "Begin Branch 3: "
+          }
+        ],
+        "role": "user"
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "\nThought2D: If we have visual features of the city or surrounding landmarks in the image, the Geoclip tool could potentially provide a geographical estimate of where the image was taken.\nAction2D: Geoclip\nAction Input2D: \"inp_a1a592\"\n"
+          }
+        ],
+        "role": "assistant"
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "Observation2: \n    GEOCLIP Prediction Results:\n    Top 5 likely coordinates:\n    lat: 61.669309, lon: 50.829792, prob: 0.13310599327087402\nlat: 55.009372, lon: 82.654438, prob: 0.04854726418852806\nlat: 48.479812, lon: 135.070757, prob: 0.022618556395173073\nlat: 56.50036, lon: 84.969463, prob: 0.02098468318581581\nlat: 55.038106, lon: 82.910041, prob: 0.01716773957014084\n    A rendering of those coordinates:\n    [Image id : geoclipeb43c4] "
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "https:\/\/storage.googleapis.com\/geolocation-13123115\/run\/0x2871e17e0\/geoclipeb43c4.png85001a32-9354-4686-92a8-ce039555477d.png"
+            }
+          },
+          {
+            "type": "text",
+            "text": "\n    \nAnalyze2: "
+          }
+        ],
+        "role": "user"
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "End Branch 3"
+          }
+        ],
+        "role": "user"
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "Begin Branch 4: "
+          }
+        ],
+        "role": "user"
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "\nThought2E: Since we know the target location is a shopping center in Kryvyi Rih, we could plot satellite imagery of the area to try to identify damage to structures that resemble those in the image.\nAction2E: plot_satellite\nAction Input2E: \"textsearch_coords6394e6\"\n"
+          }
+        ],
+        "role": "assistant"
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "Could not run tool plot_satellite: Unsupported file format\n please adjust. \nAnalyze2: "
+          }
+        ],
+        "role": "user"
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "End Branch 4"
+          }
+        ],
+        "role": "user"
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "\nYou were given 5 choices over what is the next step to take for our investigation.\nFor each choice, evaluate the validity of the choice, think about whether the choice is promising on its path toward a successful geolocation.\nFinally, in 5 SEPARATE lines, output a number in the range [1, 10] that represents how promising each choice is.\nDO NOT OUTPUT ANYTHING ELSE AFTER THE 5 LINES.\nThe outputs should be in the same order as the choices, and in the format of:\nbranch 1: 9\nbranch 2: 5\nbranch 3: 7\nbranch 4: 2\nbranch n: score_for_n\n"
+          }
+        ],
+        "role": "user"
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "Now, begin your evaluation for each of the 5 branches."
+          }
+        ],
+        "role": "user"
+      }
+    ],
+    "temperature": 0.1,
+    "model": "gpt-4-vision-preview",
+    "max_tokens": 3000
+  }
