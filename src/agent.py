@@ -225,6 +225,8 @@ class Agent:
             return
         try:
             tool_inp = state.transition.tool_input
+            orig_inp = tool_inp
+            orig_e = None
             fail_cnt = 0
             tool_res = None
             attempts = []
@@ -235,6 +237,8 @@ class Agent:
                     )
                     break
                 except Exception as e:
+                    if orig_e is None:
+                        orig_e = e
                     if fail_cnt == self.RESCUE_THRESHOLD:
                         raise e
                     fail_cnt += 1
@@ -243,8 +247,9 @@ class Agent:
                         rescut_pmpt,
                         self.session
                     )[0].message.splitlines()[-1]
-                    if tool_inp.lower() == "give_up":
-                        raise e
+                    if "give_up" in tool_inp.lower():
+                        tool_inp = orig_inp
+                        raise orig_e
                     attempts.append(f"Attempt {fail_cnt}: tool input = {tool_inp}, error = {str(e)} \n")
         except Exception as e:
             print('[red]Error[/red]: ', e, traceback.format_exc())
@@ -439,7 +444,7 @@ class Agent:
                 INITIAL_REACT_PROMPT.format(
                     tool_names=", ".join([t.name for t in session.tools]),
                     tools=render_text_description(session.tools),
-                    input=f"{utils.image_to_prompt(image_loc)} Where is this image located? {additional}",
+                    input=f"{utils.image_to_prompt(image_loc, session)} Where is this image located? {additional}",
                 )
             )
         )

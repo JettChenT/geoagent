@@ -38,13 +38,19 @@ class Session:
     def notify_update(func):
         def wrapper(self, *args, **kwargs):
             res = func(self, *args, **kwargs)
-            # self._push("set_session_info", (
-            #     self.id,
-            #     self.to_json()
-            # ))
+            self.subscriber.push("set_session_info", (
+                self.id,
+                self.to_json()
+            ))
             return res
 
         return wrapper
+
+    def update_info(self, delta: Dict):
+        self.subscriber.push("set_session_info", (
+            self.id,
+            delta
+        ))
 
     def get_loc(self, identifier: str):
         try:

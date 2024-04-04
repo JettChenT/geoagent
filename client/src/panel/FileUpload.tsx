@@ -1,5 +1,5 @@
-import useStore from "./store";
-import { socket, URL } from "./socket";
+import useStore from "../store";
+import { socket, URL } from "../socket";
 import { FileUploader } from "react-drag-drop-files";
 import { useState } from "react";
 
@@ -19,8 +19,8 @@ function FileUpload() {
   };
   return (
     <FileUploader handleChange={onUpdate} name="file" types={fileTypes}>
-      <div className="w-full h-32 bg-slate-300 bg-opacity-20 rounded-xl flex items-center justify-center hover:bg-slate-300 hover:bg-opacity-30">
-        <div className="text-lg font-bold">Drag and drop image here</div>
+      <div className="w-full h-32 bg-slate-300 bg-opacity-20 rounded-md flex items-center justify-center hover:bg-slate-300 hover:bg-opacity-30 border-dashed border-2 border-slate-200 hover:cursor-pointer">
+        <div className="text-lg font-bold">Import Image</div>
       </div>
     </FileUploader>
   );

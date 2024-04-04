@@ -71,8 +71,11 @@ def from_twitter(session: Session, url: str) -> str:
             frame_loc = find_valid_loc(session, "frame_", ".png")
             extract_last_frame_ffmpeg(to_filename, frame_loc)
             final_loc = enforce_image(frame_loc, session)
-            session.subscriber.push("set_session_info_key", (session.id, "image_loc", str(final_loc)))
             pmpt += image_to_prompt(final_loc, session)
+    session.update_info({
+        "content_type": "tweet",
+        "tweet_id": twid,
+    })
     return pmpt
 
 if __name__ == "__main__":

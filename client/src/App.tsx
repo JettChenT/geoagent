@@ -14,6 +14,7 @@ import ReactFlow, {
   getRectOfNodes,
   getTransformForBounds,
   getViewportForBounds,
+  useUpdateNodeInternals,
   useReactFlow,
   MiniMap,
 } from "reactflow";
@@ -24,16 +25,14 @@ import "reactflow/dist/style.css";
 import "react18-json-view/src/style.css";
 
 import useStore, { EditorState } from "./store";
-import ContextNode, { proc_incoming } from "./ContextNode";
+import ContextNode, { proc_incoming } from "./nodes/ContextNode";
 import { socket } from "./socket";
 import { useDebouncedCallback } from "use-debounce";
-import { getOutgoers } from "reactflow";
 import { downloadImage, imageHeight, imageWidth } from "./utils";
 import { toPng } from "html-to-image";
-import JsonView from "react18-json-view";
-import InfoDisplay from "./infoDisplay";
-import FileUpload from "./fileUpload";
-import SocialImport from "./socialImport";
+import InfoDisplay from "./panel/InfoDisplay";
+import FileUpload from "./panel/FileUpload";
+import SocialImport from "./panel/SocialImport";
 import { Button } from "./components/ui/button";
 import {
   Select,
@@ -43,6 +42,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Image } from "lucide-react";
+import ConfigPanel from "./panel/ConfigPanel";
 
 const nodeTypes = {
   contextNode: ContextNode,
@@ -62,7 +62,10 @@ const getLayoutedElements = (nodes, edges, options) => {
     nodes: nodes.map((node) => {
       const { x, y } = g.node(node.id);
 
-      return { ...node, position: { x, y } };
+      return {
+        ...node,
+        position: { x: x - node.width / 2, y: y - node.height / 2 },
+      };
     }),
     edges,
   };
@@ -73,6 +76,7 @@ function App() {
     edges,
     globalInfo,
     sessionsInfo,
+    debug,
     onNodesChange,
     onEdgesChange,
     onConnect,
@@ -89,15 +93,17 @@ function App() {
     currentSession,
     setCurrentSession,
     setSessionsInfoKey,
+    setSessionInfo,
   } = useStore();
   const reactFlowWrapper = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
   const [isConnected, setIsConnected] = useState(socket.connected);
   const { fitView } = useReactFlow();
+  const updateNodeInternals = useUpdateNodeInternals();
 
-  const onLayout = useDebouncedCallback((direction) => {
+  const onLayout = useDebouncedCallback(() => {
     let { edges, nodes } = useStore.getState();
-    const layouted = getLayoutedElements(nodes, edges, { direction });
+    const layouted = getLayoutedElements(nodes, edges, { direction: "LR" });
 
     setNodes([...layouted.nodes]);
     setEdges([...layouted.edges]);
@@ -118,7 +124,7 @@ function App() {
         position: { x: 100, y: 100 },
         data: proc_incoming(dat),
       });
-      onLayout("LR");
+      onLayout();
     });
 
     socket.on("add_node", (par_id, node_id, dat) => {
@@ -135,13 +141,13 @@ function App() {
         },
         par_id
       );
-      onLayout("LR");
+      onLayout();
     });
 
     socket.on("update_node", (node_id, dat) => {
       console.log("update_node", node_id, dat);
       updateContextData(node_id, proc_incoming(dat));
-      onLayout("LR");
+      onLayout();
     });
 
     socket.on("global_info", (info) => {
@@ -164,12 +170,16 @@ function App() {
 
     socket.on("set_current_session", (session_id) => {
       setCurrentSession(session_id);
-      onLayout("LR");
+      onLayout();
+    });
+
+    socket.on("set_session_info", (session_id, info) => {
+      setSessionInfo(session_id, info);
     });
   }, []);
 
   const down_image = () => {
-    onLayout("LR");
+    onLayout();
     const nodesBounds = getNodesBounds(useStore.getState().nodes);
     const transform = getTransformForBounds(
       nodesBounds,
@@ -224,24 +234,23 @@ function App() {
       >
         <Panel
           position="top-right"
-          className="flex flex-col space-y-4 w-72 h-5/6 overflow-auto p-2"
+          className="flex flex-col space-y-4 w-72 h-5/6 overflow-auto overflow-x-hidden p-2 font-mono"
         >
-          <div className="mb-4">
+          <h1 className="text-2xl">
+            <span className="text-blue-700 font-bold">GeoAgent</span> Console
+          </h1>
+          <div className="font-bold">
             {isConnected ? (
               <div className="text-green-500 flex items-center">
-                🟢 Connected
+                🟢 Connected to Server
               </div>
             ) : (
-              <div className="text-red-500 flex items-center">
+              <div className="flex items-center text-red-500">
                 🔴 Not Connected
               </div>
             )}
           </div>
-          <div className="mb-4">
-            <Button onClick={down_image} className="w-full">
-              Export Image <Image className="ml-2 mt-0.5" size={20} />
-            </Button>
-          </div>
+
           <Select value={currentSession} onValueChange={handleSessionChange}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select Session" />
@@ -250,14 +259,20 @@ function App() {
               <SelectItem value="all_sessions">All Sessions</SelectItem>
               {Object.keys(sessionsInfo).map((sessionId) => (
                 <SelectItem key={sessionId} value={sessionId}>
-                  {sessionId}
+                  Session: {sessionId}
                 </SelectItem>
               ))}
             </SelectContent>
+            <ConfigPanel onLayout={onLayout} />
           </Select>
-          <InfoDisplay />
+          {debug && <InfoDisplay />}
           <SocialImport />
           <FileUpload />
+          <div className="mb-4">
+            <Button onClick={down_image} className="w-full">
+              Export Screenshot <Image className="ml-2 mt-0.5" size={20} />
+            </Button>
+          </div>
         </Panel>
         <Background />
         <MiniMap />

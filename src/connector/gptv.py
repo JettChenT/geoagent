@@ -203,7 +203,10 @@ class Gpt4Vision(LMM):
                 choices = _generate_batch(pmpt, msg, session,  n)
 
         if self.debug:
-            print(choices)
+            print("Choices:")
+            for c in choices:
+                print(c.content)
+                print("---")
         return [Message(c.content, c.role) for c in choices]
 
 

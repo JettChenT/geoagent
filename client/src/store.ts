@@ -11,7 +11,7 @@ import {
   applyNodeChanges,
   applyEdgeChanges,
 } from "reactflow";
-import { ContextData } from "./ContextNode";
+import { ContextData } from "./nodes/ContextNode";
 
 export type EditorState = {
   nodes: Node<ContextData>[];
@@ -19,6 +19,7 @@ export type EditorState = {
   globalInfo: any;
   sessionsInfo: any;
   currentSession: string | null;
+  debug: boolean;
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
@@ -34,7 +35,50 @@ export type EditorState = {
   setSessionId: (nodeId: string, sessionId: string | null) => void;
   setCurrentSession: (sessionId: string | null) => void;
   setSessionsInfoKey: (sessionId: string, key: string, value: any) => void;
+  setSessionInfo: (sessionId: string, info: any) => void; // Added setSessionInfo function type
+  setDebug: (debug: boolean) => void;
 };
+
+const sampleNodes: Node<ContextData>[] = [
+  {
+    id: "1",
+    type: "contextNode",
+    position: { x: 100, y: 100 },
+    data: {
+      cur_messages: [],
+      observation: "Hello, World!",
+      transition: {
+        type: "AgentAction",
+        tool: "Propose Coordinates",
+        tool_input: "37.7749,-122.4194",
+      },
+      lats_data: {},
+      auxiliary: {},
+      session_id: "1",
+      is_root: false,
+      state: "normal",
+    },
+  },
+  {
+    id: "2",
+    type: "contextNode",
+    position: { x: 100, y: 100 },
+    data: {
+      cur_messages: [],
+      observation: "Hello, World!",
+      transition: {
+        type: "AgentAction",
+        tool: "Google Lens",
+        tool_input: "foo bar",
+      },
+      lats_data: {},
+      auxiliary: {},
+      session_id: "1",
+      is_root: false,
+      state: "normal",
+    },
+  },
+];
 
 const useStore = create<EditorState>((set, get) => ({
   nodes: [],
@@ -42,6 +86,7 @@ const useStore = create<EditorState>((set, get) => ({
   globalInfo: {},
   sessionsInfo: {},
   currentSession: "all_sessions",
+  debug: true,
   onNodesChange: (changes: NodeChange[]) => {
     set({
       nodes: applyNodeChanges(changes, get().nodes),
@@ -80,10 +125,12 @@ const useStore = create<EditorState>((set, get) => ({
     return get().nodes.find((n) => n.id === nodeId);
   },
   createNode: (node) => {
-    node.data = { ...node.data, is_root: true };
-    set({
-      nodes: [...get().nodes, node],
-    });
+    if (!get().nodes.some((n) => n.id === node.id)) {
+      node.data = { ...node.data, is_root: true };
+      set({
+        nodes: [...get().nodes, node],
+      });
+    }
   },
   createChildNode: (node, parentId) => {
     set((state) => {
@@ -146,6 +193,18 @@ const useStore = create<EditorState>((set, get) => ({
         [sessionId]: { ...state.sessionsInfo[sessionId], [key]: value },
       },
     }));
+  },
+  setSessionInfo: (sessionId, info) => {
+    // Implementation of setSessionInfo
+    set((state) => ({
+      sessionsInfo: {
+        ...state.sessionsInfo,
+        [sessionId]: { ...state.sessionsInfo[sessionId], ...info },
+      },
+    }));
+  },
+  setDebug: (debug) => {
+    set({ debug });
   },
 }));
 

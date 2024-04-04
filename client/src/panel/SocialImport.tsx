@@ -1,11 +1,11 @@
-import useStore from "./store";
-import { socket, URL } from "./socket";
+import useStore from "../store";
+import { socket, URL } from "../socket";
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { SiTwitter } from "@icons-pack/react-simple-icons";
-import { useToast } from "./components/ui/use-toast";
+import { useToast } from "../components/ui/use-toast";
 
 function ActionIcon({ url }: { url: string }) {
   if (url.search("twitter") !== -1) {
@@ -35,10 +35,8 @@ function SocialImport() {
     socket.emit("from_social", { url });
   };
   return (
-    <div className="w-full mb-4 overflow-auto bg-slate-300 bg-opacity-20 rounded-xl p-2">
-      <span className="text-lg font-bold my-2 block">
-        Import from social media
-      </span>
+    <div className="w-full mb-4 overflow-auto bg-slate-300 bg-opacity-20 rounded-md p-2 font-mono">
+      <span className="text-lg font-bold my-2 block">Import from Internet</span>
       <div className="flex w-full max-w-sm flex-col items-center space-y-2">
         <Input
           type="text"
