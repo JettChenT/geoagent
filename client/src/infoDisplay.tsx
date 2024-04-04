@@ -17,23 +17,15 @@ function InfoDisplay() {
   return (
     <>
       <div className="w-full mb-4 overflow-auto bg-slate-300 bg-opacity-20 rounded-xl p-2">
-        <div className="text-lg font-bold my-2">Session Info:</div>
-        {currentSession === null || currentSession === "all_sessions" ? (
-          <JsonView src={sessionsInfo} collapsed={true} />
-        ) : (
-          sessionsInfo[currentSession].image_loc && (
-            <>
-              <img
-                src={proc_img_url(sessionsInfo[currentSession].image_loc)}
-                alt="session_image"
-                className="w-full mb-2"
-              />
-            </>
-          )
-        )}
-        {currentSession !== null && currentSession !== "all_sessions" && (
-          <JsonView src={sessionsInfo[currentSession]} collapsed={true} />
-        )}
+        <div className="text-lg font-bold mb-2">Session Info:</div>
+        <JsonView
+          src={
+            currentSession === "all_sessions"
+              ? sessionsInfo
+              : sessionsInfo[currentSession]
+          }
+          collapsed={true}
+        />
       </div>
       <div className="w-full mb-4 overflow-auto bg-slate-300 bg-opacity-20 rounded-xl p-2">
         <div className="text-lg font-bold my-2">Global Info:</div>

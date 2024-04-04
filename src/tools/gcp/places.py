@@ -39,8 +39,9 @@ def text_search(query: str, session: Session):
     )
     res_data = r.json()
     if 'places' not in res_data:
-        print(res_data)
-        return f"Invalid response: {res_data}"
+        if res_data == {}:
+            raise Exception("No results found, perhaps the query is invalid")
+        raise Exception(f"Invalid response: {res_data}")
     res_data_disp = [
         {"name": x["displayName"]["text"], "location": x["location"]}
         for x in res_data["places"]
@@ -66,7 +67,7 @@ def plot_satellite(coords_loc: str, session: Session):
     :param coords_loc: the location of the coordinate csv or geojson file
     :return:
     """
-    coords = Coords.load(coords_loc)
+    coords = Coords.load(utils.try_find_loc(session, coords_loc, [".geojson", ".csv"]))
     if len(coords) > SATELLITE_CAP:
         return f"Too many coordinates: {len(coords)} > {SATELLITE_CAP}"
     retrieved = []

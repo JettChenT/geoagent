@@ -197,7 +197,7 @@ class Context:
             return ctx
 
     @property
-    def messages(self):
+    def messages(self) -> List[Message]:
         return (self.parent.messages if self.parent else []) + self.cur_messages
 
     @notify_update

@@ -12,3 +12,6 @@ eval folder_path:
 
 eval-batched folder_path:
     python -m src.evaluation {{folder_path}} batched
+
+server
+    python -m src.sock

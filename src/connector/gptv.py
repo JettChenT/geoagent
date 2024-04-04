@@ -127,7 +127,7 @@ class Gpt4Vision(LMM):
                  debug: bool = False,
                  max_tokens: int = 3000,
                  multi_gen_strategy: MultiGenStrategy = MultiGenStrategy.BATCH,
-                 disable_cert_verification: bool = True
+                 disable_cert_verification: bool = False
                  ):
         # Adds black bar containing the location of the image, since gpt-vision api does not recognize image order.
         # utils.toggle_blackbar()

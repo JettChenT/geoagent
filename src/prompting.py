@@ -169,3 +169,27 @@ First summarize what you did in the current trajectory.
 Then, in a few sentences reflect on the current trajectory. 
 Provide advice to other agents doing this investigation regarding what to avoid, what to do better, and what has been tried etc.
 """
+
+RESCUE_PROMPT = """
+I am calling a function, but I encountered an error. You will help me adjust the function inputs so that it works.
+For example, if you are given:
+Function description: Add(a: int, b: int) - Adds two integers
+Used inputs: 1, a
+Error message: TypeError: unsupported operand type(s) for +: 'int' and 'str'
+
+You could output:
+
+Thought: The error message indicates that the second input is a string, which is not supported. I should change the second input to an integer.
+Corrected Inputs:
+1, 2
+
+-----
+
+Function description: {function_description}
+Previous attempts: {attempts}
+Used inputs: {inputs}
+Error message: {error_message}
+Think about what went wrong; finally, in a separate line, output the corrected inputs.
+Always remember to output the corrected inputs in the final line without any other text.
+If the error is unfixable, output "GIVE_UP" in the final line instead.
+"""

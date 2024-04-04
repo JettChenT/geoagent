@@ -33,6 +33,16 @@ import { toPng } from "html-to-image";
 import JsonView from "react18-json-view";
 import InfoDisplay from "./infoDisplay";
 import FileUpload from "./fileUpload";
+import SocialImport from "./socialImport";
+import { Button } from "./components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Image } from "lucide-react";
 
 const nodeTypes = {
   contextNode: ContextNode,
@@ -181,8 +191,8 @@ function App() {
     }).then(downloadImage);
   };
 
-  const handleSessionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setCurrentSession(e.target.value);
+  const handleSessionChange = (value: string) => {
+    setCurrentSession(value);
     setTimeout(() => {
       fitView();
     }, 10);
@@ -214,7 +224,7 @@ function App() {
       >
         <Panel
           position="top-right"
-          className="flex flex-col space-y-4 w-64 h-5/6 overflow-auto"
+          className="flex flex-col space-y-4 w-72 h-5/6 overflow-auto p-2"
         >
           <div className="mb-4">
             {isConnected ? (
@@ -228,29 +238,26 @@ function App() {
             )}
           </div>
           <div className="mb-4">
-            <button
-              onClick={down_image}
-              className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-2 rounded w-full"
-            >
-              Download
-            </button>
+            <Button onClick={down_image} className="w-full">
+              Export Image <Image className="ml-2 mt-0.5" size={20} />
+            </Button>
           </div>
-          <div className="indicator">
-            <select
-              value={currentSession}
-              onChange={handleSessionChange}
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-4"
-            >
-              <option value="all_sessions">All Sessions</option>
+          <Select value={currentSession} onValueChange={handleSessionChange}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select Session" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all_sessions">All Sessions</SelectItem>
               {Object.keys(sessionsInfo).map((sessionId) => (
-                <option key={sessionId} value={sessionId}>
+                <SelectItem key={sessionId} value={sessionId}>
                   {sessionId}
-                </option>
+                </SelectItem>
               ))}
-            </select>
-            <InfoDisplay />
-            <FileUpload />
-          </div>
+            </SelectContent>
+          </Select>
+          <InfoDisplay />
+          <SocialImport />
+          <FileUpload />
         </Panel>
         <Background />
         <MiniMap />

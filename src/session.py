@@ -14,7 +14,7 @@ class Session:
     reflections: List[str] = Factory(list)
     root: Optional[Context] = None
     tools: List[BaseTool] = Factory(list)
-    subscriber: Optional[Subscriber] = None
+    subscriber: Subscriber = Factory(Subscriber)
     namespace: Dict = Factory(dict)
 
     @property

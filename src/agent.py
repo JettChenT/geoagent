@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 from typing import Tuple, Optional, List
 from enum import Enum
 import re
@@ -101,11 +102,14 @@ class Agent:
     DEPTH_THRESHOLD = 10
     ROLLOUT_THRESHOLD = 8
     BRANCH_CNT = 5
+    RESCUE_THRESHOLD = 3
 
-    def __init__(self, vllm: LMM, run_type: RunType = RunType.PARALLEL, subscriber: Optional[Subscriber] = None):
+    def __init__(self, vllm: LMM, run_type: RunType = RunType.PARALLEL, subscriber: Optional[Subscriber] = None, fast_lm : Optional[LMM]=None):
         self.vllm = vllm
+        self.fast_lm = fast_lm or vllm
         self.output_parser = ReActSingleInputOutputParser()
         self.run_type = run_type
+        subscriber = subscriber or default_subscriber()
         self.subscriber = subscriber
         self.session = Session(subscriber=subscriber)
 
@@ -220,9 +224,28 @@ class Agent:
             )
             return
         try:
-            tool_res = str(
-                tool._run(*utils.get_args(tool, utils.sanitize(state.transition.tool_input)))
-            )  # TODO: Make multi-argument parsing more robust
+            tool_inp = state.transition.tool_input
+            fail_cnt = 0
+            tool_res = None
+            attempts = []
+            while fail_cnt <= self.RESCUE_THRESHOLD:
+                try:
+                    tool_res = str(
+                        tool._run(*utils.get_args(tool, utils.sanitize(tool_inp)))
+                    )
+                    break
+                except Exception as e:
+                    if fail_cnt == self.RESCUE_THRESHOLD:
+                        raise e
+                    fail_cnt += 1
+                    rescut_pmpt = [Message(RESCUE_PROMPT.format(function_description=tool.description, inputs=tool_inp, error_message=str(e), attempts=attempts))]
+                    tool_inp = self.fast_lm.prompt(
+                        rescut_pmpt,
+                        self.session
+                    )[0].message.splitlines()[-1]
+                    if tool_inp.lower() == "give_up":
+                        raise e
+                    attempts.append(f"Attempt {fail_cnt}: tool input = {tool_inp}, error = {str(e)} \n")
         except Exception as e:
             print('[red]Error[/red]: ', e, traceback.format_exc())
             # ask if user would like to continue, if so, ask for potential feedback
@@ -326,19 +349,15 @@ class Agent:
         node.set_auxiliary("reflection", res.message)
         self.session.add_reflection(res.message)
 
-    def tst_sock(self, a, b):
-        self._push("global_info_set", ("latest_session", self.session.id))
-        self._push("set_session_info_key", (self.session.id, "b", b))
-        self._push("set_session_info_key", (self.session.id, "a", a))
-        return "DONE"
-
-    def lats(self, image_loc: str, additional: str = "", set_cur=False) -> Context:
-        utils.flush_run_dir(self.session)
-        self._push("global_info_set", ("latest_session", self.session.id))
+    def image_pmpt(self, loc: str | Path , additional: str = "") -> str:
+        image_loc = utils.enforce_image(loc, self.session)
         self._push("set_session_info_key", (self.session.id, "image_loc", image_loc))
+        return f"{utils.image_to_prompt(image_loc, self.session)} Where is this image located? {additional}"
+
+    def lats(self, goal: str, set_cur=False) -> Context:
+        self._push("global_info_set", ("latest_session", self.session.id))
         if set_cur:
             self._push("set_current_session", self.session.id)
-        image_loc = utils.enforce_image(image_loc, self.session)
         self.session.tools = proc_tools(TOOLS, self.session)
         root = Context(subscriber=self.subscriber)
         initial_msg = [
@@ -346,7 +365,7 @@ class Agent:
                 INITIAL_REACT_PROMPT.format(
                     tool_names=", ".join([t.name for t in self.session.tools]),
                     tools=render_text_description(self.session.tools),
-                    input=f"{utils.image_to_prompt(image_loc, self.session)} Where is this image located? {additional}",
+                    input=goal,
                 )
             ),
             ProxiedMessage(
@@ -490,7 +509,7 @@ def main():
     sub.push("global_info_set", ("task", "Geolocating Image"))
     logging.basicConfig(level=logging.INFO)
     img_loc = sys.argv[1] if len(sys.argv) else "./images/anon/12.png"
-    res = agent.lats(img_loc, additional_info)
+    res = agent.lats(agent.image_pmpt(img_loc, additional_info))
     print(res)
     input("success! Press enter to exit.")
 

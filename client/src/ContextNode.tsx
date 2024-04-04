@@ -88,7 +88,7 @@ const stext = (st) => {
     case "success":
       return "✅ Success";
     case "reflecting":
-      return "✅ Success";
+      return "🤔 Reflecting";
     default:
       return `⚪ ${st}`;
   }
@@ -115,7 +115,7 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
         setBgColor("bg-green-100");
         break;
       case "reflecting":
-        setBgColor("bg-green-100");
+        setBgColor("bg-yellow-100");
         break;
       case "expanding":
         setBgColor("bg-orange-100 animate-pulse");
@@ -153,7 +153,7 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
               className="w-full mb-2"
             />
           )}
-        {/* <div
+        <div
           className="text-sm text-left nodrag"
           style={{ userSelect: "text", cursor: "text" }}
         >
@@ -161,7 +161,7 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
           <div className="text-gray-500 font-mono overflow-auto max-h-16">
             {lastMessage}
           </div>
-        </div> */}
+        </div>
         <div
           className="text-sm text-left nodrag"
           style={{ userSelect: "text", cursor: "text" }}
@@ -193,7 +193,7 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
             </span>
           )}
         </div>
-        {/* <div
+        <div
           className="text-sm text-left nodrag"
           style={{ userSelect: "text", cursor: "text" }}
         >
@@ -205,8 +205,8 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
               data.auxiliary
             )}
           </div>
-        </div> */}
-        {/* <div
+        </div>
+        <div
           className="text-sm text-left nodrag"
           style={{ userSelect: "text", cursor: "text" }}
         >
@@ -218,7 +218,7 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
               data.lats_data
             )}
           </div>
-        </div> */}
+        </div>
         <div
           className="text-sm text-left nodrag"
           style={{ userSelect: "text", cursor: "text" }}

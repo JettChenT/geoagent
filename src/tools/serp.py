@@ -15,6 +15,7 @@ TOP_N = 15
 
 def process_single_result(v, i, session):
     try:
+        # TODO
         im_url = v["thumbnail"]
         img_data = requests.get(im_url).content
         im = Image.open(io.BytesIO(img_data))

@@ -62,7 +62,7 @@ def evaluate(target_folder: Path):
         img_path = target_folder / row['image']
         sio_sub.push("global_info_set", ("image", str(img_path)))
         try:
-            res = agent.lats(img_path)
+            res = agent.lats(agent.image_pmpt(img_path))
             pred = utils.sanitize(res.transition.tool_input)
             cords.loc[i, 'pred'] = pred
             print(f"Predicted: {pred} for image {row['image']}")
@@ -80,7 +80,7 @@ def evaluate_image(row, target_folder, sio_sub, session_ids):
     sio_sub.push("global_info_set", ("image", str(img_path)))
     pred = ""
     try:
-        res = agent.lats(str(img_path))
+        res = agent.lats(agent.image_pmpt(img_path))
         agent.backup()
         sio_sub.push("set_session_info_key", (agent.session.id, "completed", True))
         session_ids.append(agent.session.id)  # Add session ID to the list

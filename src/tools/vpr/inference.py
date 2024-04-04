@@ -66,7 +66,7 @@ def locate_image(img_id: str, db_loc: str, session: Session):
     Note that db_loc must come from the result of the streetview tool.
     :return:
     """
-    db_coords = Coords.load(db_loc)
+    db_coords = Coords.load(utils.try_find_loc(session, db_loc, [".geojson", ".csv"]))
     im = load_image(session.get_loc(img_id))
     res = loc_sim(im, [load_image(x["image_path"]) for x in db_coords.auxiliary])
     new_coords = Coords(

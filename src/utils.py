@@ -3,7 +3,7 @@ import shutil
 from pathlib import Path
 import os
 from io import BytesIO
-from typing import List
+from typing import List, Optional
 
 import base64
 from PIL import Image, ImageDraw, ImageFont
@@ -22,7 +22,7 @@ RUN_DIR = "run/"
 DEBUG_DIR = Path("./debug")
 
 
-def image_to_base64(im: Image) -> str:
+def image_to_base64(im: Image.Image) -> str:
     buffer = BytesIO()
     im.save(buffer, "PNG")
     buffer.seek(0)
@@ -111,11 +111,17 @@ def image_to_prompt(loc: str | Path, session: Session):
         loc = str(loc)
     return f"[Image id : {img_id}] <img {loc}>"
 
+def file_size_mb(file: Path | str) -> float:
+    return Path(file).stat().st_size / (1e6)
+
 
 def enforce_image(loc: str | Path, session: Session):
     im = load_image(loc)
     loc = find_valid_loc(session, "inp_", ".png")
     im.save(loc)
+    while file_size_mb(loc) > 19:
+        im = im.resize((int(im.width // 1.1), int(im.height // 1.1)))
+        im.save(loc)
     return loc
 
 
@@ -265,6 +271,15 @@ def upload_image(session: Session, image: Path) -> str:
     res.raise_for_status()
     return f"{res.json()['url']}.png"
 
+def try_find_loc(session: Session, loc:str, expected_pfix: Optional[List[str]] = None) -> Path:
+    pfix = [""] + (expected_pfix or [])
+    find_preference = [loc, f"run/{loc}", f"run/{session.id}/{loc}"]
+    for f in find_preference:
+        for pf in pfix:
+            res = Path(f"{f}{pf}")
+            if res.exists():
+                return res
+    raise FileNotFoundError(f"Could not find {loc}")
 
 if __name__ == "__main__":
     ses = Session()

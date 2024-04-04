@@ -10,8 +10,10 @@ from . import utils
 from urllib.request import urlopen
 from .subscriber import SIOSubscriber, default_subscriber
 from .connector.gptv import Gpt4Vision
+from .connector.fast_lm import Gpt35
 from .agent import Agent
 from .config import *
+from .feeder import process_url
 
 sio = socketio.AsyncServer(
     cors_allowed_origins='*',
@@ -42,10 +44,10 @@ def start_session(sid, data):
         agent = Agent(Gpt4Vision(), subscriber=default_subscriber(sio))
         ses = agent.session
         utils.setup_session(ses)
-        a_path = "run/user_upload.png"
+        a_path = "run/user_upload.png" # TODO: fix this to be session specific
         im = Image.open(io.BytesIO(img_b64))
         im.save(a_path)
-        th = Thread(target=agent.lats, args=(str(a_path), description, True))
+        th = Thread(target=agent.lats, args=(agent.image_pmpt(a_path, description), True))
         th.start()
         return ses.id
     except Exception as e:
@@ -53,6 +55,25 @@ def start_session(sid, data):
         asyncio.run(sio.emit("error", str(e), room=sid))
         return
 
+@sio.on("from_social")
+def from_social(sid, data):
+    sub = default_subscriber(sio)
+    try:
+        url = data['url']
+        agent = Agent(Gpt4Vision(debug=True), subscriber=sub, fast_lm=Gpt35(debug=True))
+        ses = agent.session
+        utils.setup_session(ses)
+        sub.push("set_session_info_key", (ses.id, "status", "Processing social media url..."))
+        prompt = process_url(ses, url)
+        sub.push("set_session_info_key", (ses.id, "status", "Social media url processed."))
+        sub.push("url_processed", (url))
+        th = Thread(target=agent.lats, args=(prompt, True))
+        th.start()
+        return ses.id
+    except Exception as e:
+        print(e)
+        sub.push("error", str(e))
+        return
 
 app.router.add_static('/run', 'run')
 app.router.add_static('/images', 'images')
@@ -76,10 +97,7 @@ if __name__ == '__main__':
     sio, srv_thread = start_srv()
     sio_sub = SIOSubscriber(sio)
     input("Press Enter to start...")
-    sio_sub.push('global_info_set', ("b", "est"))
-    sio_sub.push('set_session_info_key', ("a","wow", "something different"))
-    sio_sub.push('global_info_set', ("test", "test"))
-    sio_sub.push('set_session_info_key', ("test", "wowow", "something lovely"))
     input("Press Enter to stop...")
+    srv_thread.join()
 
 

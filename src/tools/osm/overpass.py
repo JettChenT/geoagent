@@ -114,11 +114,10 @@ def query(q: str, session: Session) -> Any:
     return rsp
 
 
-@tool("Return Coordinates", return_direct=True)
+@tool("Propose Coordinates", return_direct=True)
 def show_coords(lat: float, lon: float):
     """
-    Use this when you have reached a conclusion about the location of the image.
-    This returns the results to the end user as the conclusion to your investigation.
+    Use this when you believe that the coordinates could be the location of interest.
     Format for tool input: lat, lon
     E.G: 47.6097, -122.3331
     :param lat: the latitude of the location

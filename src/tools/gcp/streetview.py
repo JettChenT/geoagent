@@ -41,7 +41,7 @@ def get_panos(coords_path: str, session: Session) -> str:
     # TODO: pano tiles
     # Note: the sampling of streetview images could perhaps be improved in the future. Now it's just a SRS
     # e.g. ensure that each coordinate is represented, and that the coordinates are not too close to each other.
-    coords = Coords.load(coords_path)
+    coords = Coords.load(utils.try_find_loc(session, coords_path, [".geojson", ".csv"])).coords
     print(coords)
     pid_set = set()
     for coord in coords:
