@@ -4,7 +4,7 @@ from .wrapper import gtool, Session
 from ..coords import Coords
 
 
-@tool("Decide")
+@gtool("Decide")
 def decide(decision: str) -> str:
     """
     This is a miscellaneous function that does nothing but note that a decision has been made.
@@ -15,6 +15,14 @@ def decide(decision: str) -> str:
     # TODO: perhaps add a critic?
     return "Decision noted"
 
+@gtool("Plan Ahead")
+def plan_ahead(plan: str) -> str:
+    """
+    This is a miscellaneous function that does nothing but note that a plan has been made.
+    :param plan: The plan made. E.G. "I will use the streetview tool on the possible locations, then use StreetView Locate to narrow down the location"
+    :return:
+    """
+    return "Plan noted"
 
 @gtool("Add Clue")
 def add_clue(clue: str, session: Session):

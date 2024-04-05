@@ -8,7 +8,7 @@ from langchain.tools import tool
 from tqdm import tqdm
 from ... import utils
 from ...coords import Coords
-from ..wrapper import gtool
+from ..wrapper import gtool, ToolResponse
 from ...session import Session
 import random
 import textwrap
@@ -32,7 +32,7 @@ def get_pano(lat: float, lon: float) -> str | Image.Image:
 
 
 @gtool("Get StreetViews", cached=True)
-def get_panos(coords_path: str, session: Session) -> str:
+def get_panos(coords_path: str, session: Session) -> ToolResponse:
     """
     Gets Google Streetview images of coordinates
     :param coords_path: Path to the csv or geojson file containing coordinates information
@@ -49,7 +49,7 @@ def get_panos(coords_path: str, session: Session) -> str:
         pid_set = pid_set.union({(x.pano_id, (x.lat, x.lon)) for x in pids})
 
     if len(pid_set) == 0:
-        return "No panoramas found for this location."
+        return ToolResponse("No panoramas found for this location.")
 
     # print(pid_set)
     res = "Google Streetview Results \n ------------ \n"
@@ -86,10 +86,10 @@ def get_panos(coords_path: str, session: Session) -> str:
 
     coords = Coords(coord_l, auxiliary_l)
     res += coords.to_prompt(session, "streetview_")
-    return res
+    return ToolResponse(res, {"geojson": coords.to_geojson(), "images": [x['image_path'] for x in auxiliary_l]})
 
 
 if __name__ == "__main__":
     import sys
     utils.toggle_blackbar()
-    print(get_panos(sys.argv[1] if len(sys.argv)>1 else "./bak/run_svst/textsearch_coords2.csv"))
+    print(get_panos(sys.argv[1] if len(sys.argv)>1 else "./bak/run_svst/textsearch_coords2.csv", Session()))

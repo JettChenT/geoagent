@@ -13,7 +13,6 @@ from .session import Session
 PADDING = 0.001
 
 
-# TODO: support for coords to preserve auxiliary information?
 class Coords:
     coords: List[Tuple[float, float]]  # lat, lon
     auxiliary: List[Any]
@@ -29,14 +28,17 @@ class Coords:
             map(lambda x: x[1], self.coords)
         )
 
+    def bbox(self):
+        x_cords, y_cords = self.split_latlon()
+        return [[min(x_cords), min(y_cords)], [max(x_cords), max(y_cords)]]
+
     def render(self) -> Image.Image:
         """
         Visualizes the coordinates on a map
         :param coords:
         :return:
         """
-        x_cords, y_cords = self.split_latlon()
-        bbox = [[min(x_cords), min(y_cords)], [max(x_cords), max(y_cords)]]
+        bbox = self.bbox()
         m = folium.Map()
         m.fit_bounds(bbox, padding=[PADDING] * 4)
         for coord in self.coords:
@@ -55,14 +57,14 @@ class Coords:
             res += f"A rendering of the coordinates: {utils.image_to_prompt(loc, session)}"
         if store:
             loc = utils.find_valid_loc(session, f"{prefix}coords", ".geojson")
-            self.to_geojson(loc)
+            self.save_geojson(loc)
             res += f"The coordinates are stored at {loc}"
         return res
 
     def to_csv(self, path: str | Path):
         df = pd.DataFrame(self.coords, columns=["lat", "lon"])
         df["auxiliary"] = [json.dumps(x) for x in self.auxiliary]
-        df.to_geojson(path, index=False)
+        df.to_csv(path, index=False)
 
     @staticmethod
     def from_csv(path: str | Path):
@@ -74,7 +76,7 @@ class Coords:
             else None,
         )
 
-    def to_geojson(self, path: str | Path):
+    def to_geojson(self):
         features = []
         for coord, aux in zip(self.coords, self.auxiliary):
             features.append(
@@ -87,11 +89,17 @@ class Coords:
                     "properties": aux
                 }
             )
+        return {
+            "type": "FeatureCollection",
+            "features": features,
+            "properties": {
+                "bounds": self.bbox()
+            }
+        }
+
+    def save_geojson(self, path: str | Path):
         with open(path, 'w') as f:
-            json.dump({
-                "type": "FeatureCollection",
-                "features": features
-            }, f)
+            json.dump(self.to_geojson(), f)
 
     @staticmethod
     def from_geojson(path: str | Path):

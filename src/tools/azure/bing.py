@@ -3,11 +3,10 @@ from pathlib import Path
 from ... import utils
 import requests
 from rich import print
-from langchain.tools import tool
 from .auth import ENDPOINT, HEADERS
+from ..wrapper import gtool
 
-
-@tool("Bing Search")
+@gtool("Bing Search")
 def search_text(query, mkt="en-US"):
     """
     Searches Bing for a query.
@@ -20,7 +19,7 @@ def search_text(query, mkt="en-US"):
     return response.json()
 
 
-@tool("Bing Image Search")
+@gtool("Bing Image Search")
 def search_image(img_path: str | Path, mkt="en-US"):
     """
     Searches Bing for an image.

@@ -7,6 +7,8 @@ from langchain_core.runnables import Runnable
 from langchain.tools import tool, BaseTool
 import agentops
 import inspect
+
+from .response import ToolResponse
 from ..session import Session
 
 
@@ -22,6 +24,7 @@ class GToolWrap:
 
     def to_tool(self, session: Session) -> BaseTool:
         f = self.fn
+        f_mod = f
         sig = inspect.signature(f)
         if 'session' in inspect.signature(f).parameters:
             np = dict(sig.parameters)
@@ -37,11 +40,23 @@ class GToolWrap:
                 all_kwargs.update(all_kwargs.pop("kwargs", {}))
                 all_kwargs["session"] = session
                 return f_bak(**all_kwargs)
-            if self.cached:
-                g = functools.cache(g)
-            if self.use_agentops:
-                g = agentops.record_function(f.__name__)(g)
-            f = g
+            f_mod = g
+        
+        f_mod_bak = f_mod
+        @functools.wraps(f)
+        def g(*args, **kwargs):
+            res = f_mod_bak(*args, **kwargs)
+            if isinstance(res, ToolResponse):
+                return res
+            return ToolResponse(str(res), {})
+
+        f_mod = g
+
+        if self.cached:
+            f_mod = functools.cache(f_mod)
+        if self.use_agentops:
+            f_mod = agentops.record_function(f.__name__)(f_mod)
+        f = f_mod
         t: BaseTool = tool(*self.args,
                     return_direct=self.return_direct,
                     args_schema=self.args_schema,
@@ -67,5 +82,5 @@ def gtool(
 
     return _partial
 
-def proc_tools(tools: List[BaseTool|GToolWrap], session: Session) -> List[BaseTool]:
-    return [t.to_tool(session) if isinstance(t, GToolWrap) else t for t in tools]
+def proc_tools(tools: List[GToolWrap], session: Session) -> List[BaseTool]:
+    return [t.to_tool(session) for t in tools]

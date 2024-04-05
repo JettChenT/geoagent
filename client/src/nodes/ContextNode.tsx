@@ -123,12 +123,11 @@ export default function ContextNode({ id, data }: NodeProps<ContextData>) {
     <div
       className={`react-flow__node-default ${
         data.is_root ? "w-96" : "w-64"
-      } rounded-md shadow nowheel overflow-auto ${bgColor} select-text`}
+      } rounded-md shadow nowheel ${bgColor} select-text`}
     >
-      <div className="p-2 space-y-1">
+      <div className="p-2 space-y-1 overflow-x-auto">
         <div className="text-lg font-bold text-left">
-          Context{" "}
-          <span className="text-gray-500 font-mono">{data.session_id}</span>
+          Context <span className="text-gray-500 font-mono">{id}</span>
         </div>
         <MediaInfo data={data} sessionsInfo={sessionsInfo} />
         <TransitionInfo transition={data.transition} />

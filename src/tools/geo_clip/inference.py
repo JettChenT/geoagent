@@ -11,6 +11,7 @@ from ... import utils
 from ...coords import Coords
 from ...session import Session
 from ..wrapper import gtool
+from ..response import ToolResponse
 
 
 PAR_DIR = Path(__file__).parent
@@ -38,7 +39,7 @@ def predict(image: Image.Image, top_n=5) -> List[Tuple[Tuple[float, float], floa
 
 
 @gtool("Geoclip", cached=True)
-def geoclip_predict(img_id: str, session: Session) -> str:
+def geoclip_predict(img_id: str, session: Session) -> ToolResponse:
     """
     The Geoclip model is an image model that predicts the likely GPS location of an image based on its visual features.
     Feel free to use this as starting point for your investigation.
@@ -51,18 +52,20 @@ def geoclip_predict(img_id: str, session: Session) -> str:
     image = utils.load_image(session.get_loc(img_id))
     tops = predict(image)
 
-    viz = Coords([it[0] for it in tops]).render()
+    cords = Coords([it[0] for it in tops])
+    viz = cords.render()
     saved = utils.save_img(viz, "geoclip", session)
     cords_fmt = "\n".join(
         [f"lat: {it[0][0]}, lon: {it[0][1]}, prob: {it[1]}" for it in tops]
     )
-    return f"""
+    res_pmpt =  f"""
     GEOCLIP Prediction Results:
     Top 5 likely coordinates:
     {cords_fmt}
     A rendering of those coordinates:
     {utils.image_to_prompt(str(saved), session)}
     """
+    return ToolResponse(res_pmpt, {"geojson": cords.to_geojson()})
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 from openai import OpenAI
 from ... import config
+from ..wrapper import gtool
 from langchain.tools import tool
 from functools import cache
 import os
@@ -7,8 +8,7 @@ import os
 PPLX_KEY = os.getenv("PPLX_KEY")
 client = OpenAI(api_key=PPLX_KEY, base_url="https://api.perplexity.ai")
 
-@tool("perplexity ask")
-@cache
+@gtool("perplexity ask", cached=True)
 def ask(question: str) -> str:
     """
     Ask a question to the perplexity online model. Use this as a search engine.

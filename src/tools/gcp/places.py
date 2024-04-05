@@ -5,7 +5,7 @@ import io
 from functools import cache
 from ... import utils
 from ...session import Session
-from ..wrapper import gtool
+from ..wrapper import gtool, ToolResponse
 from langchain.tools import tool
 
 import requests
@@ -53,7 +53,10 @@ def text_search(query: str, session: Session):
         ],
         res_data["places"],
     )
-    return f"Results for query: {res_data_disp}\n Coordinates: {res_coords.to_prompt(session, 'textsearch_')}"
+    return ToolResponse(
+        f"Results for query: {res_data_disp}\n Coordinates: {res_coords.to_prompt(session, 'textsearch_')}"
+        , {"geojson": res_coords.to_geojson()}
+    )
 
 
 SATELLITE_CAP = 125
@@ -61,7 +64,7 @@ TOP_N = 15
 
 
 @gtool(cached=True)
-def plot_satellite(coords_loc: str, session: Session):
+def plot_satellite(coords_loc: str, session: Session) -> ToolResponse:
     """
     Plots the satellite image of a given set of coordinates. Uses Google Maps Static API.
     :param coords_loc: the location of the coordinate csv or geojson file
@@ -69,7 +72,7 @@ def plot_satellite(coords_loc: str, session: Session):
     """
     coords = Coords.load(utils.try_find_loc(session, coords_loc, [".geojson", ".csv"]))
     if len(coords) > SATELLITE_CAP:
-        return f"Too many coordinates: {len(coords)} > {SATELLITE_CAP}"
+        return ToolResponse(f"Too many coordinates: {len(coords)} > {SATELLITE_CAP}")
     retrieved = []
     for coord in coords:
         r = requests.get(
@@ -92,12 +95,12 @@ def plot_satellite(coords_loc: str, session: Session):
         coords=[x[0] for x in retrieved],
         auxiliary=[{"satellite_imagery": str(x[1])} for x in retrieved],
     )
-    return f"""
+    return ToolResponse(f"""
     Satellite Images({len(retrieved)} available, showing top {len(sim)}):
     {sim}
     Full Results:
     {full_res.to_prompt(session, 'satellite_', render=False)}
-    """
+    """, {"images": [str(x[1]) for x in retrieved], "geojson": full_res.to_geojson()})
 
 
 if __name__ == "__main__":

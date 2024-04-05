@@ -10,7 +10,7 @@ from langchain.tools import tool
 from ...coords import Coords
 from ... import utils
 from ..ml import using_mps, load_image, cosine_similarity
-from ..wrapper import gtool, Session
+from ..wrapper import gtool, Session, ToolResponse
 
 model = None
 TOP_N = 15
@@ -58,7 +58,7 @@ def loc_sim(target: Image.Image, db: List[Image.Image]):
     return s
 
 @gtool("Streetview Locate")
-def locate_image(img_id: str, db_loc: str, session: Session):
+def locate_image(img_id: str, db_loc: str, session: Session) -> ToolResponse:
     """
     Locates an image using the streetview database. Must use the streetview tool to download the database first.
     :param img_id: the id of the image to be located
@@ -85,7 +85,10 @@ def locate_image(img_id: str, db_loc: str, session: Session):
             f"Coordinate: {new_coords.coords[top_n[t]]}\n"
         )
     res += f"Full results: \n {new_coords.to_prompt(session, 'vpr_', render=False)}"
-    return res
+    return ToolResponse(res, {
+        "geojson": Coords([new_coords.coords[t] for t in top_n]).to_geojson(), 
+        "images": [db_coords.auxiliary[t]["image_path"] for t in top_n]
+    })
 
 
 if __name__ == "__main__":

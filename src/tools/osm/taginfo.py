@@ -1,8 +1,9 @@
 import requests
 from langchain.tools import tool
+from ..wrapper import gtool
 
 
-@tool("Taginfo Query")
+@gtool("Taginfo Query")
 def taginfo_query(q: str):
     """
     Queries the Taginfo API for a query.

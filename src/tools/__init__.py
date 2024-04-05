@@ -5,9 +5,10 @@ from langchain_core.tools import BaseTool
 from . import osm, nominatim, geo_clip, vpr, azure, serp, pplx, Sample4Geo, misc
 from .gcp import streetview, places
 from .wrapper import GToolWrap, proc_tools, gtool
+from .response import ToolResponse
 
 # noinspection PyTypeChecker
-TOOLS: List[BaseTool | GToolWrap] = [
+TOOLS: List[GToolWrap] = [
     # osm.query,
     # osm.wiki_search,
     osm.show_coords,
@@ -25,5 +26,6 @@ TOOLS: List[BaseTool | GToolWrap] = [
     Sample4Geo.satellite_locate,
     misc.decide,
     misc.add_clue,
-    misc.save_coords
+    misc.save_coords,
+    misc.plan_ahead
 ]

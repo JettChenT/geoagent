@@ -63,7 +63,7 @@ class Context:
         self.children: List[Self] = []
         self.depth = 0 if parent is None else parent.depth + 1
         self.is_terminal = False
-        self.reward = 0
+        self.reward = 0.0
         self.exhausted = False  # If all children are terminal
         self.em = 0  # Exact match, evaluation metric
 
@@ -207,6 +207,10 @@ class Context:
     @notify_update
     def set_auxiliary(self, key, value):
         self.auxiliary[key] = value
+
+    @notify_update
+    def update_auxiliary(self, data):
+        self.auxiliary.update(data)
 
     @notify_update
     def set_state(self, state: CtxState):

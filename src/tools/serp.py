@@ -7,7 +7,7 @@ from serpapi import GoogleSearch
 from functools import cache
 from PIL import Image
 from .. import utils
-from .wrapper import Session, gtool
+from .wrapper import Session, gtool, ToolResponse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 SERP_API_KEY = os.environ["SERP_API_KEY"]
@@ -26,10 +26,12 @@ def process_single_result(v, i, session):
     saved_loc = utils.save_img(im, "serp", session)
     return f"Result {i}: \n Title:{v['title']} \n {utils.image_to_prompt(saved_loc, session)}\n"
 
-def proc_image_results(results: dict, session: Session, top_n=TOP_N) -> str:
+def proc_image_results(results: dict, session: Session, top_n=TOP_N) -> ToolResponse:
     with ThreadPoolExecutor() as executor:
         res = list(executor.map(process_single_result, results[:top_n], range(top_n), [session]*top_n))
-    return "".join(res)
+    return ToolResponse("".join(res), {
+        "images": [v['thumbnail'] for v in results[:top_n]]
+    })
 
 @gtool("google_lens", cached=True)
 def search_lens(img_id: str, session: Session):

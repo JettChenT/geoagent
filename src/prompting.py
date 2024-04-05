@@ -100,6 +100,11 @@ Finally, output the entire modified OSM query.
 """
 
 INITIAL_REACT_PROMPT = """
+You are a GeoLocation Agent.
+In your investigation process:
+- Do not forget to propose coordinates every once in a while
+- Get Streetviews -> Streetview Locate; Get Satellite -> Satellite Locate are useful workflows
+
 Answer the following questions as best you can. You have access to the following tools:
 
 {tools}

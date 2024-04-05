@@ -1,11 +1,11 @@
 import requests
-from langchain.tools import tool
 from langchain_core.tools import ToolException
+from ..wrapper import gtool
 
 API_URL = "https://wiki.openstreetmap.org/api.php"
 
 
-@tool("OSM Wiki Search")
+@gtool("OSM Wiki Search")
 def search(query: str) -> str:
     """
     Searches the OSM Wiki for a query. Use this if you are not sure about

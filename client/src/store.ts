@@ -12,6 +12,7 @@ import {
   applyEdgeChanges,
 } from "reactflow";
 import { ContextData } from "./nodes/ContextNode";
+import { sampleNodes } from "./mock";
 
 export type EditorState = {
   nodes: Node<ContextData>[];
@@ -38,47 +39,6 @@ export type EditorState = {
   setSessionInfo: (sessionId: string, info: any) => void; // Added setSessionInfo function type
   setDebug: (debug: boolean) => void;
 };
-
-const sampleNodes: Node<ContextData>[] = [
-  {
-    id: "1",
-    type: "contextNode",
-    position: { x: 100, y: 100 },
-    data: {
-      cur_messages: [],
-      observation: "Hello, World!",
-      transition: {
-        type: "AgentAction",
-        tool: "Propose Coordinates",
-        tool_input: "37.7749,-122.4194",
-      },
-      lats_data: {},
-      auxiliary: {},
-      session_id: "1",
-      is_root: false,
-      state: "normal",
-    },
-  },
-  {
-    id: "2",
-    type: "contextNode",
-    position: { x: 100, y: 100 },
-    data: {
-      cur_messages: [],
-      observation: "Hello, World!",
-      transition: {
-        type: "AgentAction",
-        tool: "Google Lens",
-        tool_input: "foo bar",
-      },
-      lats_data: {},
-      auxiliary: {},
-      session_id: "1",
-      is_root: false,
-      state: "normal",
-    },
-  },
-];
 
 const useStore = create<EditorState>((set, get) => ({
   nodes: [],

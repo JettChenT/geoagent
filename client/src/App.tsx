@@ -41,7 +41,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Image } from "lucide-react";
+import { ChevronDownSquareIcon, Image } from "lucide-react";
 import ConfigPanel from "./panel/ConfigPanel";
 
 const nodeTypes = {
@@ -103,10 +103,18 @@ function App() {
 
   const onLayout = useDebouncedCallback(() => {
     let { edges, nodes } = useStore.getState();
-    const layouted = getLayoutedElements(nodes, edges, { direction: "LR" });
+    for (const node of nodes) {
+      updateNodeInternals(node.id);
+    }
+    setTimeout(() => {
+      let new_nodes = useStore.getState().nodes;
+      const layouted = getLayoutedElements(new_nodes, edges, {
+        direction: "LR",
+      });
 
-    setNodes([...layouted.nodes]);
-    setEdges([...layouted.edges]);
+      setNodes([...layouted.nodes]);
+      setEdges([...layouted.edges]);
+    }, 100);
   }, 100);
 
   useEffect(() => {
@@ -124,6 +132,7 @@ function App() {
         position: { x: 100, y: 100 },
         data: proc_incoming(dat),
       });
+      fitView();
       onLayout();
     });
 
@@ -234,7 +243,7 @@ function App() {
       >
         <Panel
           position="top-right"
-          className="flex flex-col space-y-4 w-72 h-5/6 overflow-auto overflow-x-hidden p-2 font-mono"
+          className="flex flex-col space-y-4 w-72 overflow-auto overflow-x-hidden p-2 font-mono"
         >
           <h1 className="text-2xl">
             <span className="text-blue-700 font-bold">GeoAgent</span> Console
@@ -275,7 +284,7 @@ function App() {
           </div>
         </Panel>
         <Background />
-        <MiniMap />
+        <MiniMap position="top-left" />
         <Controls />
       </ReactFlow>
     </div>

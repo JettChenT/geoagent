@@ -103,7 +103,7 @@ def query(q: str, session: Session) -> Any:
     rsp = f"OSM Query result: {res}"
     if isinstance(res, Coords):
         dump_loc = utils.find_valid_loc(session, "osm_query_coords", ".geojson")
-        res.to_geojson(dump_loc)
+        res.save_geojson(dump_loc)
         rsp += f"\n The coordinates are stored at {dump_loc}"
     if isinstance(img, Image.Image):
         loc = utils.save_img(img, "osm_query_res", session)
@@ -114,7 +114,7 @@ def query(q: str, session: Session) -> Any:
     return rsp
 
 
-@tool("Propose Coordinates", return_direct=True)
+@gtool("Propose Coordinates", return_direct=True)
 def show_coords(lat: float, lon: float):
     """
     Use this when you believe that the coordinates could be the location of interest.

@@ -19,7 +19,7 @@ from .prompting import *
 from .connector.gptv import Gpt4Vision
 from .connector import LMM, Message
 from .messages import ProxiedMessage
-from .tools import TOOLS, proc_tools
+from .tools import TOOLS, proc_tools, ToolResponse
 from .context import Context, CtxState
 from .session import Session
 from .react_parser import ReActSingleInputOutputParser
@@ -232,9 +232,7 @@ class Agent:
             attempts = []
             while fail_cnt <= self.RESCUE_THRESHOLD:
                 try:
-                    tool_res = str(
-                        tool._run(*utils.get_args(tool, utils.sanitize(tool_inp)))
-                    )
+                    tool_res: ToolResponse = tool._run(*utils.get_args(tool, utils.sanitize(tool_inp)))
                     break
                 except Exception as e:
                     if orig_e is None:
@@ -271,6 +269,10 @@ class Agent:
                 )
             )
             return
+
+        if tool_res.auxiliary:
+            state.update_auxiliary(tool_res.auxiliary)
+
         if tool.return_direct:
             state.is_terminal = True
             if self.run_type == RunType.INTERACTIVE:
@@ -279,13 +281,13 @@ class Agent:
                     state.reward = 1
                 else:
                     feedback = input("Enter feedback:")
-                    tool_res += "\nFeedback: " + feedback
+                    tool_res.raw += "\nFeedback: " + feedback
             else:
                 state.reward = self.get_reward(state)
         state.add_message(
-            Message(f"Observation{state.depth}: {tool_res}\nAnalyze{state.depth}: ")
+            Message(f"Observation{state.depth}: {tool_res.raw}\nAnalyze{state.depth}: ")
         )
-        state.set_observation(tool_res)
+        state.set_observation(tool_res.raw)
 
     @Context.wrap_state(CtxState.Evaluating)
     def get_value(self, node: Context):
