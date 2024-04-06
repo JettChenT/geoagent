@@ -24,7 +24,7 @@ export const sampleNodes: Node<ContextData>[] = [
   {
     id: "2",
     type: "contextNode",
-    position: { x: 100, y: 100 },
+    position: { x: 100, y: 200 },
     data: {
       cur_messages: [],
       observation: "Hello, World!",
@@ -61,4 +61,26 @@ export const sampleNodes: Node<ContextData>[] = [
       state: "normal",
     },
   },
+  {
+    id: "3",
+    type: "contextNode",
+    position: { x: 300, y: 100 },
+    data: {
+      cur_messages: [],
+      observation: "Hello, World!",
+      transition: null,
+      lats_data: {},
+      auxiliary: {},
+      session_id: "1",
+      is_root: true,
+      state: "normal",
+    },
+  },
 ];
+
+export const sampleSessionInfo = {
+  1: {
+    content_type: "telegram",
+    telegram_id: "truexanewsua/74039",
+  },
+};

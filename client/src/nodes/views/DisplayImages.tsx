@@ -9,11 +9,7 @@ import {
 } from "@/components/ui/carousel";
 import { proc_img_url } from "@/utils";
 
-export default function DisplayImages({ data }: { data: ContextData }) {
-  if (!data.auxiliary.images) {
-    return null;
-  }
-  const images = data.auxiliary.images;
+export default function DisplayImages({ images }: { images: string[] }) {
   return (
     <div className="px-5">
       <Carousel

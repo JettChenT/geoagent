@@ -18,6 +18,7 @@ export default function MediaInfo({
   const tabs = useMemo(() => {
     let tempTabs = [];
     if (
+      data.transition &&
       data.transition.type === "AgentAction" &&
       data.transition.tool === "Propose Coordinates"
     ) {
@@ -31,6 +32,24 @@ export default function MediaInfo({
         tempTabs.push({
           label: "Tweet",
           content: <Tweet id={sessionInfo.tweet_id} />,
+        });
+      }
+      if (sessionInfo.content_type === "telegram") {
+        tempTabs.push({
+          label: "Telegram",
+          content: (
+            <iframe
+              src={`https://t.me/${sessionInfo.telegram_id}?embed=1`}
+              width="100%"
+              height="400"
+            ></iframe>
+          ),
+        });
+      }
+      if (sessionInfo.images) {
+        tempTabs.push({
+          label: "Images",
+          content: <DisplayImages images={sessionInfo.images} />,
         });
       }
       if (sessionInfo.image_loc) {
@@ -55,7 +74,7 @@ export default function MediaInfo({
     if (data.auxiliary.images) {
       tempTabs.push({
         label: "Images",
-        content: <DisplayImages data={data} />,
+        content: <DisplayImages images={data.auxiliary.images} />,
       });
     }
     return tempTabs;

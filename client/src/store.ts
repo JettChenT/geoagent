@@ -12,7 +12,7 @@ import {
   applyEdgeChanges,
 } from "reactflow";
 import { ContextData } from "./nodes/ContextNode";
-import { sampleNodes } from "./mock";
+import { sampleNodes, sampleSessionInfo } from "./mock";
 
 export type EditorState = {
   nodes: Node<ContextData>[];
@@ -40,11 +40,13 @@ export type EditorState = {
   setDebug: (debug: boolean) => void;
 };
 
+const USE_MOCK = false;
+
 const useStore = create<EditorState>((set, get) => ({
-  nodes: [],
+  nodes: USE_MOCK ? sampleNodes : [],
   edges: [],
   globalInfo: {},
-  sessionsInfo: {},
+  sessionsInfo: USE_MOCK ? sampleSessionInfo : {},
   currentSession: "all_sessions",
   debug: true,
   onNodesChange: (changes: NodeChange[]) => {
