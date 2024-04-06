@@ -1,6 +1,8 @@
 import { ContextData } from "./nodes/ContextNode";
 import { Node } from "reactflow";
 
+export const USE_MOCK = false;
+
 export const sampleNodes: Node<ContextData>[] = [
   {
     id: "1",
@@ -55,6 +57,7 @@ export const sampleNodes: Node<ContextData>[] = [
             ],
           },
         },
+        text: "NOOOOOOOO BODY EXPECTS THE Spanish INQUISITION! Our chief weapon is surprise...surprise and fear...fear and surprise.... Our two weapons are fear and surprise...and ruthless efficiency.... Our *three* weapons are fear, surprise, and ruthless efficiency...and an almost fanatical devotion to the Pope.... Our *four*...no... *Amongst* our weapons.... Amongst our weaponry...are such elements as fear, surprise.... I'll come in again.",
       },
       session_id: "1",
       is_root: false,

@@ -77,6 +77,16 @@ export default function MediaInfo({
         content: <DisplayImages images={data.auxiliary.images} />,
       });
     }
+    if (data.auxiliary.text) {
+      tempTabs.push({
+        label: "Text",
+        content: (
+          <div className="text-sm font-mono text-left nodrag max-h-24 overflow-auto border-2 border-solid">
+            <pre className="whitespace-pre-wrap">{data.auxiliary.text}</pre>
+          </div>
+        ),
+      });
+    }
     return tempTabs;
   }, [data, sessionInfo]);
 

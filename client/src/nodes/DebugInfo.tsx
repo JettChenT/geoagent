@@ -19,9 +19,13 @@ export default function DebugInfo({ data }: { data: ContextData }) {
         className="text-sm text-left nodrag"
         style={{ userSelect: "text", cursor: "text" }}
       >
-        <span className="font-bold">Last Message:</span>
+        <span className="font-bold">Messages</span>
         <div className="text-gray-500 font-mono overflow-auto max-h-16">
-          {lastMessage}
+          {data.cur_messages
+            .slice(data.cur_messages.length - 3)
+            .map((message, index) => (
+              <div key={index}>{message.message}</div>
+            ))}
         </div>
         <div
           className="text-sm text-left nodrag"

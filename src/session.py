@@ -23,7 +23,7 @@ class Session:
 
     def find_tool(self, name: str) -> BaseTool | None:
         for tool in self.tools:
-            if tool.name in name:
+            if tool.name in name or tool._run.__name__ in name:
                 return tool
 
     def to_json(self):

@@ -217,12 +217,24 @@ class Agent:
             return
         tool: BaseTool | None = self.session.find_tool(state.transition.tool)
         if tool is None:
-            state.add_message(
-                Message(
-                    f"Could not find tool {state.transition.tool}, please adjust your input. \nAnalyze{state.depth}: "
-                )
-            )
-            return
+            fail_cnt = 0
+            while fail_cnt <= self.RESCUE_THRESHOLD:
+                try:
+                    tool = self.session.find_tool(
+                        self.fast_lm.prompt(
+                            [Message(FUNCTION_NOT_FOUND_PROMPT.format(functions=", ".join([t.name for t in self.session.tools]), used_function=state.transition.tool))],
+                            self.session
+                        )[0].message.splitlines()[-1]
+                    )
+                    break
+                except Exception as e:
+                    fail_cnt += 1
+            if tool is None:
+                state.add_message(
+                    Message(
+                        f"Could not find tool {state.transition.tool}, please adjust your input. \nAnalyze{state.depth}: "
+                ))
+                return
         try:
             tool_inp = state.transition.tool_input
             orig_inp = tool_inp
@@ -429,82 +441,6 @@ class Agent:
             best_child = root
         best_child.set_state(CtxState.Success)
         return best_child
-
-    def run(self, image_loc: str, additional: str = ""):
-        """
-        Run the agent
-        :param image_loc: path to the image
-        :param additional: additional context to the agent
-        :return:
-        """
-        session = Session()
-        utils.flush_run_dir(session)
-        session.tools = proc_tools(TOOLS, session)
-        ctx = Context(subscriber=self.subscriber)
-        ctx.add_message(
-            Message(
-                INITIAL_REACT_PROMPT.format(
-                    tool_names=", ".join([t.name for t in session.tools]),
-                    tools=render_text_description(session.tools),
-                    input=f"{utils.image_to_prompt(image_loc, session)} Where is this image located? {additional}",
-                )
-            )
-        )
-        for i in range(1, self.DEPTH_THRESHOLD + 1):
-            print("last message", ctx.messages[-1].message)
-            choices = self.vllm.prompt(ctx, self.session, stop=["Observation"], n=self.BRANCH_CNT, temperature=1)
-            for (i, r) in enumerate(choices):
-                print(f"Branch {i}: {r}")
-            chosen = int(input("Choose a branch: "))
-            res = choices[chosen].message
-            parsed: AgentAction | AgentFinish = self.output_parser.parse(res)
-            if isinstance(parsed, AgentFinish):
-                isok = input("Is this ok? (y/n)")
-                if isok == "y":
-                    print("Finished !")
-                    break
-                feedback = input("Enter feedback:")
-                res += "\nFeedback: " + feedback
-                ctx.add_message(Message(f"{res}\Analyze{i}: "))
-            elif isinstance(parsed, AgentAction):
-                print("[blue]Action[/blue]: ", parsed.tool)
-                print("[blue]Action Input[/blue]: ", parsed.tool_input)
-                tool: BaseTool | None = session.find_tool(parsed.tool)
-                if tool is None:
-                    ctx.add_message(
-                        Message(
-                            f"{res}\n Could not find tool {parsed.tool}, please adjust your input. \nAnalyze{i}: "
-                        )
-                    )
-                    continue
-                try:
-                    tool_res = str(
-                        tool._run(*utils.get_args(tool, utils.sanitize(parsed.tool_input)))
-                    )  # TODO: Make multi-argument parsing more robust
-                except Exception as e:
-                    print(f"Exception encountered when running tool {tool}", e)
-                    # ask if user would like to continue, if so, ask for potential feedback
-                    docontinue = input("Continue? (y/n)")
-                    if docontinue == "n":
-                        break
-                    feedback = input("Enter feedback if any:")
-                    ctx.add_message(
-                        Message(
-                            f"{res}\n Could not run tool {parsed.tool}: {e}, {feedback}\n please adjust. \nAnalyze{i}: "
-                        )
-                    )
-                    continue
-                if tool.return_direct:
-                    isok = input("Is this ok? (y/n)")
-                    if isok == "y":
-                        print("Finished !")
-                        break
-                    feedback = input("Enter feedback:")
-                    tool_res += "\nFeedback: " + feedback
-                ctx.add_message(
-                    Message(f"{res}\nObservation{i}: {tool_res}\nAnalyze{i}: ")
-                )
-                ctx.commit(transition=parsed)
 
 
 def main():

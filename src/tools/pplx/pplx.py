@@ -1,6 +1,6 @@
 from openai import OpenAI
 from ... import config
-from ..wrapper import gtool
+from ..wrapper import gtool, ToolResponse
 from langchain.tools import tool
 from functools import cache
 import os
@@ -9,7 +9,7 @@ PPLX_KEY = os.getenv("PPLX_KEY")
 client = OpenAI(api_key=PPLX_KEY, base_url="https://api.perplexity.ai")
 
 @gtool("perplexity ask", cached=True)
-def ask(question: str) -> str:
+def ask(question: str) -> ToolResponse:
     """
     Ask a question to the perplexity online model. Use this as a search engine.
     Note that it does not have access to image. Only send text queries that do not require visual information.
@@ -30,7 +30,8 @@ def ask(question: str) -> str:
         model="sonar-medium-online",
         messages=messages
     )
-    return response.choices[0].message.content
+    res = response.choices[0].message.content
+    return ToolResponse(res, {"text": res})
 
 if __name__ == '__main__':
     print(ask("What is the coordinates for Apple HQ?"))

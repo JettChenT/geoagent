@@ -175,6 +175,23 @@ Then, in a few sentences reflect on the current trajectory.
 Provide advice to other agents doing this investigation regarding what to avoid, what to do better, and what has been tried etc.
 """
 
+FUNCTION_NOT_FOUND_PROMPT = """
+I am calling a function, but the function is not found. You will help me find the function that I am trying to call.
+Think about what went wrong; finally, in a separate line, output the correct function name.
+If the error is unfixable, output "GIVE_UP" in the final line instead.
+For example, if you are given: 
+Available functions: Get StreetViews: get_panos(coords_path: str) -> src.tools.response.ToolResponse, ...
+Used function: get_streetview
+You could output:
+Thought: The function name is incorrect. I should use Get StreetViews instead of get_streetview.
+Corrected function: 
+Get StreetViews
+
+---
+Available functions: {functions}
+Used function: {used_function}
+"""
+
 RESCUE_PROMPT = """
 I am calling a function, but I encountered an error. You will help me adjust the function inputs so that it works.
 For example, if you are given:

@@ -4,12 +4,15 @@ import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import { SiTwitter } from "@icons-pack/react-simple-icons";
+import { SiTwitter, SiTelegram } from "@icons-pack/react-simple-icons";
 import { useToast } from "../components/ui/use-toast";
 
 function ActionIcon({ url }: { url: string }) {
   if (url.search("twitter") !== -1) {
     return <SiTwitter size={18} className="ml-1 mt-0.5" />;
+  }
+  if (url.search("t.me") !== -1) {
+    return <SiTelegram size={18} className="ml-1 mt-0.5" />;
   }
   return <ArrowRight size={18} />;
 }
