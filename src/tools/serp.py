@@ -9,6 +9,7 @@ from PIL import Image
 from .. import utils
 from .wrapper import Session, gtool, ToolResponse
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import json
 
 SERP_API_KEY = os.environ["SERP_API_KEY"]
 TOP_N = 15
@@ -72,11 +73,38 @@ def image_search(query: str, session: Session):
     images_results = results["images_results"]
     return proc_image_results(images_results, session)
 
+@gtool("google_search", cached=True)
+def google_search(query: str):
+    """
+    Searches Google for a query (text query -> snippets, links)
+    :param query: The query to search for
+    :return:
+    """
+    params = {
+        "api_key": SERP_API_KEY,
+        "engine": "google",
+        "q": query,
+    }
+    search = GoogleSearch(params)
+    results = search.get_dict()
+    if "organic_results" not in results:
+        return f"Error: {results['error']}" if "error" in results else "No results found."
+    organic_results = results["organic_results"]
+    res = []
+    
+    if "answer_box" in results and results['answer_box']['type'] == 'organic_result':
+        res.append(f"Answer box found: {json.dumps(results['answer_box'], indent=2)}\n")
 
+    for i, v in enumerate(organic_results[:TOP_N]):
+        highlighted = ';'.join(v['snippet_highlighted_words']) if 'snippet_highlighted_words' in v else 'None'
+        res.append(f"Result {i}: \n Title:{v['title']} \n {v['snippet']}\n Highlighted: {highlighted}\n")
+    return ToolResponse("\n".join(res), {
+        "links": [v['link'] for v in organic_results[:TOP_N]],
+        "full_results": results,
+        "text": '\n'.join(res), 
+    })
 
 if __name__ == "__main__":
     from rich import print
     dotenv.load_dotenv()
-    session = Session()
-    image_search = image_search.to_tool(session)
-    print(image_search("The White House"))
+    print(google_search("Location of building fire in Shebekino"))

@@ -37,7 +37,6 @@ export default function DisplayGeojson({ data }: { data: ContextData }) {
       bounds={gjson.properties.bounds}
       className="h-48"
       scrollWheelZoom={false}
-      dragging={false}
     >
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

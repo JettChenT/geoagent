@@ -19,7 +19,8 @@ def ask(question: str) -> ToolResponse:
     messages = [
         {
             "role": "system",
-            "content": "You are a helpful assistant."
+            "content": "You are a helpful assistant helping with a geolocation investigation. "
+            "If a precise location relating to the query can be found, please output the exact address or coordinates. "
         },
         {
             "role": "user",
@@ -34,4 +35,4 @@ def ask(question: str) -> ToolResponse:
     return ToolResponse(res, {"text": res})
 
 if __name__ == '__main__':
-    print(ask("What is the coordinates for Apple HQ?"))
+    print(ask("What is the location of the building fire in Shebekino, Belgorod region, Russia? Give me the address."))

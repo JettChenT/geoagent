@@ -22,6 +22,8 @@ def text_search(query: str, session: Session):
     """
     Returns information about a location based on a text query. Uses Google Places API.
     This is equivalent to a Google Maps search.
+    When querying foreign locations, you can try using the local language for addresses for better results; but keep most of your generations in English.
+    For example, when you want to search for buildings in a Russian street, you can search "buildings in <Russian name of the street>".
     The geojson file returned would contain the coordinates of the location, as well as auxiliary information about the location, including
     the name, address, and photo ids.
     :param query: the text query
@@ -33,7 +35,7 @@ def text_search(query: str, session: Session):
         json={"textQuery": query},
         headers=wrap_auth(
             {
-                "X-Goog-FieldMask": "places.id,places.displayName,places.location,places.photos"
+                "X-Goog-FieldMask": "places.id,places.displayName,places.location,places.photos,places.types,places.primaryType"
             }
         ),
     )
@@ -55,7 +57,7 @@ def text_search(query: str, session: Session):
     )
     return ToolResponse(
         f"Results for query: {res_data_disp}\n Coordinates: {res_coords.to_prompt(session, 'textsearch_')}"
-        , {"geojson": res_coords.to_geojson()}
+        , {"geojson": res_coords.to_geojson(), "raw": res_data}
     )
 
 
@@ -107,5 +109,5 @@ if __name__ == "__main__":
     from rich import print
     ses = Session()
     nfn = text_search.to_tool(ses)
-    res = nfn("New York")
+    res = nfn("Buildings in Улица Ленина, Шебекино")
     print(res)

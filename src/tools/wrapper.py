@@ -65,6 +65,9 @@ class GToolWrap:
         doc = f.__doc__
         t.description = f"{name}{sig} - {doc.strip()}"
         return t
+    
+    def __call__(self, *args, **kwargs):
+        return self.fn(*args, **kwargs)
 
 def gtool(
         *args: Union[str, Callable, Runnable],

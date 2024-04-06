@@ -22,6 +22,7 @@ TOOLS: List[GToolWrap] = [
     # azure.bing.search_image,
     serp.search_lens,
     serp.image_search,
+    serp.google_search,
     pplx.ask,
     Sample4Geo.satellite_locate,
     misc.decide,
