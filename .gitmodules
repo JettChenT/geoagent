@@ -1,6 +1,0 @@
-[submodule "geo-clip"]
-	path = geo-clip
-	url = https://github.com/VicenteVivan/geo-clip
-[submodule "tools/anyloc"]
-	path = tools/anyloc
-	url = https://github.com/AnyLoc/AnyLoc
