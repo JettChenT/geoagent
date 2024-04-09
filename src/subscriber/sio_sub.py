@@ -2,6 +2,7 @@ from . import Subscriber
 from typing import Optional
 import socketio
 import asyncio
+from .subscriber_message import SubscriberMessageType
 
 class SIOSubscriber(Subscriber):
     def __init__(self, sio: Optional[socketio.AsyncServer] = None):
@@ -10,5 +11,5 @@ class SIOSubscriber(Subscriber):
             sio, sub_thread = start_srv()
         self.sio = sio
 
-    def push(self, msg_type, msg):
-        asyncio.run(self.sio.emit(msg_type, msg))
+    def push(self, msg_type: SubscriberMessageType, msg):
+        asyncio.run(self.sio.emit(msg_type.value, msg))

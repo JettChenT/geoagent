@@ -17,6 +17,7 @@ from rich import print
 from . import config, utils
 from .prompting import *
 from .connector.gptv import Gpt4Vision
+from .connector.fast_lm import Gpt35
 from .connector import LMM, Message
 from .messages import ProxiedMessage
 from .tools import TOOLS, proc_tools, ToolResponse
@@ -442,6 +443,11 @@ class Agent:
         best_child.set_state(CtxState.Success)
         return best_child
 
+
+def default_agent(sio):
+    sub = default_subscriber(sio)
+    agent = Agent(Gpt4Vision(debug=True), subscriber=sub, fast_lm=Gpt35(debug=True))
+    return agent
 
 def main():
     sub = default_subscriber()
