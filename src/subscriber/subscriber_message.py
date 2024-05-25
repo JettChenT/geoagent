@@ -7,4 +7,8 @@ class SubscriberMessageType(Enum):
     SetCurrentSession = "set_current_session"
     AddNode = "add_node"
     RootNode = "root_node"
+    UpdateNode = "update_node"
+    UrlProcessed = "url_processed"
+    Error = "error"
+    SetSessionId = "set_session_id"
     

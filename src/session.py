@@ -1,10 +1,13 @@
 from typing import Optional, List, Dict
 
 from attrs import define, field, Factory
+from pathlib import Path
 from langchain_core.tools import BaseTool
+from typing import Self
 
+from .config import RUN_DIR
 from .context import Context
-from .subscriber import Subscriber
+from .subscriber import Subscriber, SubscriberMessageType
 
 
 @define
@@ -38,7 +41,7 @@ class Session:
     def notify_update(func):
         def wrapper(self, *args, **kwargs):
             res = func(self, *args, **kwargs)
-            self.subscriber.push("set_session_info", (
+            self.subscriber.push(SubscriberMessageType.SetSessionInfo, (
                 self.id,
                 self.to_json()
             ))
@@ -47,7 +50,7 @@ class Session:
         return wrapper
 
     def update_info(self, delta: Dict):
-        self.subscriber.push("set_session_info", (
+        self.subscriber.push(SubscriberMessageType.SetSessionInfo, (
             self.id,
             delta
         ))
@@ -57,6 +60,11 @@ class Session:
             return self.namespace[identifier]
         except KeyError:
             raise Exception(f"Could not find {identifier} in namespace.")
+    
+    def setup(self) -> Self:
+        p = Path(RUN_DIR) / self.id
+        p.mkdir(parents=True, exist_ok=True)
+        return self
 
     @notify_update
     def add_reflection(self, reflection: str):

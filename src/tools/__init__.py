@@ -2,7 +2,7 @@ from typing import List
 
 from langchain_core.tools import BaseTool
 
-from . import osm, nominatim, geo_clip, vpr, azure, serp, pplx, Sample4Geo, misc
+from . import osm, nominatim, geo_clip, vpr, azure, serp, pplx, Sample4Geo, misc, tavily
 from .gcp import streetview, places
 from .wrapper import GToolWrap, proc_tools, gtool
 from .response import ToolResponse
@@ -23,6 +23,7 @@ TOOLS: List[GToolWrap] = [
     serp.search_lens,
     serp.image_search,
     serp.google_search,
+    tavily.tavily_search,
     pplx.ask,
     Sample4Geo.satellite_locate,
     misc.decide,

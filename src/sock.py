@@ -1,5 +1,6 @@
 import asyncio
 import io
+import os
 
 import socketio
 from aiohttp import web
@@ -8,10 +9,8 @@ from PIL import Image
 
 from . import utils
 from urllib.request import urlopen
-from .subscriber import SIOSubscriber, default_subscriber
-from .connector.gptv import Gpt4Vision
-from .connector.fast_lm import Gpt35
-from .agent import Agent
+from .subscriber import SIOSubscriber, default_subscriber, SubscriberMessageType
+from .agent import Agent, default_agent
 from .config import *
 from .feeder import process_url
 
@@ -41,9 +40,8 @@ def start_session(sid, data):
         with urlopen(img_b64) as response:
             img_b64 = response.read()
         description = data['description'] if 'description' in data else ""
-        agent = Agent(Gpt4Vision(), subscriber=default_subscriber(sio))
+        agent = default_agent(sio)
         ses = agent.session
-        utils.setup_session(ses)
         a_path = "run/user_upload.png" # TODO: fix this to be session specific
         im = Image.open(io.BytesIO(img_b64))
         im.save(a_path)
@@ -60,19 +58,18 @@ def from_social(sid, data):
     sub = default_subscriber(sio)
     try:
         url = data['url']
-        agent = Agent(Gpt4Vision(debug=True), subscriber=sub, fast_lm=Gpt35(debug=True))
+        agent = default_agent(sio)
         ses = agent.session
-        utils.setup_session(ses)
-        sub.push("set_session_info_key", (ses.id, "status", "Processing social media url..."))
+        sub.push(SubscriberMessageType.SetSessionInfoKey, (ses.id, "status", "Processing social media url..."))
         prompt = process_url(ses, url)
-        sub.push("set_session_info_key", (ses.id, "status", "Social media url processed."))
-        sub.push("url_processed", (url))
+        sub.push(SubscriberMessageType.SetSessionInfoKey, (ses.id, "status", "Social media url processed."))
+        sub.push(SubscriberMessageType.UrlProcessed, (url))
         th = Thread(target=agent.lats, args=(prompt, True))
         th.start()
         return ses.id
     except Exception as e:
         print(e)
-        sub.push("error", str(e))
+        sub.push(SubscriberMessageType.Error, str(e))
         return
 
 app.router.add_static('/run', 'run')

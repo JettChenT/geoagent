@@ -4,7 +4,7 @@ from .subscriber_message import SubscriberMessageType
 
 
 class Subscriber:
-    def push(self, msg_type, msg):
+    def push(self, msg_type: SubscriberMessageType, msg):
         pass
 
 

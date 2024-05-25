@@ -9,7 +9,7 @@ from contextlib import contextmanager
 from langchain_core.agents import AgentAction, AgentFinish
 from langchain_core.tools import BaseTool
 from typing_extensions import Self
-from .subscriber import Subscriber
+from .subscriber import Subscriber, SubscriberMessageType
 import numpy as np
 
 class Message:
@@ -68,16 +68,16 @@ class Context:
         self.em = 0  # Exact match, evaluation metric
 
         if self.parent:
-            self._push("add_node", (
+            self._push(SubscriberMessageType.AddNode, (
                 hex(id(self.parent)),
                 hex(id(self)),
                 self.to_json()
             ))
         else:
-            self._push("root_node", (
-                hex(id(self)),
-                self.to_json()
-            ))
+            self._push(SubscriberMessageType.RootNode, (
+                    hex(id(self)),
+                    self.to_json()
+                ))
 
     def uct(self):
         if self.visits == 0:
@@ -88,7 +88,7 @@ class Context:
     def notify_update(func):
         def wrapper(self, *args, **kwargs):
             res = func(self, *args, **kwargs)
-            self._push("update_node", (
+            self._push(SubscriberMessageType.UpdateNode, (
                 hex(id(self)),
                 self.to_json()
             ))
@@ -164,7 +164,7 @@ class Context:
             res["children"] = [c.serialize_recursive() for c in self.children]
         return res
 
-    def _push(self, msg_type, msg):
+    def _push(self, msg_type: SubscriberMessageType, msg):
         if self.subscriber:
             self.subscriber.push(msg_type, msg)
 

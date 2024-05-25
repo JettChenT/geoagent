@@ -11,7 +11,7 @@ from multiprocessing import Value
 
 from src import utils
 from .connector.gptv import Gpt4Vision
-from .subscriber import SIOSubscriber
+from .subscriber import SIOSubscriber, SubscriberMessageType
 from .sock import start_srv
 from .agent import Agent
 
@@ -53,14 +53,14 @@ def evaluate(target_folder: Path):
     cords = shuffle(cords)
     cords.reset_index(drop=True, inplace=True)
     input("This will evaluate images sequentially. Press enter to start.")
-    sio_sub.push("global_info_set", ("task", "Evaluating Dataset Sequentially"))
+    sio_sub.push(SubscriberMessageType.GlobalInfoSet, ("task", "Evaluating Dataset Sequentially"))
     print("Starting...")
 
     for i, row in cords.iterrows():
         t_begin = time.time()
         agent = Agent(Gpt4Vision(), subscriber=sio_sub)  # Create a new Agent instance for each image
         img_path = target_folder / row['image']
-        sio_sub.push("global_info_set", ("image", str(img_path)))
+        sio_sub.push(SubscriberMessageType.GlobalInfoSet, ("image", str(img_path)))
         try:
             res = agent.lats(agent.image_pmpt(img_path))
             pred = utils.sanitize(res.transition.tool_input)
@@ -77,12 +77,12 @@ def evaluate_image(row, target_folder, sio_sub, session_ids):
     agent = Agent(Gpt4Vision(), subscriber=sio_sub)
     t_begin = time.time()
     img_path = target_folder / row['image']
-    sio_sub.push("global_info_set", ("image", str(img_path)))
+    sio_sub.push(SubscriberMessageType.GlobalInfoSet, ("image", str(img_path)))
     pred = ""
     try:
         res = agent.lats(agent.image_pmpt(img_path))
         agent.backup()
-        sio_sub.push("set_session_info_key", (agent.session.id, "completed", True))
+        sio_sub.push(SubscriberMessageType.SetSessionInfoKey, (agent.session.id, "completed", True))
         session_ids.append(agent.session.id)  # Add session ID to the list
         pred = utils.sanitize(res.transition.tool_input)
         print(f"Session id: {agent.session.id}, backed up.")
@@ -98,12 +98,12 @@ def evaluate_image(row, target_folder, sio_sub, session_ids):
         global counter
         with counter.get_lock():
             counter.value += 1
-            sio_sub.push("global_info_set", ("progress", counter.value))
+            sio_sub.push(SubscriberMessageType.GlobalInfoSet, ("progress", counter.value))
     except Exception as e:
         logging.error(f"Error in {img_path}: {e}")
         agent.backup()
         logging.error(f"Session ID: {agent.session.id}, Backed up.")
-        sio_sub.push("set_session_info_key", (agent.session.id, "error", str(e)))
+        sio_sub.push(SubscriberMessageType.SetSessionInfoKey, (agent.session.id, "error", str(e)))
 
 def write_session_log(session_ids, target_folder):
     timestamp = time.strftime("%Y-%m-%d-%H-%M-%S")
@@ -123,8 +123,8 @@ def evaluate_batched(target_folder: Path, batch_size=5):
     cords = shuffle(cords)
     cords.reset_index(drop=True, inplace=True)
     input("This will evaluate images in batches. Press enter to start.")
-    sio_sub.push("global_info_set", ("task", "Evaluating Dataset Batched"))
-    sio_sub.push("global_info_set", ("total", len(cords)))
+    sio_sub.push(SubscriberMessageType.GlobalInfoSet, ("task", "Evaluating Dataset Batched"))
+    sio_sub.push(SubscriberMessageType.GlobalInfoSet, ("total", len(cords)))
     print("Starting...")
     session_ids = []  # Initialize an empty list to store session IDs
 

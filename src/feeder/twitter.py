@@ -3,22 +3,7 @@ from yt_dlp.extractor.twitter import TwitterIE
 import requests
 import re
 from ..utils import image_to_prompt, Session, enforce_image, find_valid_loc
-import subprocess
-
-def extract_last_frame_ffmpeg(input_video_path, output_image_path):
-    command = [
-        'ffmpeg',
-        '-sseof', '-1', 
-        '-i', input_video_path,
-        '-update', '1',
-        '-q:v', '1',
-        output_image_path
-    ]
-    try:
-        subprocess.run(command, check=True)
-        print(f"Last frame extracted and saved to {output_image_path}")
-    except subprocess.CalledProcessError as e:
-        print(f"An error occurred: {e}")
+from .vidutils import extract_frames_ffmpeg
 
 def twitter_best_quality_url(url: str) -> str:
     """
@@ -57,7 +42,7 @@ def from_twitter(session: Session, url: str) -> str:
         if media["type"] == "photo":
             im_loc = enforce_image(media["media_url_https"], session)
             pmpt += image_to_prompt(im_loc, session)
-            session.subscriber.push("set_session_info_key", (session.id, "image_loc", str(im_loc)))
+            session.update_info({"image_loc": str(im_loc)})
         elif media["type"] == "video":
             variant = choose_variant(media["video_info"]["variants"])
             tar_url = variant["url"]
@@ -69,9 +54,10 @@ def from_twitter(session: Session, url: str) -> str:
             with open(to_filename, "wb") as f:
                 f.write(r.content)
             frame_loc = find_valid_loc(session, "frame_", ".png")
-            extract_last_frame_ffmpeg(to_filename, frame_loc)
-            final_loc = enforce_image(frame_loc, session)
-            pmpt += image_to_prompt(final_loc, session)
+            frames = extract_frames_ffmpeg(to_filename, frame_loc)
+            for frame in frames:
+                im_loc = enforce_image(frame, session)
+                pmpt += image_to_prompt(im_loc, session)
     session.update_info({
         "content_type": "tweet",
         "tweet_id": twid,

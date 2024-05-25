@@ -10,17 +10,13 @@ from concurrent.futures import ThreadPoolExecutor, wait
 
 from .. import utils
 from . import LMM, Message, Context
-import dotenv
 import os
-from PIL import Image
-from pathlib import Path
 from openai import OpenAI
 from openai._types import NOT_GIVEN, NotGiven
 from rich import print
 import logging
 from ..utils import encode_image, DEBUG_DIR
 from ..session import Session
-from .. import config
 import hashlib
 import backoff
 import httpx
@@ -188,7 +184,7 @@ class Gpt4Vision(LMM):
             )
         choices = []
         pmpt = partial(self._create_completions,
-                       model="gpt-4-vision-preview",
+                       model="gpt-4o",
                        max_tokens=self.max_tokens,
                        stop=stop,
                        temperature=temperature,
@@ -216,8 +212,7 @@ if __name__ == "__main__":
     sess = Session()
     utils.setup_session(sess)
     ctx = Context(cur_messages=[Message(f"{utils.image_to_prompt('images/hw_prob.png', sess)}"
-                                        f"What is the path to the image?"
+                                        f"Describe this image"
                                         )])
     print(str(ctx))
     gptv = Gpt4Vision(debug=True, multi_gen_strategy=MultiGenStrategy.BATCH)
-    print(gptv.prompt(ctx, sess, n=1))

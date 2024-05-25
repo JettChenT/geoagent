@@ -24,7 +24,7 @@ from .tools import TOOLS, proc_tools, ToolResponse
 from .context import Context, CtxState
 from .session import Session
 from .react_parser import ReActSingleInputOutputParser
-from .subscriber import Subscriber, SIOSubscriber, default_subscriber
+from .subscriber import Subscriber, SIOSubscriber, default_subscriber, SubscriberMessageType
 
 if os.getenv("FUNTRACE"):
     import functiontrace
@@ -112,7 +112,7 @@ class Agent:
         self.run_type = run_type
         subscriber = subscriber or default_subscriber()
         self.subscriber = subscriber
-        self.session = Session(subscriber=subscriber)
+        self.session = Session(subscriber=subscriber).setup()
 
     def _push(self, *args, **kwargs):
         if self.subscriber:
@@ -371,13 +371,13 @@ class Agent:
 
     def image_pmpt(self, loc: str | Path , additional: str = "") -> str:
         image_loc = utils.enforce_image(loc, self.session)
-        self._push("set_session_info_key", (self.session.id, "image_loc", image_loc))
+        self._push(SubscriberMessageType.SetSessionInfoKey, (self.session.id, "image_loc", image_loc))
         return f"{utils.image_to_prompt(image_loc, self.session)} Where is this image located? {additional}"
 
     def lats(self, goal: str, set_cur=False) -> Context:
-        self._push("global_info_set", ("latest_session", self.session.id))
+        self._push(SubscriberMessageType.GlobalInfoSet, ("latest_session", self.session.id))
         if set_cur:
-            self._push("set_current_session", self.session.id)
+            self._push(SubscriberMessageType.SetCurrentSession, self.session.id)
         self.session.tools = proc_tools(TOOLS, self.session)
         root = Context(subscriber=self.subscriber)
         initial_msg = [
@@ -398,7 +398,7 @@ class Agent:
         ]
         root.add_messages(initial_msg)
         self.session.root = root
-        self._push("set_session_id", (root.id(), self.session.id))
+        self._push(SubscriberMessageType.SetSessionId, (root.id(), self.session.id))
         terminals = []
 
         for i in range(1, self.DEPTH_THRESHOLD + 1):
@@ -455,7 +455,7 @@ def main():
     additional_info = input(
         "Enter any additional information regarding this image or guidance on the geolocation process. \nPress enter to begin.\n"
     )
-    sub.push("global_info_set", ("task", "Geolocating Image"))
+    sub.push(SubscriberMessageType.GlobalInfoSet, ("task", "Geolocating Image"))
     logging.basicConfig(level=logging.INFO)
     img_loc = sys.argv[1] if len(sys.argv) else "./images/anon/12.png"
     res = agent.lats(agent.image_pmpt(img_loc, additional_info))

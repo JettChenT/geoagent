@@ -1,4 +1,5 @@
 from . import Subscriber
+from .subscriber_message import SubscriberMessageType
 import sqlite3
 import datetime
 
@@ -12,12 +13,12 @@ class SQLiteSubscriber(Subscriber):
         conn.commit()
         self.db_path = db_path
 
-    def push(self, msg_type, msg, session_id=None):
+    def push(self, msg_type: SubscriberMessageType, msg, session_id=None):
         timestamp = datetime.datetime.now().isoformat()
         conn = sqlite3.connect(self.db_path)
         cur = conn.cursor()
         cur.execute("INSERT INTO messages (type, message, timestamp, session_id) VALUES (?, ?, ?, ?)",
-                         (msg_type, str(msg), timestamp, session_id))
+                         (msg_type.value, str(msg), timestamp, session_id))
         conn.commit()
 
 def replay_session(session_id, db_path:str = "logs/analytics.db"):

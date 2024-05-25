@@ -15,11 +15,10 @@ import random
 import inspect
 
 from .session import Session
+from .config import RUN_DIR, DEBUG_DIR
 
 # Mutable Global Variable: Whether to render a black bar at the bottom with the location of image
 GLOB_RENDER_BLACKBAR = False
-RUN_DIR = "run/"
-DEBUG_DIR = Path("./debug")
 
 
 def image_to_base64(im: Image.Image) -> str:

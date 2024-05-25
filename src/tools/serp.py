@@ -16,16 +16,12 @@ TOP_N = 15
 
 def process_single_result(v, i, session):
     try:
-        # TODO
-        im_url = v["thumbnail"]
-        img_data = requests.get(im_url).content
-        im = Image.open(io.BytesIO(img_data))
+        im_url = v["original"]
+        res_img = utils.enforce_image(im_url, session)
     except Exception as e:
         im_url = v["thumbnail"]
-        img_data = requests.get(im_url).content
-        im = Image.open(io.BytesIO(img_data))
-    saved_loc = utils.save_img(im, "serp", session)
-    return f"Result {i}: \n Title:{v['title']} \n {utils.image_to_prompt(saved_loc, session)}\n"
+        res_img = utils.enforce_image(im_url, session)
+    return f"Result {i}: \n Title:{v['title']} \n {utils.image_to_prompt(res_img, session)}\n"
 
 def proc_image_results(results: dict, session: Session, top_n=TOP_N) -> ToolResponse:
     with ThreadPoolExecutor() as executor:
